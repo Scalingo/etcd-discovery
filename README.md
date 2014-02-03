@@ -41,7 +41,7 @@ notice it and communicating with it, it is necessary to watch these
 notifications.
 
 ```go
-newHosts := SubscribeNew("name_of_service")
+newHosts := service.SubscribeNew("name_of_service")
 for host := range newHosts {
   fmt.Println(host.Name, "has registered")
 }
@@ -50,7 +50,7 @@ for host := range newHosts {
 ### Watch down services
 
 ```go
-deadHosts := SubscribeDown("name_of_service")
+deadHosts := service.SubscribeDown("name_of_service")
 for hostname := range deadHosts {
   fmt.Println(hostname, "is dead, RIP")
 }
