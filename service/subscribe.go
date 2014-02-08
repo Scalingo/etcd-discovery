@@ -9,7 +9,12 @@ func Subscribe(service string) <-chan *etcd.Response {
 	stop := make(chan bool)
 	responses := make(chan *etcd.Response)
 	go func() {
-		client.Watch("/services/"+service, 0, true, responses, stop)
+		_, err := client.Watch("/services/"+service, 0, true, responses, stop)
+		if err != nil {
+			logger.Println("fail to watch", service, err)
+			close(responses)
+			close(stop)
+		}
 	}()
 	return responses
 }
@@ -38,26 +43,9 @@ func SubscribeNew(service string) chan *Host {
 					logger.Println("Fail to get", response.Node.Key, ":", err)
 					continue
 				}
-				hosts <- buildHostFromResponse(res)
+				hosts <- buildHostFromNode(res.Node)
 			}
 		}
 	}()
 	return hosts
-}
-
-func buildHostFromResponse(res *etcd.Response) *Host {
-	nodes := res.Node.Nodes
-	host := &Host{}
-	host.Name = path.Base(res.Node.Key)
-	for _, node := range nodes {
-		switch(path.Base(node.Key)) {
-		case "user":
-			host.User = node.Value
-		case "password":
-			host.Password = node.Value
-		case "port":
-			host.Port = node.Value
-		}
-	}
-	return host
 }
