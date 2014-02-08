@@ -10,23 +10,23 @@ import (
 func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		stop := make(chan bool)
-		Register("test", genHost(), stop)
+		Register("test_register", genHost(), stop)
 
 		Convey("It should be available with etcd", func() {
-			_, err := client.Get("/services/test/"+hostname, false, false)
+			_, err := client.Get("/services/test_register/"+hostname, false, false)
 			So(err, ShouldBeNil)
-			_, err = client.Get("/services/test/"+hostname+"/user", false, false)
+			_, err = client.Get("/services/test_register/"+hostname+"/user", false, false)
 			So(err, ShouldBeNil)
-			_, err = client.Get("/services/test/"+hostname+"/password", false, false)
+			_, err = client.Get("/services/test_register/"+hostname+"/password", false, false)
 			So(err, ShouldBeNil)
-			_, err = client.Get("/services/test/"+hostname+"/port", false, false)
+			_, err = client.Get("/services/test_register/"+hostname+"/port", false, false)
 			So(err, ShouldBeNil)
 		})
 		stop <- true
 
-		Register("test2", genHost(), stop)
+		Register("test2_register", genHost(), stop)
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			res, _ := client.Get("/services/test2/"+hostname, false, false)
+			res, _ := client.Get("/services/test2_register/"+hostname, false, false)
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
 			So(duration, ShouldBeLessThanOrEqualTo, HEARTBEAT_DURATION*time.Second)
@@ -34,8 +34,8 @@ func TestRegister(t *testing.T) {
 		stop <- true
 
 		Convey("After sending stop, the service should disappear", func() {
-			time.Sleep(HEARTBEAT_DURATION * time.Second)
-			_, err := client.Get("/services/test/"+hostname, false, false)
+			time.Sleep(HEARTBEAT_DURATION * 2 * time.Second)
+			_, err := client.Get("/services/test2_register/"+hostname, false, false)
 			So(err, ShouldNotBeNil)
 		})
 	})
