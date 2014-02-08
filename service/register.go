@@ -21,10 +21,11 @@ func Register(service string, host *Host, stop chan bool) {
 	client.Create(key + "/port", host.Port, 0)
 
 	go func() {
-		ticker := time.NewTimer((HEARTBEAT_DURATION - 1) * time.Second)
+		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
 		for {
 			select {
 			case <-stop:
+				ticker.Stop()
 				return
 			case <-ticker.C:
 				client.UpdateDir(key, HEARTBEAT_DURATION)
