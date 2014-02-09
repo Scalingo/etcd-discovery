@@ -46,16 +46,17 @@ func TestSubscribeDown(t *testing.T) {
 
 func TestSubscribeNew(t *testing.T) {
 	stop := make(chan bool)
+	defer close(stop)
 
 	Convey("When the service 'test' is watched and a host registered", t, func() {
 		hosts := SubscribeNew("test_new")
 		time.Sleep(200 * time.Millisecond)
-		Register("test_new", genHost(), stop)
+		newHost := genHost()
+		Register("test_new", newHost, stop)
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
-			So(host, ShouldNotBeNil)
+			So(host, ShouldResemble, newHost)
 			So(ok, ShouldBeTrue)
 		})
-		stop <- true
 	})
 }

@@ -16,6 +16,7 @@ func TestStart(t *testing.T) {
 	Convey("When monitoring a services 'test_start'", t, func() {
 		Convey("Its slice must be defined", func() {
 			start("test_start1")
+
 			So(services["test_start1"], ShouldNotBeNil)
 		})
 		Convey("There must be no hosts", func() {
@@ -42,11 +43,47 @@ func TestStart(t *testing.T) {
 			stop1, stop2 := make(chan bool), make(chan bool)
 			service.Register("test_start4", &service.Host{Name: "host_start4_1"}, stop1)
 			service.Register("test_start4", &service.Host{Name: "host_start4_2"}, stop2)
+
 			stop1 <- true
 			time.Sleep(service.HEARTBEAT_DURATION * 2 * time.Second)
+
 			hosts, err := Hosts("test_start4")
 			So(len(hosts), ShouldEqual, 1)
 			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestAttributes(t *testing.T) {
+	host := &service.Host{Name: "host_attr", User: "user", Password: "password", Port: "1000"}
+	Convey("When a host is added to the slice", t, func() {
+
+		Convey("It should have all the attributes of the registered host", func() {
+			start("test_attr1")
+
+			stop := make(chan bool)
+			service.Register("test_attr1", host, stop)
+
+			hosts, err := Hosts("test_attr1")
+			So(err, ShouldBeNil)
+			So(len(hosts), ShouldEqual, 1)
+			So(hosts[0], ShouldResemble, host)
+		})
+
+		Convey("When the same host is removed and re-added, nothing should change", func() {
+			start("test_attr2")
+
+			stop := make(chan bool)
+			service.Register("test_attr2", host, stop)
+
+			stop <- true
+			time.Sleep(service.HEARTBEAT_DURATION * 2 * time.Second)
+			service.Register("test_attr2", host, make(chan bool))
+
+			hosts, err := Hosts("test_attr2")
+			So(err, ShouldBeNil)
+			So(len(hosts), ShouldEqual, 1)
+			So(hosts[0], ShouldResemble, host)
 		})
 	})
 }

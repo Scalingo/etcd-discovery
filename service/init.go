@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	logger    *log.Logger
-	client    *etcd.Client
-	hostname  string
+	logger   *log.Logger
+	client   *etcd.Client
+	hostname string
 )
 
 func init() {
@@ -31,4 +31,3 @@ func init() {
 
 	logger = log.New(os.Stderr, "[etcd-discovery]", log.LstdFlags)
 }
-

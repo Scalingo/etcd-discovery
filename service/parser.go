@@ -1,8 +1,8 @@
 package service
 
 import (
+	"encoding/json"
 	"github.com/coreos/go-etcd/etcd"
-	"path"
 )
 
 func buildHostsFromNodes(nodes etcd.Nodes) []*Host {
@@ -14,18 +14,7 @@ func buildHostsFromNodes(nodes etcd.Nodes) []*Host {
 }
 
 func buildHostFromNode(node *etcd.Node) *Host {
-	nodes := node.Nodes
 	host := &Host{}
-	host.Name = path.Base(node.Key)
-	for _, n := range nodes {
-		switch(path.Base(n.Key)) {
-		case "user":
-			host.User = n.Value
-		case "password":
-			host.Password = n.Value
-		case "port":
-			host.Port = n.Value
-		}
-	}
+	json.Unmarshal([]byte(node.Value), &host)
 	return host
 }
