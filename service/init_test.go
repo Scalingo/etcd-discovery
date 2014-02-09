@@ -20,4 +20,3 @@ func TestInit(t *testing.T) {
 		})
 	})
 }
-

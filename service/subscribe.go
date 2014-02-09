@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"path"
 )
@@ -37,13 +38,8 @@ func SubscribeNew(service string) chan *Host {
 	go func() {
 		responses := Subscribe(service)
 		for response := range responses {
-			if response.Node.Dir && response.Action == "create" {
-				res, err := client.Get(response.Node.Key, false, true)
-				if err != nil {
-					logger.Println("Fail to get", response.Node.Key, ":", err)
-					continue
-				}
-				hosts <- buildHostFromNode(res.Node)
+			if response.Action == "create" {
+				hosts <- buildHostFromNode(response.Node)
 			}
 		}
 	}()
