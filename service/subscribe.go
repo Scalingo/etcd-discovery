@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"path"
 )
