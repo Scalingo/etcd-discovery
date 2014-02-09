@@ -5,6 +5,16 @@ import (
 	"testing"
 )
 
+func TestGetNoHost(t *testing.T) {
+	Convey("Without any service", t, func() {
+		Convey("Get should return an empty slice", func() {
+			hosts, err := Get("test_no_service")
+			So(len(hosts), ShouldEqual, 0)
+			So(err, ShouldBeNil)
+		})
+	})
+}
+
 func TestGet(t *testing.T) {
 	Convey("Given two registered services", t, func() {
 		stop1, stop2 := make(chan bool), make(chan bool)
