@@ -18,7 +18,8 @@ func Register(service string, host *Host, stop chan bool) {
 	key := fmt.Sprintf("/services/%s/%s", service, host.Name)
 	hostJson, _ := json.Marshal(&host)
 
-	client.Create(key, string(hostJson), HEARTBEAT_DURATION)
+	value := string(hostJson)
+	client.Create(key, value, HEARTBEAT_DURATION)
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
@@ -28,7 +29,7 @@ func Register(service string, host *Host, stop chan bool) {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				client.UpdateDir(key, HEARTBEAT_DURATION)
+				client.Update(key, value, HEARTBEAT_DURATION)
 			}
 		}
 	}()
