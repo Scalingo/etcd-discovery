@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/coreos/go-etcd/etcd"
+	"runtime/debug"
 	"time"
 )
 
@@ -20,18 +20,19 @@ func Register(service string, host *Host, stop chan bool) error {
 	hostJson, _ := json.Marshal(&host)
 
 	value := string(hostJson)
-	_, err := client.Create(key, value, HEARTBEAT_DURATION)
-
-	// If the service has been restarted, we update the TTL
+	err := createOrUpdate(key, value)
 	if err != nil {
-		if etcdErr, ok := err.(*etcd.EtcdError); ok && etcdErr.ErrorCode == 105 {
-			client.Update(key, value, HEARTBEAT_DURATION)
-		} else {
-			return err
-		}
+		return err
 	}
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Printf("Error when updating %v %v: %v\n", service, host, r)
+				debug.PrintStack()
+			}
+		}()
+
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
 		for {
 			select {
@@ -39,10 +40,43 @@ func Register(service string, host *Host, stop chan bool) error {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				client.Update(key, value, HEARTBEAT_DURATION)
+				err := updateOrCreate(key, value)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}()
 
+	return nil
+}
+
+func createOrUpdate(k, v string) error {
+	_, err := client.Create(k, v, HEARTBEAT_DURATION)
+	if err != nil {
+		if IsKeyAlreadyExistError(err) {
+			_, err = client.Update(k, v, HEARTBEAT_DURATION)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
+func updateOrCreate(k, v string) error {
+	_, err := client.Update(k, v, HEARTBEAT_DURATION)
+	if err != nil {
+		if IsKeyAlreadyExistError(err) {
+			_, err = client.Create(k, v, HEARTBEAT_DURATION)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 	return nil
 }
