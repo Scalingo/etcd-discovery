@@ -16,7 +16,6 @@ func TestStart(t *testing.T) {
 	Convey("When monitoring a services 'test_start'", t, func() {
 		Convey("Its slice must be defined", func() {
 			start("test_start1")
-
 			So(services["test_start1"], ShouldNotBeNil)
 		})
 		Convey("There must be no hosts", func() {
@@ -32,6 +31,7 @@ func TestStart(t *testing.T) {
 			stop1, stop2 := make(chan bool), make(chan bool)
 			service.Register("test_start3", &service.Host{Name: "host_start3_1"}, stop1)
 			service.Register("test_start3", &service.Host{Name: "host_start3_2"}, stop2)
+			waitRegistration()
 
 			hosts, err := Hosts("test_start3")
 			So(len(hosts), ShouldEqual, 2)
@@ -45,7 +45,7 @@ func TestStart(t *testing.T) {
 			service.Register("test_start4", &service.Host{Name: "host_start4_2"}, stop2)
 
 			stop1 <- true
-			time.Sleep(service.HEARTBEAT_DURATION * 2 * time.Second)
+			waitExpiration()
 
 			hosts, err := Hosts("test_start4")
 			So(len(hosts), ShouldEqual, 1)
@@ -63,6 +63,7 @@ func TestAttributes(t *testing.T) {
 
 			stop := make(chan bool)
 			service.Register("test_attr1", host, stop)
+			waitRegistration()
 
 			hosts, err := Hosts("test_attr1")
 			So(err, ShouldBeNil)
@@ -77,8 +78,10 @@ func TestAttributes(t *testing.T) {
 			service.Register("test_attr2", host, stop)
 
 			stop <- true
-			time.Sleep(service.HEARTBEAT_DURATION * 2 * time.Second)
+			waitExpiration()
+
 			service.Register("test_attr2", host, make(chan bool))
+			waitRegistration()
 
 			hosts, err := Hosts("test_attr2")
 			So(err, ShouldBeNil)
@@ -95,4 +98,36 @@ func TestNoService(t *testing.T) {
 			So(err, ShouldEqual, NoSuchServiceError)
 		})
 	})
+}
+
+func TestUpdate(t *testing.T) {
+	Convey("When a node is update, the data should be updated", t, func() {
+		host1 := &service.Host{Name: "host_attr", User: "user", Password: "password", Port: "1000"}
+		host2 := &service.Host{Name: "host_attr", User: "user", Password: "password2", Port: "1000"}
+		start("test_upd")
+
+		stop := make(chan bool)
+		service.Register("test_upd", host1, stop)
+		waitRegistration()
+		stop <- true
+
+		hosts, _ := Hosts("test_upd")
+		So(len(hosts), ShouldEqual, 1)
+		So(hosts[0].Password, ShouldEqual, host1.Password)
+
+		service.Register("test_upd", host2, stop)
+		waitRegistration()
+
+		hosts, _ = Hosts("test_upd")
+		So(len(hosts), ShouldEqual, 1)
+		So(hosts[0].Password, ShouldEqual, host2.Password)
+	})
+}
+
+func waitRegistration() {
+	time.Sleep(200 * time.Millisecond)
+}
+
+func waitExpiration() {
+	time.Sleep(service.HEARTBEAT_DURATION * 2 * time.Second)
 }
