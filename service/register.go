@@ -52,30 +52,30 @@ func Register(service string, host *Host, stop chan bool) error {
 }
 
 func createOrUpdate(k, v string) error {
-	_, err := client.Create(k, v, HEARTBEAT_DURATION)
-	if err != nil {
-		if IsKeyAlreadyExistError(err) {
-			_, err = client.Update(k, v, HEARTBEAT_DURATION)
-			if err != nil {
-				return err
+	_, errCreate := client.Create(k, v, HEARTBEAT_DURATION)
+	if errCreate != nil {
+		if IsKeyAlreadyExistError(errCreate) {
+			_, errUpdate := client.Update(k, v, HEARTBEAT_DURATION)
+			if errUpdate != nil {
+				return errUpdate
 			}
 		} else {
-			return err
+			return errCreate
 		}
 	}
 	return nil
 }
 
 func updateOrCreate(k, v string) error {
-	_, err := client.Update(k, v, HEARTBEAT_DURATION)
-	if err != nil {
-		if IsKeyAlreadyExistError(err) {
-			_, err = client.Create(k, v, HEARTBEAT_DURATION)
-			if err != nil {
-				return err
+	_, errUpdate := client.Update(k, v, HEARTBEAT_DURATION)
+	if errUpdate != nil {
+		if IsKeyNotFoundError(errUpdate) {
+			_, errCreate := client.Create(k, v, HEARTBEAT_DURATION)
+			if errCreate != nil {
+				return errCreate
 			}
 		} else {
-			return err
+			return errUpdate
 		}
 	}
 	return nil
