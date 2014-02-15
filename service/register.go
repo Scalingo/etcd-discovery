@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/coreos/go-etcd/etcd"
 	"time"
 )
 
@@ -10,7 +11,7 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, stop chan bool) {
+func Register(service string, host *Host, stop chan bool) error {
 	if len(host.Name) == 0 {
 		host.Name = hostname
 	}
@@ -19,7 +20,16 @@ func Register(service string, host *Host, stop chan bool) {
 	hostJson, _ := json.Marshal(&host)
 
 	value := string(hostJson)
-	client.Create(key, value, HEARTBEAT_DURATION)
+	_, err := client.Create(key, value, HEARTBEAT_DURATION)
+
+	// If the service has been restarted, we update the TTL
+	if err != nil {
+		if etcdErr, ok := err.(*etcd.EtcdError); ok && etcdErr.ErrorCode == 105 {
+			client.Update(key, value, HEARTBEAT_DURATION)
+		} else {
+			return err
+		}
+	}
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
@@ -33,4 +43,6 @@ func Register(service string, host *Host, stop chan bool) {
 			}
 		}
 	}()
+
+	return nil
 }
