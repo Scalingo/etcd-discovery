@@ -11,13 +11,12 @@ import (
 
 func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
-		stop := make(chan bool)
 		host := genHost()
-		err := Register("test_register", host, stop)
-		So(err, ShouldBeNil)
-
 		Convey("It should be available with etcd", func() {
-			res, err := client.Get("/services/test_register/"+hostname, false, false)
+			err := Register("test_register", host, make(chan bool))
+			So(err, ShouldBeNil)
+
+			res, err := client.Get("/services/test_register/"+host.Name, false, false)
 
 			h := &Host{}
 			json.Unmarshal([]byte(res.Node.Value), &h)
@@ -26,20 +25,22 @@ func TestRegister(t *testing.T) {
 			So(h, ShouldResemble, host)
 			So(err, ShouldBeNil)
 		})
-		stop <- true
 
-		Register("test2_register", genHost(), stop)
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			res, _ := client.Get("/services/test2_register/"+hostname, false, false)
+			Register("test2_register", host, make(chan bool))
+			res, _ := client.Get("/services/test2_register/"+host.Name, false, false)
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
 			So(duration, ShouldBeLessThanOrEqualTo, HEARTBEAT_DURATION*time.Second)
 		})
-		stop <- true
 
 		Convey("After sending stop, the service should disappear", func() {
+			stop := make(chan bool)
+			host := genHost()
+			Register("test3_register", host, stop)
+			stop<-true
 			time.Sleep(HEARTBEAT_DURATION * 2 * time.Second)
-			_, err := client.Get("/services/test2_register/"+hostname, false, false)
+			_, err := client.Get("/services/test3_register/"+host.Name, false, false)
 			So(err, ShouldNotBeNil)
 		})
 	})

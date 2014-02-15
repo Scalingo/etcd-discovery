@@ -60,3 +60,24 @@ func TestSubscribeNew(t *testing.T) {
 		})
 	})
 }
+
+func TestSubscribeUpdate(t *testing.T) {
+	stop := make(chan bool)
+	defer close(stop)
+
+	Convey("When the service 'test' is watched and a host updates its data", t, func() {
+		hosts := SubscribeUpdate("test_upd")
+		time.Sleep(200 * time.Millisecond)
+		newHost := genHost()
+		Register("test_upd", newHost, stop)
+		stop <- true
+		newHost.Password = "newpass"
+		Register("test_upd", newHost, stop)
+
+		Convey("A host should be available in the channel", func() {
+			host, ok := <-hosts
+			So(host, ShouldResemble, newHost)
+			So(ok, ShouldBeTrue)
+		})
+	})
+}

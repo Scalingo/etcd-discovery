@@ -44,3 +44,16 @@ func SubscribeNew(service string) chan *Host {
 	}()
 	return hosts
 }
+
+func SubscribeUpdate(service string) chan *Host {
+	hosts := make(chan *Host)
+	go func() {
+		responses := Subscribe(service)
+		for response := range responses {
+			if response.Action == "update" {
+				hosts <- buildHostFromNode(response.Node)
+			}
+		}
+	}()
+	return hosts
+}

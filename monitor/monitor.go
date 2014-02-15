@@ -21,11 +21,18 @@ func Start(name string) error {
 	services[name] = currentHosts
 
 	newHosts := service.SubscribeNew(name)
+	updateHosts := service.SubscribeUpdate(name)
 	deadHosts := service.SubscribeDown(name)
 	for {
 		select {
 		case h := <-newHosts:
 			currentHosts = append(currentHosts, h)
+		case h := <-updateHosts:
+			for i, host := range currentHosts {
+				if host.Name == h.Name {
+					currentHosts[i] = h
+				}
+			}
 		case name := <-deadHosts:
 			for i, s := range currentHosts {
 				if s.Name == name {
