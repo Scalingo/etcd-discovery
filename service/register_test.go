@@ -13,7 +13,8 @@ func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		stop := make(chan bool)
 		host := genHost()
-		Register("test_register", host, stop)
+		err := Register("test_register", host, stop)
+		So(err, ShouldBeNil)
 
 		Convey("It should be available with etcd", func() {
 			res, err := client.Get("/services/test_register/"+hostname, false, false)
