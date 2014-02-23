@@ -38,7 +38,7 @@ func TestRegister(t *testing.T) {
 			stop := make(chan bool)
 			host := genHost()
 			Register("test3_register", host, stop)
-			stop<-true
+			stop <- true
 			time.Sleep(HEARTBEAT_DURATION * 2 * time.Second)
 			_, err := client.Get("/services/test3_register/"+host.Name, false, false)
 			So(err, ShouldNotBeNil)
