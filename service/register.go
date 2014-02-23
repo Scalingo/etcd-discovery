@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"runtime/debug"
+	"github.com/coreos/go-etcd/etcd"
 	"time"
 )
 
@@ -18,22 +18,11 @@ func Register(service string, host *Host, stop chan bool) error {
 
 	key := fmt.Sprintf("/services/%s/%s", service, host.Name)
 	hostJson, _ := json.Marshal(&host)
-
 	value := string(hostJson)
-	err := createOrUpdate(key, value)
-	if err != nil {
-		return err
-	}
 
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Printf("Error when updating %v %v: %v\n", service, host, r)
-				debug.PrintStack()
-			}
-		}()
-
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
+		createOrUpdate(key, value)
 		for {
 			select {
 			case <-stop:
@@ -41,8 +30,16 @@ func Register(service string, host *Host, stop chan bool) error {
 				return
 			case <-ticker.C:
 				err := updateOrCreate(key, value)
-				if err != nil {
-					panic(err)
+				// If for any random reason, there is an error,
+				// we retry every second until it's ok.
+				for err != nil {
+					errEtcd := err.(*etcd.EtcdError)
+					logger.Println("Lost etcd registeration for", service, ":", errEtcd.ErrorCode)
+					time.Sleep(1 * time.Second)
+					err = createOrUpdate(key, value)
+					if err == nil {
+						logger.Println("Recover etcd registeration for", service)
+					}
 				}
 			}
 		}

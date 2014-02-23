@@ -1,3 +1,4 @@
 *.test
 .*swp
 *~
+Godeps/_workspace

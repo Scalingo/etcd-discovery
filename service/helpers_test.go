@@ -1,5 +1,9 @@
 package service
 
+import (
+	"time"
+)
+
 func genHost(name ...interface{}) *Host {
 	var strName string
 	if len(name) == 1 {
@@ -13,4 +17,8 @@ func genHost(name ...interface{}) *Host {
 		Password: "secret",
 		Port:     "10000",
 	}
+}
+
+func waitRegistration() {
+	time.Sleep(200 * time.Millisecond)
 }
