@@ -8,21 +8,22 @@ import (
 	"time"
 )
 
+type Service struct {
+	Name  string
+	Hosts []*service.Host
+}
+type Services map[string]*Service
+
 var (
+	services           = Services{}
 	logger             = log.New(os.Stdout, "[etcd-discovery] ", log.LstdFlags)
-	services           = map[string][]*service.Host{}
 	NoSuchServiceError = errors.New("no such service")
 )
 
 func Start(name string) error {
-	hosts, err := service.Get(name)
-	if err != nil {
-		return err
-	}
-
-	currentHosts := make([]*service.Host, len(hosts))
-	copy(currentHosts, hosts)
-	services[name] = currentHosts
+	services[name] = &Service{name, nil}
+	s := services[name]
+	s.Populate()
 
 	newHosts, errsNew := service.SubscribeNew(name)
 	updateHosts, errsUpd := service.SubscribeUpdate(name)
@@ -42,22 +43,12 @@ func Start(name string) error {
 			time.Sleep(1 * time.Second)
 			deadHosts, errsDown = service.SubscribeDown(name)
 		case h := <-newHosts:
-			currentHosts = append(currentHosts, h)
+			s.Save(h)
 		case h := <-updateHosts:
-			for i, host := range currentHosts {
-				if host.Name == h.Name {
-					currentHosts[i] = h
-				}
-			}
-		case name := <-deadHosts:
-			for i, s := range currentHosts {
-				if s.Name == name {
-					currentHosts = append(currentHosts[:i], currentHosts[i+1:]...)
-				}
-			}
+			s.Save(h)
+		case hostname := <-deadHosts:
+			s.Remove(hostname)
 		}
-		// We update the global state after each operation on the local slice
-		services[name] = currentHosts
 	}
 	return nil
 }
@@ -66,5 +57,36 @@ func Hosts(service string) ([]*service.Host, error) {
 	if _, ok := services[service]; !ok {
 		return nil, NoSuchServiceError
 	}
-	return services[service], nil
+	return services[service].Hosts, nil
+}
+
+func (s *Service) Populate() error {
+	hosts, err := service.Get(s.Name)
+	if err != nil {
+		return err
+	}
+	for _, h := range hosts {
+		s.Save(h)
+	}
+	return nil
+}
+
+func (s *Service) Save(newHost *service.Host) {
+	for _, h := range s.Hosts {
+		if h.Name == newHost.Name {
+			h.Port = newHost.Port
+			h.Password = newHost.Password
+			h.User = newHost.User
+			return
+		}
+	}
+	s.Hosts = append(s.Hosts, newHost)
+}
+
+func (s *Service) Remove(hostname string) {
+	for i, h := range s.Hosts {
+		if h.Name == hostname {
+			s.Hosts = append(s.Hosts[:i], s.Hosts[i+1:]...)
+		}
+	}
 }

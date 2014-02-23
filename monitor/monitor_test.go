@@ -124,6 +124,22 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestDoubleRegister(t *testing.T) {
+	Convey("When the service is registered twice, only the last one must be present", t, func(){
+		start("test_double")
+
+		stop1, stop2 := make(chan bool), make(chan bool)
+		service.Register("test_double", &service.Host{Name: "host_double_1", Port: "1234"}, stop1)
+		waitRegistration()
+		service.Register("test_double", &service.Host{Name: "host_double_1", Port: "1235"}, stop2)
+		waitRegistration()
+
+		hosts, _ := Hosts("test_double")
+		So(len(hosts), ShouldEqual, 1)
+		So(hosts[0].Port, ShouldEqual, "1235")
+	})
+}
+
 func waitRegistration() {
 	time.Sleep(200 * time.Millisecond)
 }
