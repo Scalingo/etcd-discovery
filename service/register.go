@@ -22,6 +22,7 @@ func Register(service string, host *Host, stop chan bool) error {
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
+		createOrUpdate(key, value)
 		for {
 			select {
 			case <-stop:

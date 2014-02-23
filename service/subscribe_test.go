@@ -9,7 +9,7 @@ import (
 // Tests
 func TestSubscribe(t *testing.T) {
 	Convey("When we subscribe a service, we get all the notifications from it", t, func() {
-		responses := Subscribe("test_subs")
+		responses, _ := Subscribe("test_subs")
 		time.Sleep(200 * time.Millisecond)
 		Convey("When something happens about this service, the responses must be gathered in the channel", func() {
 			_, err := client.Create("/services/test_subs/key", "test", 0)
@@ -35,7 +35,7 @@ func TestSubscribeDown(t *testing.T) {
 	Convey("When the service 'test' is watched and a host expired", t, func() {
 		Register("test_expiration", genHost(), stop)
 		stop <- true
-		hosts := SubscribeDown("test_expiration")
+		hosts, _ := SubscribeDown("test_expiration")
 		Convey("The name of the disappeared host should be returned", func() {
 			host, ok := <-hosts
 			So(host, ShouldEqual, hostname)
@@ -49,7 +49,7 @@ func TestSubscribeNew(t *testing.T) {
 	defer close(stop)
 
 	Convey("When the service 'test' is watched and a host registered", t, func() {
-		hosts := SubscribeNew("test_new")
+		hosts, _ := SubscribeNew("test_new")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost()
 		Register("test_new", newHost, stop)
@@ -66,7 +66,7 @@ func TestSubscribeUpdate(t *testing.T) {
 	defer close(stop)
 
 	Convey("When the service 'test' is watched and a host updates its data", t, func() {
-		hosts := SubscribeUpdate("test_upd")
+		hosts, _ := SubscribeUpdate("test_upd")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost()
 		Register("test_upd", newHost, stop)
