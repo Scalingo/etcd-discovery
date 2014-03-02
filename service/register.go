@@ -34,11 +34,11 @@ func Register(service string, host *Host, stop chan bool) error {
 				// we retry every second until it's ok.
 				for err != nil {
 					errEtcd := err.(*etcd.EtcdError)
-					logger.Println("Lost etcd registeration for", service, ":", errEtcd.ErrorCode)
+					logger.Println("Lost etcd registrationg for", service, ":", errEtcd.ErrorCode)
 					time.Sleep(1 * time.Second)
 					err = createOrUpdate(key, value)
 					if err == nil {
-						logger.Println("Recover etcd registeration for", service)
+						logger.Println("Recover etcd registrationg for", service)
 					}
 				}
 			}
