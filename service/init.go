@@ -1,7 +1,7 @@
 package service
 
 import (
-	"io/ioutils"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -43,15 +43,15 @@ func init() {
 }
 
 func newTLSClient(hosts []string) *etcd.Client {
-	cacertContent, err := ioutils.ReadAll(cacert)
+	cacertContent, err := ioutil.ReadFile(cacert)
 	if err != nil {
 		panic(err)
 	}
-	keyContent, err := ioutils.ReadAll(tlskey)
+	keyContent, err := ioutil.ReadFile(tlskey)
 	if err != nil {
 		panic(err)
 	}
-	certContent, err := ioutils.ReadAll(tlscert)
+	certContent, err := ioutil.ReadFile(tlscert)
 	if err != nil {
 		panic(err)
 	}
