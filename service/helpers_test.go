@@ -11,12 +11,7 @@ func genHost(name ...interface{}) *Host {
 	}
 
 	// Empty if no arg, custom name otherways
-	return &Host{
-		Name:     strName,
-		User:     "user",
-		Password: "secret",
-		Port:     "10000",
-	}
+	return NewHost(strName, "10000", "user", "secret")
 }
 
 func waitRegistration() {

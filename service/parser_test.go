@@ -1,9 +1,10 @@
 package service
 
 import (
+	"testing"
+
 	"github.com/coreos/go-etcd/etcd"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 var (
@@ -22,12 +23,7 @@ var (
 )
 
 var (
-	sampleResult = &Host{
-		Name:     "example.org",
-		User:     "user",
-		Password: "password",
-		Port:     "port",
-	}
+	sampleResult = NewHost("example.org", "port", "user", "password")
 )
 
 func TestBuildHostsFromNodes(t *testing.T) {

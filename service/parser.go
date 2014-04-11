@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+
 	"github.com/coreos/go-etcd/etcd"
 )
 
@@ -15,6 +16,12 @@ func buildHostsFromNodes(nodes etcd.Nodes) []*Host {
 
 func buildHostFromNode(node *etcd.Node) *Host {
 	host := &Host{}
-	json.Unmarshal([]byte(node.Value), &host)
+	err := json.Unmarshal([]byte(node.Value), &host)
+	if err != nil {
+		panic(err)
+	}
+	if host.Scheme == "" {
+		host.Scheme = "http"
+	}
 	return host
 }
