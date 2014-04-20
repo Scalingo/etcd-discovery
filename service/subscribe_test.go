@@ -1,9 +1,9 @@
 package service
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 // Tests
@@ -12,13 +12,13 @@ func TestSubscribe(t *testing.T) {
 		responses, _ := Subscribe("test_subs")
 		time.Sleep(200 * time.Millisecond)
 		Convey("When something happens about this service, the responses must be gathered in the channel", func() {
-			_, err := client.Create("/services/test_subs/key", "test", 0)
+			_, err := Client.Create("/services/test_subs/key", "test", 0)
 			So(err, ShouldBeNil)
 			r := <-responses
 			So(r, ShouldNotBeNil)
 			So(r.Node.Key, ShouldEqual, "/services/test_subs/key")
 			So(r.Action, ShouldEqual, "create")
-			_, err = client.Delete("/services/test_subs/key", false)
+			_, err = Client.Delete("/services/test_subs/key", false)
 			So(err, ShouldBeNil)
 			r = <-responses
 			So(r, ShouldNotBeNil)

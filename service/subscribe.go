@@ -1,8 +1,9 @@
 package service
 
 import (
-	"github.com/coreos/go-etcd/etcd"
 	"path"
+
+	"github.com/coreos/go-etcd/etcd"
 )
 
 func Subscribe(service string) (<-chan *etcd.Response, <-chan *etcd.EtcdError) {
@@ -10,7 +11,7 @@ func Subscribe(service string) (<-chan *etcd.Response, <-chan *etcd.EtcdError) {
 	responses := make(chan *etcd.Response)
 	errors := make(chan *etcd.EtcdError)
 	go func() {
-		_, err := client.Watch("/services/"+service, 0, true, responses, stop)
+		_, err := Client.Watch("/services/"+service, 0, true, responses, stop)
 		if err != nil {
 			errors <- err.(*etcd.EtcdError)
 			close(errors)

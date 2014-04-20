@@ -10,7 +10,7 @@ import (
 
 var (
 	logger   *log.Logger
-	client   *etcd.Client
+	Client   *etcd.Client
 	hostname string
 
 	cacert  = os.Getenv("ETCD_CACERT")
@@ -27,9 +27,9 @@ func init() {
 		if !strings.Contains(host, "https://") {
 			host = strings.Replace(host, "http", "https", 1)
 		}
-		client = newTLSClient([]string{host})
+		Client = newTLSClient([]string{host})
 	} else {
-		client = etcd.NewClient([]string{host})
+		Client = etcd.NewClient([]string{host})
 	}
 
 	if len(os.Getenv("HOSTNAME")) != 0 {

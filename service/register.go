@@ -3,8 +3,9 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/coreos/go-etcd/etcd"
 	"time"
+
+	"github.com/coreos/go-etcd/etcd"
 )
 
 const (

@@ -1,15 +1,15 @@
 package service
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"log"
 	"testing"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestInit(t *testing.T) {
 	Convey("After initialization", t, func() {
-		Convey("client should be set", func() {
-			So(client, ShouldNotBeNil)
+		Convey("Client should be set", func() {
+			So(Client, ShouldNotBeNil)
 		})
 		Convey("hostname should be set", func() {
 			So(hostname, ShouldNotBeNil)
