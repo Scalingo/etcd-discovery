@@ -39,7 +39,7 @@ func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.EtcdError) {
 	responses, errors := Subscribe(service)
 	go func() {
 		for response := range responses {
-			if response.Action == "create" {
+			if response.Action == "create" || (response.PrevNode == nil && response.Action == "set") {
 				hosts <- buildHostFromNode(response.Node)
 			}
 		}
@@ -52,7 +52,7 @@ func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.EtcdError) {
 	responses, errors := Subscribe(service)
 	go func() {
 		for response := range responses {
-			if response.Action == "update" {
+			if response.Action == "update" || (response.PrevNode != nil && response.Action == "set") {
 				hosts <- buildHostFromNode(response.Node)
 			}
 		}
