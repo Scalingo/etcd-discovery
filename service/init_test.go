@@ -8,8 +8,8 @@ import (
 
 func TestInit(t *testing.T) {
 	Convey("After initialization", t, func() {
-		Convey("Client should be set", func() {
-			So(Client, ShouldNotBeNil)
+		Convey("client should be set", func() {
+			So(Client(), ShouldNotBeNil)
 		})
 		Convey("hostname should be set", func() {
 			So(hostname, ShouldNotBeNil)

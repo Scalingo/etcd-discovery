@@ -11,7 +11,7 @@ func Subscribe(service string) (<-chan *etcd.Response, <-chan *etcd.EtcdError) {
 	responses := make(chan *etcd.Response)
 	errors := make(chan *etcd.EtcdError)
 	go func() {
-		_, err := Client.Watch("/services/"+service, 0, true, responses, stop)
+		_, err := Client().Watch("/services/"+service, 0, true, responses, stop)
 		if err != nil {
 			errors <- err.(*etcd.EtcdError)
 			close(errors)

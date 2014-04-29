@@ -17,7 +17,7 @@ func TestRegister(t *testing.T) {
 			waitRegistration()
 			So(err, ShouldBeNil)
 
-			res, err := Client.Get("/services/test_register/"+host.Name, false, false)
+			res, err := Client().Get("/services/test_register/"+host.Name, false, false)
 			So(err, ShouldBeNil)
 
 			h := &Host{}
@@ -30,7 +30,7 @@ func TestRegister(t *testing.T) {
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
 			Register("test2_register", host, make(chan bool))
 			waitRegistration()
-			res, err := Client.Get("/services/test2_register/"+host.Name, false, false)
+			res, err := Client().Get("/services/test2_register/"+host.Name, false, false)
 			So(err, ShouldBeNil)
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
@@ -44,7 +44,7 @@ func TestRegister(t *testing.T) {
 			waitRegistration()
 			stop <- true
 			time.Sleep(HEARTBEAT_DURATION * 2 * time.Second)
-			_, err := Client.Get("/services/test3_register/"+host.Name, false, false)
+			_, err := Client().Get("/services/test3_register/"+host.Name, false, false)
 			So(err, ShouldNotBeNil)
 		})
 	})
