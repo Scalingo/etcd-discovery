@@ -9,7 +9,7 @@ import (
 func buildHostsFromNodes(nodes etcd.Nodes) []*Host {
 	hosts := make([]*Host, len(nodes))
 	for i, node := range nodes {
-		hosts[i] = buildHostFromNode(&node)
+		hosts[i] = buildHostFromNode(node)
 	}
 	return hosts
 }
