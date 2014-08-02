@@ -4,14 +4,10 @@ import (
 	"time"
 )
 
-func genHost(name ...interface{}) *Host {
-	var strName string
-	if len(name) == 1 {
-		strName = name[0].(string)
-	}
-
+func genHost(name string) *Host {
 	// Empty if no arg, custom name otherways
-	return NewHost(strName, "10000", "user", "secret")
+	host, _ := NewHost(name, Ports{"http": "10000"}, "user", "secret")
+	return host
 }
 
 func waitRegistration() {

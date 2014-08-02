@@ -15,15 +15,17 @@ var (
 			"Name": "example.org",
 			"User": "user",
 			"Password": "password",
-			"Port": "port"
+			"Ports": {
+				"http": "111"
+			}
 		}
 		`,
 	}
-	sampleNodes = etcd.Nodes{*sampleNode, *sampleNode}
+	sampleNodes = etcd.Nodes{sampleNode, sampleNode}
 )
 
 var (
-	sampleResult = NewHost("example.org", "port", "user", "password")
+	sampleResult, _ = NewHost("example.org", Ports{"http": "111"}, "user", "password")
 )
 
 func TestBuildHostsFromNodes(t *testing.T) {

@@ -1,4 +1,10 @@
-### Initial version
+# v2.0
+
+* Change way to represent interfaces :
+  As a service can bind different interfaces (not only http),
+  it has now to specify them.
+
+# v1.0
 
 * Simple implementation of Register/SubscribeNew/SubscribeDown
 * Test for these features

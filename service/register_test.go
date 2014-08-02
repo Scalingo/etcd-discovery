@@ -11,7 +11,7 @@ import (
 
 func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
-		host := genHost()
+		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
 			err := Register("test_register", host, make(chan bool))
 			waitRegistration()
@@ -39,7 +39,7 @@ func TestRegister(t *testing.T) {
 
 		Convey("After sending stop, the service should disappear", func() {
 			stop := make(chan bool)
-			host := genHost()
+			host := genHost("test-disappear")
 			Register("test3_register", host, stop)
 			waitRegistration()
 			stop <- true

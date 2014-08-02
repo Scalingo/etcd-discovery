@@ -20,8 +20,5 @@ func buildHostFromNode(node *etcd.Node) *Host {
 	if err != nil {
 		panic(err)
 	}
-	if host.Scheme == "" {
-		host.Scheme = "http"
-	}
 	return host
 }
