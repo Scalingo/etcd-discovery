@@ -1,8 +1,8 @@
 package service
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGetNoHost(t *testing.T) {
@@ -19,8 +19,10 @@ func TestGet(t *testing.T) {
 	Convey("Given two registered services", t, func() {
 		stop1, stop2 := make(chan bool), make(chan bool)
 		host1, host2 := genHost("host1"), genHost("host2")
-		Register("test_service", host1, stop1)
-		Register("test_service", host2, stop2)
+		r1, _ := Register("test_service", host1, stop1)
+		r2, _ := Register("test_service", host2, stop2)
+		<-r1
+		<-r2
 		Convey("We should have 2 hosts", func() {
 			hosts, err := Get("test_service")
 			So(len(hosts), ShouldEqual, 2)

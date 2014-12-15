@@ -27,7 +27,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcd.EtcdError) {
 	responses, errors := Subscribe(service)
 	go func() {
 		for response := range responses {
-			if response.Action == "expire" {
+			if response.Action == "expire" || response.Action == "delete" {
 				expirations <- path.Base(response.Node.Key)
 			}
 		}

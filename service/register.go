@@ -12,11 +12,12 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, stop chan bool) error {
+func Register(service string, host *Host, stop chan bool) (chan struct{}, error) {
 	if len(host.Name) == 0 {
 		host.Name = hostname
 	}
 
+	registered := make(chan struct{}, 1)
 	key := fmt.Sprintf("/services/%s/%s", service, host.Name)
 	hostJson, _ := json.Marshal(&host)
 	value := string(hostJson)
@@ -24,9 +25,14 @@ func Register(service string, host *Host, stop chan bool) error {
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
 		Client().Set(key, value, HEARTBEAT_DURATION)
+		registered <- struct{}{}
 		for {
 			select {
 			case <-stop:
+				_, err := Client().Delete(key, false)
+				if err != nil {
+					logger.Println("fail to remove key", key)
+				}
 				ticker.Stop()
 				return
 			case <-ticker.C:
@@ -46,5 +52,5 @@ func Register(service string, host *Host, stop chan bool) error {
 		}
 	}()
 
-	return nil
+	return registered, nil
 }

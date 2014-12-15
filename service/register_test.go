@@ -13,9 +13,9 @@ func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
-			err := Register("test_register", host, make(chan bool))
-			waitRegistration()
+			r, err := Register("test_register", host, make(chan bool))
 			So(err, ShouldBeNil)
+			<-r
 
 			res, err := Client().Get("/services/test_register/"+host.Name, false, false)
 			So(err, ShouldBeNil)
@@ -28,8 +28,8 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			Register("test2_register", host, make(chan bool))
-			waitRegistration()
+			r, _ := Register("test2_register", host, make(chan bool))
+			<-r
 			res, err := Client().Get("/services/test2_register/"+host.Name, false, false)
 			So(err, ShouldBeNil)
 			now := time.Now()
@@ -40,10 +40,10 @@ func TestRegister(t *testing.T) {
 		Convey("After sending stop, the service should disappear", func() {
 			stop := make(chan bool)
 			host := genHost("test-disappear")
-			Register("test3_register", host, stop)
-			waitRegistration()
+			r, _ := Register("test3_register", host, stop)
+			<-r
 			stop <- true
-			time.Sleep(HEARTBEAT_DURATION * 2 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 			_, err := Client().Get("/services/test3_register/"+host.Name, false, false)
 			So(err, ShouldNotBeNil)
 		})
