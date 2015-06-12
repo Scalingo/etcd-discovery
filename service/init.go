@@ -4,18 +4,20 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/coreos/go-etcd/etcd"
 )
 
 var (
-	logger          *log.Logger
-	clientSingleton *etcd.Client
-	hostname        string
+	logger           *log.Logger
+	clientSingleton  *etcd.Client
+	clientSingletonO = &sync.Once{}
+	hostname         string
 )
 
 func Client() *etcd.Client {
-	if clientSingleton == nil {
+	clientSingletonO.Do(func() {
 		host := "http://localhost:4001"
 		if len(os.Getenv("ETCD_HOST")) != 0 {
 			host = os.Getenv("ETCD_HOST")
@@ -36,7 +38,7 @@ func Client() *etcd.Client {
 		} else {
 			clientSingleton = etcd.NewClient([]string{host})
 		}
-	}
+	})
 	return clientSingleton
 }
 
