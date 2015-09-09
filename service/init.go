@@ -18,25 +18,29 @@ var (
 
 func Client() *etcd.Client {
 	clientSingletonO.Do(func() {
-		host := "http://localhost:4001"
-		if len(os.Getenv("ETCD_HOST")) != 0 {
-			host = os.Getenv("ETCD_HOST")
+		hosts := []string{"http://localhost:4001"}
+		if len(os.Getenv("ETCD_HOSTS")) != 0 {
+			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
+		} else if len(os.Getenv("ETCD_HOST")) != 0 {
+			hosts = []string{os.Getenv("ETCD_HOST")}
 		}
 
 		cacert := os.Getenv("ETCD_CACERT")
 		tlskey := os.Getenv("ETCD_TLS_KEY")
 		tlscert := os.Getenv("ETCD_TLS_CERT")
 		if len(cacert) != 0 && len(tlskey) != 0 && len(tlscert) != 0 {
-			if !strings.Contains(host, "https://") {
-				host = strings.Replace(host, "http", "https", 1)
+			for i, host := range hosts {
+				if !strings.Contains(host, "https://") {
+					hosts[i] = strings.Replace(host, "http", "https", 1)
+				}
 			}
-			c, err := etcd.NewTLSClient([]string{host}, tlscert, tlskey, cacert)
+			c, err := etcd.NewTLSClient(hosts, tlscert, tlskey, cacert)
 			if err != nil {
 				panic(err)
 			}
 			clientSingleton = c
 		} else {
-			clientSingleton = etcd.NewClient([]string{host})
+			clientSingleton = etcd.NewClient(hosts)
 		}
 	})
 	return clientSingleton
