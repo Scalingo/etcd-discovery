@@ -23,6 +23,12 @@ func Client() *etcd.Client {
 			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
 		} else if len(os.Getenv("ETCD_HOST")) != 0 {
 			hosts = []string{os.Getenv("ETCD_HOST")}
+		} else if len(os.Getenv("ETCD_1_PORT_4001_TCP_ADDR")) != 0 {
+			hosts = []string{
+				"http://" +
+					os.Getenv("ETCD_1_PORT_4001_TCP_ADDR") +
+					":" + os.Getenv("ETCD_1_PORT_4001_TCP_PORT"),
+			}
 		}
 
 		cacert := os.Getenv("ETCD_CACERT")
