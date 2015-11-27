@@ -63,5 +63,5 @@ func init() {
 		hostname = h
 	}
 
-	logger = log.New(os.Stderr, "[etcd-discovery]", log.LstdFlags)
+	logger = log.New(os.Stderr, "[etcd-discovery] ", log.LstdFlags)
 }
