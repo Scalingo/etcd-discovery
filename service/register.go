@@ -12,7 +12,7 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, stop chan bool) (chan struct{}, error) {
+func Register(service string, host *Host, stop chan struct{}) (chan struct{}, error) {
 	if len(host.Name) == 0 {
 		host.Name = hostname
 	}
