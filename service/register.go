@@ -41,11 +41,11 @@ func Register(service string, host *Host, stop chan bool) (chan struct{}, error)
 				// we retry every second until it's ok.
 				for err != nil {
 					errEtcd := err.(*etcd.EtcdError)
-					logger.Println("Lost etcd registrationg for", service, ":", errEtcd.ErrorCode)
+					logger.Printf("lost registration of '%v': %v", service, errEtcd.Message)
 					time.Sleep(1 * time.Second)
 					_, err = Client().Set(key, value, HEARTBEAT_DURATION)
 					if err == nil {
-						logger.Println("Recover etcd registrationg for", service)
+						logger.Printf("recover registration of '%v'", service)
 					}
 				}
 			}
