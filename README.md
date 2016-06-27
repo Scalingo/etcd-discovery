@@ -21,14 +21,16 @@ API
     * The Name attribute is optional, the variable is taken from the environment variable HOSTNAME or from os.Hostname()
  * The stop channel exists if you want to be able to stop the registeration
  */
-stop := make(chan bool)
+stop := make(chan struct{})
 service.Register(
   "name_of_service",
   &service.Host{
     Name: "hostname_"
     User: "user",
     Password: "secret",
-    Port: "port",
+    Ports: map[string]string{
+      "http":"1234",
+    },
   },
   stop,
 )
