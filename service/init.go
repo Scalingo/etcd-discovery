@@ -18,16 +18,16 @@ var (
 
 func Client() *etcd.Client {
 	clientSingletonO.Do(func() {
-		hosts := []string{"http://localhost:4001"}
+		hosts := []string{"http://localhost:2379"}
 		if len(os.Getenv("ETCD_HOSTS")) != 0 {
 			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
 		} else if len(os.Getenv("ETCD_HOST")) != 0 {
 			hosts = []string{os.Getenv("ETCD_HOST")}
-		} else if len(os.Getenv("ETCD_1_PORT_4001_TCP_ADDR")) != 0 {
+		} else if len(os.Getenv("ETCD_1_PORT_2379_TCP_ADDR")) != 0 {
 			hosts = []string{
 				"http://" +
-					os.Getenv("ETCD_1_PORT_4001_TCP_ADDR") +
-					":" + os.Getenv("ETCD_1_PORT_4001_TCP_PORT"),
+					os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") +
+					":" + os.Getenv("ETCD_1_PORT_2379_TCP_PORT"),
 			}
 		}
 
