@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/go-etcd/etcd"
+	etcd "github.com/coreos/etcd/client"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -24,26 +25,25 @@ func Register(service string, host *Host, stop chan struct{}) (chan struct{}, er
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
-		Client().Set(key, value, HEARTBEAT_DURATION)
+		KAPI().Set(context.Background(), key, value, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 		registered <- struct{}{}
 		for {
 			select {
 			case <-stop:
-				_, err := Client().Delete(key, false)
+				_, err := KAPI().Delete(context.Background(), key, &etcd.DeleteOptions{Recursive: false})
 				if err != nil {
 					logger.Println("fail to remove key", key)
 				}
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				_, err := Client().Set(key, value, HEARTBEAT_DURATION)
+				_, err := KAPI().Set(context.Background(), key, value, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 				// If for any random reason, there is an error,
 				// we retry every second until it's ok.
 				for err != nil {
-					errEtcd := err.(*etcd.EtcdError)
-					logger.Printf("lost registration of '%v': %v (%v)", service, errEtcd.Message, Client().GetCluster())
+					logger.Printf("lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
 					time.Sleep(1 * time.Second)
-					_, err = Client().Set(key, value, HEARTBEAT_DURATION)
+					_, err = KAPI().Set(context.Background(), key, value, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 					if err == nil {
 						logger.Printf("recover registration of '%v'", service)
 					}

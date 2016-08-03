@@ -1,9 +1,14 @@
 package service
 
+import (
+	etcd "github.com/coreos/etcd/client"
+	"golang.org/x/net/context"
+)
+
 func Get(service string) ([]*Host, error) {
-	res, err := Client().Get("/services/"+service, false, true)
+	res, err := KAPI().Get(context.Background(), "/services/"+service, &etcd.GetOptions{Recursive: true})
 	if err != nil {
-		if IsKeyNotFoundError(err) {
+		if etcd.IsKeyNotFound(err) {
 			return []*Host{}, nil
 		}
 		return nil, err

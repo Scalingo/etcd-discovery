@@ -3,6 +3,7 @@ package service
 import (
 	"log"
 	"testing"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,7 +16,7 @@ func TestInit(t *testing.T) {
 			So(hostname, ShouldNotBeNil)
 		})
 		Convey("the logger should be correctly parameterised", func() {
-			So(logger.Prefix(), ShouldEqual, "[etcd-discovery]")
+			So(logger.Prefix(), ShouldEqual, "[etcd-discovery] ")
 			So(logger.Flags(), ShouldEqual, log.LstdFlags)
 		})
 	})

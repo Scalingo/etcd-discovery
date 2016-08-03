@@ -6,18 +6,21 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	etcd "github.com/coreos/etcd/client"
 	. "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/net/context"
 )
 
 func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
-			r, err := Register("test_register", host, make(chan bool))
+			r, err := Register("test_register", host, make(chan struct{}))
 			So(err, ShouldBeNil)
 			<-r
 
-			res, err := Client().Get("/services/test_register/"+host.Name, false, false)
+			res, err := KAPI().Get(context.Background(), "/services/test_register/"+host.Name, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
 			h := &Host{}
@@ -28,9 +31,9 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			r, _ := Register("test2_register", host, make(chan bool))
+			r, _ := Register("test2_register", host, make(chan struct{}))
 			<-r
-			res, err := Client().Get("/services/test2_register/"+host.Name, false, false)
+			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+host.Name, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
@@ -38,14 +41,14 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey("After sending stop, the service should disappear", func() {
-			stop := make(chan bool)
+			stop := make(chan struct{})
 			host := genHost("test-disappear")
 			r, _ := Register("test3_register", host, stop)
 			<-r
-			stop <- true
+			close(stop)
 			time.Sleep(100 * time.Millisecond)
-			_, err := Client().Get("/services/test3_register/"+host.Name, false, false)
-			So(err, ShouldNotBeNil)
+			_, err := KAPI().Get(context.Background(), "/services/test3_register/"+host.Name, &etcd.GetOptions{})
+			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
 	})
 }

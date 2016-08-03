@@ -3,60 +3,94 @@ package service
 import (
 	"path"
 
-	"github.com/coreos/go-etcd/etcd"
+	"golang.org/x/net/context"
+
+	etcd "github.com/coreos/etcd/client"
 )
 
-func Subscribe(service string) (<-chan *etcd.Response, <-chan *etcd.EtcdError) {
-	stop := make(chan bool)
-	responses := make(chan *etcd.Response)
-	errors := make(chan *etcd.EtcdError)
-	go func() {
-		_, err := Client().Watch("/services/"+service, 0, true, responses, stop)
-		if err != nil {
-			errors <- err.(*etcd.EtcdError)
-			close(errors)
-			close(stop)
-			return
-		}
-	}()
-	return responses, errors
+func Subscribe(service string) etcd.Watcher {
+	return KAPI().Watcher("/services/"+service, &etcd.WatcherOptions{Recursive: true})
 }
 
-func SubscribeDown(service string) (<-chan string, <-chan *etcd.EtcdError) {
+func SubscribeDown(service string) (<-chan string, <-chan *etcd.Error) {
 	expirations := make(chan string)
-	responses, errors := Subscribe(service)
+	errs := make(chan *etcd.Error)
+	watcher := Subscribe(service)
 	go func() {
-		for response := range responses {
-			if response.Action == "expire" || response.Action == "delete" {
-				expirations <- path.Base(response.Node.Key)
+		var (
+			res *etcd.Response
+			err error
+		)
+
+		for {
+			res, err = watcher.Next(context.Background())
+			if err != nil {
+				break
+			}
+			if res.Action == "expire" || res.Action == "delete" {
+				expirations <- path.Base(res.Node.Key)
 			}
 		}
+		if err != nil {
+			errs <- err.(*etcd.Error)
+		}
+		close(expirations)
+		close(errs)
 	}()
-	return expirations, errors
+	return expirations, errs
 }
 
-func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.EtcdError) {
+func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.Error) {
 	hosts := make(chan *Host)
-	responses, errors := Subscribe(service)
+	errs := make(chan *etcd.Error)
+	watcher := Subscribe(service)
 	go func() {
-		for response := range responses {
-			if response.Action == "create" || (response.PrevNode == nil && response.Action == "set") {
-				hosts <- buildHostFromNode(response.Node)
+		var (
+			res *etcd.Response
+			err error
+		)
+
+		for {
+			res, err = watcher.Next(context.Background())
+			if err != nil {
+				break
+			}
+			if res.Action == "create" || (res.PrevNode == nil && res.Action == "set") {
+				hosts <- buildHostFromNode(res.Node)
 			}
 		}
+		if err != nil {
+			errs <- err.(*etcd.Error)
+		}
+		close(hosts)
+		close(errs)
 	}()
-	return hosts, errors
+	return hosts, errs
 }
 
-func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.EtcdError) {
+func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.Error) {
 	hosts := make(chan *Host)
-	responses, errors := Subscribe(service)
+	errs := make(chan *etcd.Error)
+	watcher := Subscribe(service)
 	go func() {
-		for response := range responses {
-			if response.Action == "update" || (response.PrevNode != nil && response.Action == "set") {
-				hosts <- buildHostFromNode(response.Node)
+		var (
+			res *etcd.Response
+			err error
+		)
+		for {
+			res, err = watcher.Next(context.Background())
+			if err != nil {
+				break
+			}
+			if res.Action == "update" || (res.PrevNode != nil && res.Action == "set") {
+				hosts <- buildHostFromNode(res.Node)
 			}
 		}
+		if err != nil {
+			errs <- err.(*etcd.Error)
+		}
+		close(hosts)
+		close(errs)
 	}()
-	return hosts, errors
+	return hosts, errs
 }

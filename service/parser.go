@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 
-	"github.com/coreos/go-etcd/etcd"
+	etcd "github.com/coreos/etcd/client"
 )
 
 func buildHostsFromNodes(nodes etcd.Nodes) []*Host {

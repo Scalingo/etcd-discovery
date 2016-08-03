@@ -6,18 +6,24 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/coreos/go-etcd/etcd"
+	etcd "github.com/coreos/etcd/client"
 )
 
 var (
 	logger           *log.Logger
-	clientSingleton  *etcd.Client
+	clientSingleton  etcd.Client
 	clientSingletonO = &sync.Once{}
 	hostname         string
 )
 
-func Client() *etcd.Client {
+func KAPI() etcd.KeysAPI {
+	return etcd.NewKeysAPI(Client())
+}
+
+func Client() etcd.Client {
 	clientSingletonO.Do(func() {
+		var err error
+
 		hosts := []string{"http://localhost:2379"}
 		if len(os.Getenv("ETCD_HOSTS")) != 0 {
 			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
@@ -40,13 +46,17 @@ func Client() *etcd.Client {
 					hosts[i] = strings.Replace(host, "http", "https", 1)
 				}
 			}
-			c, err := etcd.NewTLSClient(hosts, tlscert, tlskey, cacert)
+			transport := etcd.DefaultTransport
+			c, err := etcd.New(etcd.Config{Endpoints: hosts, Transport: transport})
 			if err != nil {
 				panic(err)
 			}
 			clientSingleton = c
 		} else {
-			clientSingleton = etcd.NewClient(hosts)
+			clientSingleton, err = etcd.New(etcd.Config{Endpoints: hosts, Transport: etcd.DefaultTransport})
+			if err != nil {
+				panic(err)
+			}
 		}
 	})
 	return clientSingleton
