@@ -1,3 +1,7 @@
+# v3.1
+
+Fix TLS client from environment variables
+
 # v3.0
 
 * Compatibility API v3

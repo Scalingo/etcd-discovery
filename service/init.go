@@ -2,11 +2,15 @@ package service
 
 import (
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	etcd "github.com/coreos/etcd/client"
+	"github.com/coreos/etcd/pkg/transport"
 )
 
 var (
@@ -46,11 +50,28 @@ func Client() etcd.Client {
 					hosts[i] = strings.Replace(host, "http", "https", 1)
 				}
 			}
-			transport := etcd.DefaultTransport
+			info := transport.TLSInfo{
+				CertFile: tlscert, KeyFile: tlskey, TrustedCAFile: cacert,
+			}
+			tlsconfig, err := info.ClientConfig()
+			if err != nil {
+				panic(err)
+			}
+
+			transport := &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				Dial: (&net.Dialer{
+					Timeout:   30 * time.Second,
+					KeepAlive: 30 * time.Second,
+				}).Dial,
+				TLSHandshakeTimeout: 10 * time.Second,
+				TLSClientConfig:     tlsconfig,
+			}
 			c, err := etcd.New(etcd.Config{Endpoints: hosts, Transport: transport})
 			if err != nil {
 				panic(err)
 			}
+
 			clientSingleton = c
 		} else {
 			clientSingleton, err = etcd.New(etcd.Config{Endpoints: hosts, Transport: etcd.DefaultTransport})
