@@ -5,7 +5,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func Get(service string) ([]*Host, error) {
+func Get(service string) (Hosts, error) {
 	res, err := KAPI().Get(context.Background(), "/services/"+service, &etcd.GetOptions{Recursive: true})
 	if err != nil {
 		if etcd.IsKeyNotFound(err) {

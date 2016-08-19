@@ -6,8 +6,8 @@ import (
 	etcd "github.com/coreos/etcd/client"
 )
 
-func buildHostsFromNodes(nodes etcd.Nodes) []*Host {
-	hosts := make([]*Host, len(nodes))
+func buildHostsFromNodes(nodes etcd.Nodes) Hosts {
+	hosts := make(Hosts, len(nodes))
 	for i, node := range nodes {
 		hosts[i] = buildHostFromNode(node)
 	}

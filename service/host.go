@@ -3,9 +3,20 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Ports map[string]string
+
+type Hosts []*Host
+
+func (hs Hosts) String() string {
+	names := []string{}
+	for _, h := range hs {
+		names = append(names, h.Name)
+	}
+	return strings.Join(names, ", ")
+}
 
 type Host struct {
 	Name     string `json:"name"`
