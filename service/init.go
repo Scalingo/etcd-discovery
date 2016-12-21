@@ -1,6 +1,12 @@
 package service
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -50,10 +56,13 @@ func Client() etcd.Client {
 					hosts[i] = strings.Replace(host, "http", "https", 1)
 				}
 			}
-			info := transport.TLSInfo{
-				CertFile: tlscert, KeyFile: tlskey, TrustedCAFile: cacert,
+
+			var tlsconfig *tls.Config
+			if os.Getenv("ETCD_TLS_INMEMORY") == "true" {
+				tlsconfig, err = tlsconfigFromMemory(tlscert, tlskey, cacert)
+			} else {
+				tlsconfig, err = tlsconfigFromFiles(tlscert, tlskey, cacert)
 			}
-			tlsconfig, err := info.ClientConfig()
 			if err != nil {
 				panic(err)
 			}
@@ -95,4 +104,50 @@ func init() {
 	}
 
 	logger = log.New(os.Stderr, "[etcd-discovery] ", log.LstdFlags)
+}
+
+func tlsconfigFromFiles(cert, key, ca string) (*tls.Config, error) {
+	return transport.TLSInfo{
+		CertFile: cert, KeyFile: key, TrustedCAFile: ca,
+	}.ClientConfig()
+}
+
+func tlsconfigFromMemory(certb64, keyb64, cab64 string) (*tls.Config, error) {
+	certpem, err := base64.StdEncoding.DecodeString(certb64)
+	if err != nil {
+		return nil, err
+	}
+
+	keypem, err := base64.StdEncoding.DecodeString(keyb64)
+	if err != nil {
+		return nil, err
+	}
+
+	capem, err := base64.StdEncoding.DecodeString(cab64)
+	if err != nil {
+		return nil, err
+	}
+
+	ca, _ := pem.Decode(capem)
+	if ca == nil {
+		return nil, errors.New("ca: invalid PEM")
+	}
+
+	certPool := x509.NewCertPool()
+	caCert, err := x509.ParseCertificate(ca.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("ca: not a valid certificate %v", err)
+	}
+	certPool.AddCert(caCert)
+
+	certkey, err := tls.X509KeyPair(certpem, keypem)
+	if err != nil {
+		return nil, fmt.Errorf("cert/key: invalid key pair/certificate %v", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{certkey},
+		RootCAs:      certPool,
+		MinVersion:   tls.VersionTLS12,
+	}, nil
 }

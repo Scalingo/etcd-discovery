@@ -1,6 +1,15 @@
+# v3.3
+
+* Ability to get TLS certs/key/ca from environment directly without being stored in files
+  `ETCD_TLS_INMEMORY=true`
+
+# v3.2
+
+* String method on array of Host
+
 # v3.1
 
-Fix TLS client from environment variables
+* Fix TLS client from environment variables
 
 # v3.0
 
