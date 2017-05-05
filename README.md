@@ -33,7 +33,7 @@ service.Register(
     },
   },
   &service.Infos{
-    Cirtical: false,
+    Critical: false,
   },
   stop,
 )
