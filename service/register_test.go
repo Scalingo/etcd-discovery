@@ -40,15 +40,32 @@ func TestRegister(t *testing.T) {
 			So(duration, ShouldBeLessThanOrEqualTo, HEARTBEAT_DURATION*time.Second)
 		})
 
+		Convey("And the serivce infos must be set", func() {
+			infos := &Infos{
+				Critical: true,
+			}
+			r, _ := Register("test3_register", host, infos, make(chan struct{}))
+			<-r
+			res, err := KAPI().Get(context.Background(), "/services/test3_register/_infos", &etcd.GetOptions{})
+			So(err, ShouldBeNil)
+
+			i := &Infos{}
+
+			json.Unmarshal([]byte(res.Node.Value), &i)
+
+			So(i, ShouldResemble, infos)
+		})
+
 		Convey("After sending stop, the service should disappear", func() {
 			stop := make(chan struct{})
 			host := genHost("test-disappear")
-			r, _ := Register("test3_register", host, nil, stop)
+			r, _ := Register("test4_register", host, nil, stop)
 			<-r
 			close(stop)
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(context.Background(), "/services/test3_register/"+host.Name, &etcd.GetOptions{})
+			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
 	})
+
 }

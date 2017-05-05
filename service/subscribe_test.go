@@ -96,12 +96,15 @@ func TestSubscribeUpdate(t *testing.T) {
 	defer close(stop2)
 
 	Convey("When the service 'test' is watched and a host updates its data", t, func() {
-		hosts, _ := SubscribeUpdate("test_upd")
 		newHost := genHost("test-update")
-		Register("test_upd", newHost, nil, stop1)
+		r, _ := Register("test_upd", newHost, nil, stop1)
+		<-r
 		close(stop1)
+
+		hosts, _ := SubscribeUpdate("test_upd")
 		newHost.Password = "newpass"
-		Register("test_upd", newHost, nil, stop2)
+		r, _ = Register("test_upd", newHost, nil, stop2)
+		<-r
 
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
