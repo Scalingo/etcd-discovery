@@ -11,13 +11,30 @@ type Service struct {
 }
 
 func Get(service string) (*Service, error) {
+	var hosts Hosts
+	var infos *Infos
+
 	res, err := KAPI().Get(context.Background(), "/services/"+service, &etcd.GetOptions{Recursive: true})
 	if err != nil {
-		if etcd.IsKeyNotFound(err) {
-			return &Service{}, nil
+		if !etcd.IsKeyNotFound(err) {
+			return nil, err
 		}
-		return nil, err
+	} else {
+		hosts = buildHostsFromNodes(res.Node.Nodes)
 	}
 
-	return buildServiceFromNodes(res.Node.Nodes), nil
+	res, err = KAPI().Get(context.Background(), "/services_infos/"+service, nil)
+
+	if err != nil {
+		if !etcd.IsKeyNotFound(err) {
+			return nil, err
+		}
+	} else {
+		infos = buildInfosFromNode(res.Node)
+	}
+
+	return &Service{
+		Hosts: hosts,
+		Infos: infos,
+	}, nil
 }

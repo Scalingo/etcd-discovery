@@ -27,7 +27,7 @@ func Register(service string, host *Host, infos *Infos, stop chan struct{}) (cha
 	hostJson, _ := json.Marshal(&host)
 	hostValue := string(hostJson)
 
-	serviceKey := fmt.Sprintf("/services/%s/service_infos", service)
+	serviceKey := fmt.Sprintf("/services_infos/%s", service)
 	serviceJson, _ := json.Marshal(infos)
 	serviceValue := string(serviceJson)
 

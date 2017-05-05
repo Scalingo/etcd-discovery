@@ -22,14 +22,14 @@ var (
 		`,
 	}
 	sampleInfoNode = &etcd.Node{
-		Key: "/services/test/service_infos",
+		Key: "/services_infos/test",
 		Value: `
 		{
 			"critical": true
 		}
 		`,
 	}
-	sampleNodes = etcd.Nodes{sampleNode, sampleNode, sampleInfoNode}
+	sampleNodes = etcd.Nodes{sampleNode, sampleNode}
 )
 
 var (
@@ -37,9 +37,8 @@ var (
 )
 
 func TestBuildHostsFromNodes(t *testing.T) {
-	service := buildServiceFromNodes(sampleNodes)
+	hosts := buildHostsFromNodes(sampleNodes)
 	Convey("Given a sample response with 2 nodes, we got 2 hosts", t, func() {
-		hosts := service.Hosts
 		So(len(hosts), ShouldEqual, 2)
 		So(hosts[0], ShouldResemble, sampleResult)
 		So(hosts[1], ShouldResemble, sampleResult)
