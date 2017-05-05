@@ -20,8 +20,8 @@ func TestGet(t *testing.T) {
 	Convey("Given two registered services", t, func() {
 		stop1, stop2 := make(chan struct{}), make(chan struct{})
 		host1, host2 := genHost("host1"), genHost("host2")
-		r1, _ := Register("test_service", host1, stop1)
-		r2, _ := Register("test_service", host2, stop2)
+		r1, _ := Register("test_service", host1, nil, stop1)
+		r2, _ := Register("test_service", host2, nil, stop2)
 		<-r1
 		<-r2
 		Convey("We should have 2 hosts", func() {

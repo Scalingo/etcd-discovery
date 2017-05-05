@@ -57,7 +57,9 @@ func Register(service string, host *Host, infos *Infos, stop chan struct{}) (cha
 					logger.Printf("lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
 					time.Sleep(1 * time.Second)
 
-					KAPI().Set(context.Background(), serviceKey, serviceValue, nil)
+					if infos != nil {
+						KAPI().Set(context.Background(), serviceKey, serviceValue, nil)
+					}
 
 					_, err = KAPI().Set(context.Background(), hostKey, hostValue, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 					if err == nil {

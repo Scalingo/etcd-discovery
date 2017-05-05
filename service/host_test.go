@@ -3,6 +3,7 @@ package service
 import (
 	"net/url"
 	"testing"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
