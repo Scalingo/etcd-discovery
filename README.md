@@ -32,6 +32,9 @@ service.Register(
       "http":"1234",
     },
   },
+  &service.Infos{
+    Cirtical: false,
+  },
   stop,
 )
 ```
