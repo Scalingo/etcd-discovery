@@ -103,13 +103,15 @@ func TestSubscribeUpdate(t *testing.T) {
 
 		hosts, _ := SubscribeUpdate("test_upd")
 		newHost.Password = "newpass"
-		r, _ = Register("test_upd", newHost, nil, stop2)
+		r, _ = Register("test_upd", newHost, &Infos{
+			Critical: true,
+		}, stop2)
 		<-r
 
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
-			So(host, ShouldResemble, newHost)
 			So(ok, ShouldBeTrue)
+			So(host, ShouldResemble, newHost)
 		})
 	})
 }

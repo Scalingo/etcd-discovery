@@ -46,7 +46,7 @@ func TestRegister(t *testing.T) {
 			}
 			r, _ := Register("test3_register", host, infos, make(chan struct{}))
 			<-r
-			res, err := KAPI().Get(context.Background(), "/services/test3_register/_infos", &etcd.GetOptions{})
+			res, err := KAPI().Get(context.Background(), "/services/test3_register/service_infos", &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
 			i := &Infos{}
