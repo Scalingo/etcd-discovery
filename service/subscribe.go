@@ -27,6 +27,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcd.Error) {
 			if err != nil {
 				break
 			}
+
 			if res.Action == "expire" || res.Action == "delete" {
 				expirations <- path.Base(res.Node.Key)
 			}
@@ -55,6 +56,7 @@ func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.Error) {
 			if err != nil {
 				break
 			}
+
 			if res.Action == "create" || (res.PrevNode == nil && res.Action == "set") {
 				hosts <- buildHostFromNode(res.Node)
 			}
@@ -82,6 +84,7 @@ func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.Error) {
 			if err != nil {
 				break
 			}
+
 			if res.Action == "update" || (res.PrevNode != nil && res.Action == "set") {
 				hosts <- buildHostFromNode(res.Node)
 			}

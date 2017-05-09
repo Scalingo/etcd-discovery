@@ -22,3 +22,12 @@ func buildHostFromNode(node *etcd.Node) *Host {
 	}
 	return host
 }
+
+func buildInfosFromNode(node *etcd.Node) *Infos {
+	infos := &Infos{}
+	err := json.Unmarshal([]byte(node.Value), &infos)
+	if err != nil {
+		panic(err)
+	}
+	return infos
+}

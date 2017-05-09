@@ -16,7 +16,7 @@ func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
-			r, err := Register("test_register", host, make(chan struct{}))
+			r, err := Register("test_register", host, nil, make(chan struct{}))
 			So(err, ShouldBeNil)
 			<-r
 
@@ -31,7 +31,7 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			r, _ := Register("test2_register", host, make(chan struct{}))
+			r, _ := Register("test2_register", host, nil, make(chan struct{}))
 			<-r
 			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+host.Name, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
@@ -40,15 +40,32 @@ func TestRegister(t *testing.T) {
 			So(duration, ShouldBeLessThanOrEqualTo, HEARTBEAT_DURATION*time.Second)
 		})
 
+		Convey("And the serivce infos must be set", func() {
+			infos := &Infos{
+				Critical: true,
+			}
+			r, _ := Register("test3_register", host, infos, make(chan struct{}))
+			<-r
+			res, err := KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
+			So(err, ShouldBeNil)
+
+			i := &Infos{}
+
+			json.Unmarshal([]byte(res.Node.Value), &i)
+
+			So(i, ShouldResemble, infos)
+		})
+
 		Convey("After sending stop, the service should disappear", func() {
 			stop := make(chan struct{})
 			host := genHost("test-disappear")
-			r, _ := Register("test3_register", host, stop)
+			r, _ := Register("test4_register", host, nil, stop)
 			<-r
 			close(stop)
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(context.Background(), "/services/test3_register/"+host.Name, &etcd.GetOptions{})
+			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
 	})
+
 }

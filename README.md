@@ -32,8 +32,33 @@ service.Register(
       "http":"1234",
     },
   },
+  &service.Infos{
+    Critical: false,
+  },
   stop,
 )
+```
+
+This will create two different etcd keys:
+
+* `/services/name_of_service/hostname_` containing:
+```json
+{
+   "name": "hostname_",
+   "user": "user",
+   "password": "secret",
+   "ports":{
+      "http":"1234"
+   }
+}
+```
+
+* `/service_infos/name_of_service` containing:
+```json
+{
+   "name": "name_of_service",
+   "critical": false
+}
 ```
 
 ### Subscribe to new service
