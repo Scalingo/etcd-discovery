@@ -1,3 +1,7 @@
+# v4.0
+
+* Add notion of service info, to define for instance if a service is critical or not
+
 # v3.3
 
 * Ability to get TLS certs/key/ca from environment directly without being stored in files
