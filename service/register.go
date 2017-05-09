@@ -14,12 +14,16 @@ const (
 )
 
 type Infos struct {
-	Critical bool `json:"critical"` // Is the service critical to the infrastructure health?
+	Name     string `json:"name"`
+	Critical bool   `json:"critical"` // Is the service critical to the infrastructure health?
 }
 
 func Register(service string, host *Host, infos *Infos, stop chan struct{}) (chan struct{}, error) {
 	if len(host.Name) == 0 {
 		host.Name = hostname
+	}
+	if infos != nil {
+		infos.Name = service
 	}
 
 	registered := make(chan struct{}, 1)
