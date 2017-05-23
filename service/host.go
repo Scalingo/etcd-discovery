@@ -51,7 +51,7 @@ func (h *Host) Url(scheme, path string) (string, error) {
 
 	hostname = h.Name
 
-	if len(h.PublicHostname) != nil {
+	if len(h.PublicHostname) != 0 {
 		hostname = h.PublicHostname
 	}
 	if h.User != "" {
