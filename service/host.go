@@ -19,10 +19,11 @@ func (hs Hosts) String() string {
 }
 
 type Host struct {
-	Name     string `json:"name"`
-	Ports    Ports  `json:"ports"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
+	Name           string `json:"name"`
+	Ports          Ports  `json:"ports"`
+	User           string `json:"user,omitempty"`
+	Password       string `json:"password,omitempty"`
+	PublicHostname string `json:"public_hostname,omitempty"`
 }
 
 func NewHost(hostname string, ports Ports, params ...string) (*Host, error) {
