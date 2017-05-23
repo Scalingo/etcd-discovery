@@ -48,13 +48,19 @@ func (h *Host) Url(scheme, path string) (string, error) {
 	if port, ok = h.Ports[scheme]; !ok {
 		return "", errors.New("unknown scheme")
 	}
+
+	hostname = h.Name
+
+	if len(h.PublicHostname) != nil {
+		hostname = h.PublicHostname
+	}
 	if h.User != "" {
 		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
-			scheme, h.User, h.Password, h.Name, port, path,
+			scheme, h.User, h.Password, hostname, port, path,
 		)
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",
-			scheme, h.Name, port, path,
+			scheme, hostname, port, path,
 		)
 	}
 	return url, nil
