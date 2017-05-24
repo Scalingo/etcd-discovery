@@ -21,8 +21,8 @@ func (hs Hosts) String() string {
 type Host struct {
 	Name           string `json:"name"`
 	Ports          Ports  `json:"ports"`
-	User           string `json:"user,omitempty"`
-	Password       string `json:"password,omitempty"`
+	User           string `json:"user,omitempty"`     // Deprecated
+	Password       string `json:"password,omitempty"` // Deprecated
 	PublicHostname string `json:"public_hostname,omitempty"`
 }
 

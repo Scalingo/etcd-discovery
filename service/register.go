@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	errgo "gopkg.in/errgo.v1"
+
 	etcd "github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
 )
@@ -13,44 +15,55 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-type Infos struct {
-	Name           string `json:"name"`
-	Critical       bool   `json:"critical"`                  // Is the service critical to the infrastructure health?
-	PublicHostname string `json:"public_hostname,omitempty"` // The service public hostname
-}
-
-func Register(service string, host *Host, infos *Infos, stop chan struct{}) (chan struct{}, error) {
+func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{}) chan Credentials {
 	if len(host.Name) == 0 {
 		host.Name = hostname
 	}
-	if infos == nil {
-		infos = &Infos{}
+	if serviceInfos == nil {
+		serviceInfos = &Infos{}
+		serviceInfos.User = host.User
+		serviceInfos.Password = host.Password
 	}
 
-	infos.Name = service
+	serviceInfos.Name = service
 
-	if len(infos.PublicHostname) == 0 && len(host.PublicHostname) != 0 {
-		infos.PublicHostname = host.PublicHostname
+	if len(serviceInfos.PublicHostname) == 0 && len(host.PublicHostname) != 0 {
+		serviceInfos.PublicHostname = host.PublicHostname
 	}
 
-	registered := make(chan struct{}, 1)
+	host.User = serviceInfos.User
+	host.Password = serviceInfos.Password
+
+	publicCredentialsChan := make(chan Credentials, 1)
+	privateCredentialsChan := make(chan Credentials, 1)
+
+	watcherStopper := make(chan struct{})
+
 	hostKey := fmt.Sprintf("/services/%s/%s", service, host.Name)
 	hostJson, _ := json.Marshal(&host)
 	hostValue := string(hostJson)
 
 	serviceKey := fmt.Sprintf("/services_infos/%s", service)
-	serviceJson, _ := json.Marshal(infos)
+	serviceJson, _ := json.Marshal(serviceInfos)
 	serviceValue := string(serviceJson)
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
-		KAPI().Set(context.Background(), hostKey, hostValue, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 
-		if infos != nil {
-			KAPI().Set(context.Background(), serviceKey, serviceValue, nil)
+		id, err := serviceRegistration(serviceKey, serviceValue)
+		for err != nil {
+			id, err = serviceRegistration(serviceKey, serviceValue)
 		}
 
-		registered <- struct{}{}
+		publicCredentialsChan <- Credentials{
+			User:     serviceInfos.User,
+			Password: serviceInfos.Password,
+		}
+
+		hostRegistration(hostKey, hostValue)
+
+		go watch(serviceKey, id, privateCredentialsChan, watcherStopper)
+
 		for {
 			select {
 			case <-stop:
@@ -59,20 +72,23 @@ func Register(service string, host *Host, infos *Infos, stop chan struct{}) (cha
 					logger.Println("fail to remove key", hostKey)
 				}
 				ticker.Stop()
+				watcherStopper <- struct{}{}
 				return
+			case credentials := <-privateCredentialsChan:
+				host.User = credentials.User
+				host.Password = credentials.Password
+				serviceInfos.User = credentials.User
+				serviceInfos.Password = credentials.Password
+				publicCredentialsChan <- credentials
 			case <-ticker.C:
-				_, err := KAPI().Set(context.Background(), hostKey, hostValue, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+				err := hostRegistration(hostKey, hostValue)
 				// If for any random reason, there is an error,
 				// we retry every second until it's ok.
 				for err != nil {
 					logger.Printf("lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
 					time.Sleep(1 * time.Second)
 
-					if infos != nil {
-						KAPI().Set(context.Background(), serviceKey, serviceValue, nil)
-					}
-
-					_, err = KAPI().Set(context.Background(), hostKey, hostValue, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+					err = hostRegistration(hostKey, hostValue)
 					if err == nil {
 						logger.Printf("recover registration of '%v'", service)
 					}
@@ -81,5 +97,60 @@ func Register(service string, host *Host, infos *Infos, stop chan struct{}) (cha
 		}
 	}()
 
-	return registered, nil
+	return publicCredentialsChan
+}
+
+func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
+	done := make(chan struct{})
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	for {
+		select {
+		case <-stop:
+			cancelFunc()
+			return
+		case <-done:
+			go func() {
+				watcher := KAPI().Watcher(serviceKey, &etcd.WatcherOptions{
+					AfterIndex: id,
+				})
+				resp, err := watcher.Next(ctx)
+				if err != nil {
+					logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+					done <- struct{}{}
+					return
+				}
+				var serviceInfos Infos
+				err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
+				if err != nil {
+					logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+					done <- struct{}{}
+					return
+				}
+				id = resp.Node.ModifiedIndex + 1
+				credentialsChan <- Credentials{
+					User:     serviceInfos.User,
+					Password: serviceInfos.Password,
+				}
+			}()
+			done <- struct{}{}
+		}
+	}
+}
+
+func hostRegistration(hostKey, hostJson string) error {
+	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+	if err != nil {
+		return errgo.Notef(err, "Unable to register host")
+	}
+	return nil
+
+}
+
+func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {
+	key, err := KAPI().Set(context.Background(), serviceKey, serviceJson, nil)
+	if err != nil {
+		return 0, errgo.Notef(err, "Unable to register service")
+	}
+
+	return key.Node.ModifiedIndex + 1, nil
 }
