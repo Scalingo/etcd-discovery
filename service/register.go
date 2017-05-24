@@ -25,11 +25,13 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 		serviceInfos.Password = host.Password
 	}
 
-	serviceInfos.Name = service
-
 	if len(serviceInfos.PublicHostname) == 0 && len(host.PublicHostname) != 0 {
 		serviceInfos.PublicHostname = host.PublicHostname
 	}
+
+	serviceInfos.Name = service
+
+	host.PublicHostname = serviceInfos.PublicHostname
 
 	host.User = serviceInfos.User
 	host.Password = serviceInfos.Password
@@ -101,8 +103,9 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 }
 
 func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
-	done := make(chan struct{})
+	done := make(chan struct{}, 1)
 	ctx, cancelFunc := context.WithCancel(context.Background())
+	done <- struct{}{}
 	for {
 		select {
 		case <-stop:
@@ -126,13 +129,13 @@ func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop 
 					done <- struct{}{}
 					return
 				}
-				id = resp.Node.ModifiedIndex + 1
+				id = resp.Node.ModifiedIndex
 				credentialsChan <- Credentials{
 					User:     serviceInfos.User,
 					Password: serviceInfos.Password,
 				}
+				done <- struct{}{}
 			}()
-			done <- struct{}{}
 		}
 	}
 }
@@ -152,5 +155,5 @@ func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {
 		return 0, errgo.Notef(err, "Unable to register service")
 	}
 
-	return key.Node.ModifiedIndex + 1, nil
+	return key.Node.ModifiedIndex, nil
 }
