@@ -36,8 +36,8 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 	host.User = serviceInfos.User
 	host.Password = serviceInfos.Password
 
-	publicCredentialsChan := make(chan Credentials, 1)
-	privateCredentialsChan := make(chan Credentials, 1)
+	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
+	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
 
 	watcherStopper := make(chan struct{})
 
@@ -52,17 +52,22 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
 
+		// id is the current modification index of the service key.
+		// this is used for the watcher.
 		id, err := serviceRegistration(serviceKey, serviceValue)
 		for err != nil {
 			id, err = serviceRegistration(serviceKey, serviceValue)
+		}
+
+		err = hostRegistration(hostKey, hostValue)
+		for err != nil {
+			err = hostRegistration(hostKey, hostValue)
 		}
 
 		publicCredentialsChan <- Credentials{
 			User:     serviceInfos.User,
 			Password: serviceInfos.Password,
 		}
-
-		hostRegistration(hostKey, hostValue)
 
 		go watch(serviceKey, id, privateCredentialsChan, watcherStopper)
 
@@ -76,11 +81,13 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 				ticker.Stop()
 				watcherStopper <- struct{}{}
 				return
-			case credentials := <-privateCredentialsChan:
+			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
+				// We update our cache
 				host.User = credentials.User
 				host.Password = credentials.Password
 				serviceInfos.User = credentials.User
 				serviceInfos.Password = credentials.Password
+				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
 				err := hostRegistration(hostKey, hostValue)
@@ -103,9 +110,13 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 }
 
 func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
-	done := make(chan struct{}, 1)
+	done := make(chan struct{}, 1) // Signal received when the watcher found a modification or has lost the connexion to etcd
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	done <- struct{}{}
+	done <- struct{}{} // Bootstrap to launch the first watcher instance
+
+	// id is the index of the last modification made to the key. The watcher will start watching for modifications done after
+	// this index. This will prevent packet or modification lost.
+
 	for {
 		select {
 		case <-stop:
@@ -118,7 +129,9 @@ func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop 
 				})
 				resp, err := watcher.Next(ctx)
 				if err != nil {
+					// We've lost the connexion to etcd. Speel 1s and retry
 					logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+					time.Sleep(1 * time.Second)
 					done <- struct{}{}
 					return
 				}
@@ -126,15 +139,17 @@ func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop 
 				err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
 				if err != nil {
 					logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+					time.Sleep(1 * time.Second)
 					done <- struct{}{}
 					return
 				}
+				// We've got the modification, send it to the register agent
 				id = resp.Node.ModifiedIndex
 				credentialsChan <- Credentials{
 					User:     serviceInfos.User,
 					Password: serviceInfos.Password,
 				}
-				done <- struct{}{}
+				done <- struct{}{} // Restart the process
 			}()
 		}
 	}

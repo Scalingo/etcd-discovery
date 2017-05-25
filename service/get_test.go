@@ -23,8 +23,8 @@ func TestGet(t *testing.T) {
 		infos := &Infos{
 			Critical: true,
 		}
-		r1, _ := Register("test_service_get", host1, infos, stop1)
-		r2, _ := Register("test_service_get", host2, infos, stop2)
+		r1 := Register("test_service_get", host1, infos, stop1)
+		r2 := Register("test_service_get", host2, infos, stop2)
 		<-r1
 		<-r2
 		Convey("We should have 2 hosts", func() {
