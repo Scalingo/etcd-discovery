@@ -34,12 +34,14 @@ changes := service.Register(
       "http":  "8080",
       "https": "80443",
     },
-  },
-  &service.Infos{
     Critical:       true,
     User:           gopassword.Generate(10),
     Password:       gopassword.Generate(10),
     PublicHostname: "scalingo.dev",
+    PublicPorts: service.ports{
+      "http":  "80",
+      "https": "443",
+    },
   }, stopper)
 ```
 

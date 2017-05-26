@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 
 	etcd "github.com/coreos/etcd/client"
@@ -65,4 +66,38 @@ func (s *Service) One() (*Host, error) {
 	}
 
 	return hosts[rand.Int()%len(hosts)], nil
+}
+
+func (s *Service) Url(scheme, path string) (string, error) {
+	if len(s.PublicHostname) == 0 {
+		host, err := s.One()
+		if err != nil {
+			return "", errgo.Mask(err)
+		}
+		url, err := host.Url(scheme, path)
+		if err != nil {
+			return "", errgo.Mask(err)
+		}
+		return url, nil
+	}
+
+	var url string
+	var port string
+	var ok bool
+	if port, ok = s.PublicPorts[scheme]; !ok {
+		return "", errors.New("unknown scheme")
+	}
+
+	hostname = s.PublicHostname
+
+	if s.User != "" {
+		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
+			scheme, s.User, s.Password, hostname, port, path,
+		)
+	} else {
+		url = fmt.Sprintf("%s://%s:%s%s",
+			scheme, hostname, port, path,
+		)
+	}
+	return url, nil
 }

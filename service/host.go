@@ -53,9 +53,6 @@ func (h *Host) Url(scheme, path string) (string, error) {
 
 	hostname = h.Name
 
-	if len(h.PublicHostname) != 0 {
-		hostname = h.PublicHostname
-	}
 	if h.User != "" {
 		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
 			scheme, h.User, h.Password, hostname, port, path,
