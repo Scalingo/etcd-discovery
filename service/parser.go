@@ -3,31 +3,37 @@ package service
 import (
 	"encoding/json"
 
+	errgo "gopkg.in/errgo.v1"
+
 	etcd "github.com/coreos/etcd/client"
 )
 
-func buildHostsFromNodes(nodes etcd.Nodes) Hosts {
+func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {
 	hosts := make(Hosts, len(nodes))
 	for i, node := range nodes {
-		hosts[i] = buildHostFromNode(node)
+		host, err := buildHostFromNode(node)
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		hosts[i] = host
 	}
-	return hosts
+	return hosts, nil
 }
 
-func buildHostFromNode(node *etcd.Node) *Host {
+func buildHostFromNode(node *etcd.Node) (*Host, error) {
 	host := &Host{}
 	err := json.Unmarshal([]byte(node.Value), &host)
 	if err != nil {
-		panic(err)
+		return nil, errgo.Notef(err, "Unable ru unmarshal host")
 	}
-	return host
+	return host, nil
 }
 
-func buildInfosFromNode(node *etcd.Node) *Infos {
-	infos := &Infos{}
-	err := json.Unmarshal([]byte(node.Value), &infos)
+func buildServiceFromNode(node *etcd.Node) (*Service, error) {
+	service := &Service{}
+	err := json.Unmarshal([]byte(node.Value), service)
 	if err != nil {
-		panic(err)
+		return nil, errgo.Notef(err, "Unable to unmarshal service")
 	}
-	return infos
+	return service, nil
 }

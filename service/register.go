@@ -15,26 +15,27 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{}) chan Credentials {
+func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 	if len(host.Name) == 0 {
 		host.Name = hostname
 	}
-	if serviceInfos == nil {
-		serviceInfos = &Infos{}
-		serviceInfos.User = host.User
-		serviceInfos.Password = host.Password
+
+	if len(host.PublicHostname) == 0 {
+		host.PublicHostname = host.Name
 	}
 
-	if len(serviceInfos.PublicHostname) == 0 && len(host.PublicHostname) != 0 {
-		serviceInfos.PublicHostname = host.PublicHostname
+	if host.PublicPorts == nil {
+		host.PublicPorts = host.Ports
 	}
 
-	serviceInfos.Name = service
-
-	host.PublicHostname = serviceInfos.PublicHostname
-
-	host.User = serviceInfos.User
-	host.Password = serviceInfos.Password
+	serviceInfos := &Service{
+		Name:           service,
+		Critical:       host.Critical,
+		PublicHostname: host.PublicHostname,
+		User:           host.User,
+		Password:       host.Password,
+		PublicPorts:    host.PublicPorts,
+	}
 
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
 	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
@@ -87,6 +88,8 @@ func Register(service string, host *Host, serviceInfos *Infos, stop chan struct{
 				host.Password = credentials.Password
 				serviceInfos.User = credentials.User
 				serviceInfos.Password = credentials.Password
+				// synchro the host informations
+				hostRegistration(hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
@@ -135,7 +138,7 @@ func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop 
 					done <- struct{}{}
 					return
 				}
-				var serviceInfos Infos
+				var serviceInfos Service
 				err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
 				if err != nil {
 					logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())

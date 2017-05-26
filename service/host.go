@@ -21,9 +21,11 @@ func (hs Hosts) String() string {
 type Host struct {
 	Name           string `json:"name"`
 	Ports          Ports  `json:"ports"`
-	User           string `json:"user,omitempty"`     // Deprecated
-	Password       string `json:"password,omitempty"` // Deprecated
-	PublicHostname string `json:"public_hostname,omitempty"`
+	User           string `json:"user,omitempty"`            // Deprecated
+	Password       string `json:"password,omitempty"`        // Deprecated
+	PublicHostname string `json:"public_hostname,omitempty"` // Will defaults to Hostname
+	PublicPorts    Ports  `json:"public_ports,omitempty"`    // Will defaults to Port
+	Critical       bool   `json:"critical,omitempty"`
 }
 
 func NewHost(hostname string, ports Ports, params ...string) (*Host, error) {

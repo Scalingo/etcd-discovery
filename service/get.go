@@ -1,40 +1,27 @@
 package service
 
 import (
+	"errors"
+
 	etcd "github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
+	errgo "gopkg.in/errgo.v1"
 )
 
-type Service struct {
-	Infos *Infos
-	Hosts Hosts
-}
-
 func Get(service string) (*Service, error) {
-	var hosts Hosts
-	var infos *Infos
-
-	res, err := KAPI().Get(context.Background(), "/services/"+service, &etcd.GetOptions{Recursive: true})
-	if err != nil {
-		if !etcd.IsKeyNotFound(err) {
-			return nil, err
-		}
-	} else {
-		hosts = buildHostsFromNodes(res.Node.Nodes)
-	}
-
-	res, err = KAPI().Get(context.Background(), "/services_infos/"+service, nil)
+	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
 
 	if err != nil {
 		if !etcd.IsKeyNotFound(err) {
 			return nil, err
+		} else {
+			return nil, errors.New("Service not found")
 		}
 	} else {
-		infos = buildInfosFromNode(res.Node)
+		service, err := buildServiceFromNode(res.Node)
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		return service, nil
 	}
-
-	return &Service{
-		Hosts: hosts,
-		Infos: infos,
-	}, nil
 }
