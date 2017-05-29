@@ -19,10 +19,14 @@ func (hs Hosts) String() string {
 }
 
 type Host struct {
-	Name     string `json:"name"`
-	Ports    Ports  `json:"ports"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
+	Name            string `json:"name"`
+	Ports           Ports  `json:"ports"`
+	User            string `json:"user,omitempty"`
+	Password        string `json:"password,omitempty"`
+	Public          bool   `json:"public,omitempty"`
+	PrivateHostname string `json:"private_hostname,omitempty"` // Will defaults to Hostname
+	PrivatePorts    Ports  `json:"private_ports,omitempty"`    // Will defaults to Port
+	Critical        bool   `json:"critical,omitempty"`
 }
 
 func NewHost(hostname string, ports Ports, params ...string) (*Host, error) {
@@ -47,13 +51,16 @@ func (h *Host) Url(scheme, path string) (string, error) {
 	if port, ok = h.Ports[scheme]; !ok {
 		return "", errors.New("unknown scheme")
 	}
+
+	hostname = h.Name
+
 	if h.User != "" {
 		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
-			scheme, h.User, h.Password, h.Name, port, path,
+			scheme, h.User, h.Password, hostname, port, path,
 		)
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",
-			scheme, h.Name, port, path,
+			scheme, hostname, port, path,
 		)
 	}
 	return url, nil

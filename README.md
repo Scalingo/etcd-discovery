@@ -17,26 +17,32 @@ API
 ```go
 /*
  * First argument is the name of the service
- * Then a struct containing some information
+ * Then a struct containing the service informations
     * The Name attribute is optional, the variable is taken from the environment variable HOSTNAME or from os.Hostname()
+ * Then a struct containint the service informations.
+    * The PublicHostname, User and Password will be fetched from the host informations if empty
  * The stop channel exists if you want to be able to stop the registeration
+ *
+ * It will return a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
  */
-stop := make(chan struct{})
-service.Register(
-  "name_of_service",
+stopper := make(chan struct{})
+changes := service.Register(
+  "mon-service",
   &service.Host{
-    Name: "hostname_"
-    User: "user",
-    Password: "secret",
-    Ports: map[string]string{
-      "http":"1234",
+    Name: "172.17.0.1",
+    Ports: service.Ports{
+      "http":  "8080",
+      "https": "80443",
     },
-  },
-  &service.Infos{
-    Critical: false,
-  },
-  stop,
-)
+    Critical:       true,
+    User:           gopassword.Generate(10),
+    Password:       gopassword.Generate(10),
+    PublicHostname: "scalingo.dev",
+    PublicPorts: service.ports{
+      "http":  "80",
+      "https": "443",
+    },
+  }, stopper)
 ```
 
 This will create two different etcd keys:

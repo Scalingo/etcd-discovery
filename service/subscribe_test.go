@@ -97,13 +97,13 @@ func TestSubscribeUpdate(t *testing.T) {
 
 	Convey("When the service 'test' is watched and a host updates its data", t, func() {
 		newHost := genHost("test-update")
-		r, _ := Register("test_upd", newHost, nil, stop1)
+		r := Register("test_upd", newHost, nil, stop1)
 		<-r
 		close(stop1)
 
 		hosts, _ := SubscribeUpdate("test_upd")
 		newHost.Password = "newpass"
-		r, _ = Register("test_upd", newHost, &Infos{
+		r = Register("test_upd", newHost, &Infos{
 			Critical: true,
 		}, stop2)
 		<-r

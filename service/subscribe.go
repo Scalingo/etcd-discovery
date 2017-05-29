@@ -58,7 +58,10 @@ func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.Error) {
 			}
 
 			if res.Action == "create" || (res.PrevNode == nil && res.Action == "set") {
-				hosts <- buildHostFromNode(res.Node)
+				host, err := buildHostFromNode(res.Node)
+				if err == nil {
+					hosts <- host
+				}
 			}
 		}
 		if err != nil {
@@ -86,7 +89,10 @@ func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.Error) {
 			}
 
 			if res.Action == "update" || (res.PrevNode != nil && res.Action == "set") {
-				hosts <- buildHostFromNode(res.Node)
+				host, err := buildHostFromNode(res.Node)
+				if err == nil {
+					hosts <- host
+				}
 			}
 		}
 		if err != nil {
