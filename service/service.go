@@ -11,13 +11,13 @@ import (
 )
 
 type Service struct {
-	Name           string `json:"name"`
-	Critical       bool   `json:"critical"`                  // Is the service critical to the infrastructure health?
-	PublicHostname string `json:"public_hostname,omitempty"` // The service public hostname
-	User           string `json:"user,omitempty"`            // The service username
-	Password       string `json:"password,omitempty"`        // The service password
-	PublicPorts    Ports  `json:"public_ports,omitempty"`    // The service public ports
-	Public         bool   `json:"public,omitempty"`          // Is the service public?
+	Name     string `json:"name"`
+	Critical bool   `json:"critical"`           // Is the service critical to the infrastructure health?
+	Hostname string `json:"hostname,omitempty"` // The service private hostname
+	User     string `json:"user,omitempty"`     // The service username
+	Password string `json:"password,omitempty"` // The service password
+	Ports    Ports  `json:"ports,omitempty"`    // The service private ports
+	Public   bool   `json:"public,omitempty"`   // Is the service public?
 }
 
 type Credentials struct {
@@ -70,11 +70,12 @@ func (s *Service) One() (*Host, error) {
 }
 
 func (s *Service) Url(scheme, path string) (string, error) {
-	if len(s.PublicHostname) == 0 {
+	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
+
 		url, err := host.Url(scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
@@ -82,18 +83,18 @@ func (s *Service) Url(scheme, path string) (string, error) {
 		return url, nil
 	}
 
+	// If the service IS public, take the service node.
+
 	var url string
 	var port string
 	var ok bool
-	if port, ok = s.PublicPorts[scheme]; !ok {
+	if port, ok = s.Ports[scheme]; !ok {
 		return "", errors.New("unknown scheme")
 	}
 
-	hostname = s.PublicHostname
-
 	if s.User != "" {
 		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
-			scheme, s.User, s.Password, hostname, port, path,
+			scheme, s.User, s.Password, s.Hostname, port, path,
 		)
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",

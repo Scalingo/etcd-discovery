@@ -20,27 +20,17 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 		host.Name = hostname
 	}
 
-	if host.Public {
-		if len(host.PublicHostname) == 0 {
-			host.PublicHostname = host.Name
-		}
-
-		if host.PublicPorts == nil {
-			host.PublicPorts = host.Ports
-		}
-	} else {
-		host.PublicHostname = ""
-		host.PublicPorts = nil
+	serviceInfos := &Service{
+		Name:     service,
+		Critical: host.Critical,
+		User:     host.User,
+		Password: host.Password,
+		Public:   host.Public,
 	}
 
-	serviceInfos := &Service{
-		Name:           service,
-		Critical:       host.Critical,
-		PublicHostname: host.PublicHostname,
-		User:           host.User,
-		Password:       host.Password,
-		PublicPorts:    host.PublicPorts,
-		Public:         host.Public,
+	if host.Public {
+		serviceInfos.Hostname = host.Name
+		serviceInfos.Ports = host.Ports
 	}
 
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
