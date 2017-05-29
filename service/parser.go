@@ -24,7 +24,7 @@ func buildHostFromNode(node *etcd.Node) (*Host, error) {
 	host := &Host{}
 	err := json.Unmarshal([]byte(node.Value), &host)
 	if err != nil {
-		return nil, errgo.Notef(err, "Unable ru unmarshal host")
+		return nil, errgo.Notef(err, "Unable to unmarshal host")
 	}
 	return host, nil
 }
