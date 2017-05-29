@@ -21,8 +21,9 @@ func (hs Hosts) String() string {
 type Host struct {
 	Name           string `json:"name"`
 	Ports          Ports  `json:"ports"`
-	User           string `json:"user,omitempty"`            // Deprecated
-	Password       string `json:"password,omitempty"`        // Deprecated
+	User           string `json:"user,omitempty"`
+	Password       string `json:"password,omitempty"`
+	Public         bool   `json:"public,omitempty"`
 	PublicHostname string `json:"public_hostname,omitempty"` // Will defaults to Hostname
 	PublicPorts    Ports  `json:"public_ports,omitempty"`    // Will defaults to Port
 	Critical       bool   `json:"critical,omitempty"`

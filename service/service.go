@@ -17,6 +17,7 @@ type Service struct {
 	User           string `json:"user,omitempty"`            // The service username
 	Password       string `json:"password,omitempty"`        // The service password
 	PublicPorts    Ports  `json:"public_ports,omitempty"`    // The service public ports
+	Public         bool   `json:"public,omitempty"`          // Is the service public?
 }
 
 type Credentials struct {
