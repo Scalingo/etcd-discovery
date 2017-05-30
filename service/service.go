@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 
 	etcd "github.com/coreos/etcd/client"
@@ -31,6 +32,9 @@ func (s *Service) All() (Hosts, error) {
 	})
 
 	if err != nil {
+		if etcd.IsKeyNotFound(err) {
+			return Hosts{}, nil
+		}
 		return nil, errgo.Notef(err, "Unable to fetch services")
 	}
 
@@ -70,6 +74,7 @@ func (s *Service) One() (*Host, error) {
 }
 
 func (s *Service) Url(scheme, path string) (string, error) {
+	log.Println(s.Public)
 	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
 		if err != nil {
@@ -98,7 +103,7 @@ func (s *Service) Url(scheme, path string) (string, error) {
 		)
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",
-			scheme, hostname, port, path,
+			scheme, s.Hostname, port, path,
 		)
 	}
 	return url, nil

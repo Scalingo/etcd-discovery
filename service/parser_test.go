@@ -12,12 +12,20 @@ var (
 		Key: "/services/test/example.org",
 		Value: `
 		{
-			"Name": "example.org",
+			"name": "public.dev",
+			"service_name": "test-service",
 			"User": "user",
-			"Password": "password",
-			"Ports": {
-				"http": "111"
-			}
+			"password": "password",
+			"ports": {
+				"http": "10000"
+			},
+			"public": true,
+			"critical": true,
+			"private_hostname": "test-private.dev",
+			"private_ports": {
+				"http": "20000"
+			},
+			"uuid": "1234"
 		}
 		`,
 	}
@@ -33,12 +41,13 @@ var (
 )
 
 var (
-	sampleResult, _ = NewHost("example.org", Ports{"http": "111"}, "user", "password")
+	sampleResult = genHost("test")
 )
 
 func TestBuildHostsFromNodes(t *testing.T) {
-	hosts := buildHostsFromNodes(sampleNodes)
 	Convey("Given a sample response with 2 nodes, we got 2 hosts", t, func() {
+		hosts, err := buildHostsFromNodes(sampleNodes)
+		So(err, ShouldBeNil)
 		So(len(hosts), ShouldEqual, 2)
 		So(hosts[0], ShouldResemble, sampleResult)
 		So(hosts[1], ShouldResemble, sampleResult)
@@ -46,15 +55,17 @@ func TestBuildHostsFromNodes(t *testing.T) {
 }
 
 func TestBuildHostFromNode(t *testing.T) {
-	host := buildHostFromNode(sampleNode)
 	Convey("Given a sample response, we got a filled Host", t, func() {
+		host, err := buildHostFromNode(sampleNode)
+		So(err, ShouldBeNil)
 		So(host, ShouldResemble, sampleResult)
 	})
 }
 
-func TestBuildInfosFromNode(t *testing.T) {
-	infos := buildInfosFromNode(sampleInfoNode)
+func TestBuildServiceFromNode(t *testing.T) {
 	Convey("Given a sample response, we got a filled Infos", t, func() {
+		infos, err := buildServiceFromNode(sampleInfoNode)
+		So(err, ShouldBeNil)
 		So(infos.Critical, ShouldBeTrue)
 	})
 }

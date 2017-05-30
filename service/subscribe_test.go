@@ -60,14 +60,16 @@ func TestSubscribeDown(t *testing.T) {
 	stop := make(chan struct{})
 
 	Convey("When the service 'test' is watched and a host expired", t, func() {
-		Register("test_expiration", genHost("test-expiration"), nil, stop)
+		uuid, r := Register("test_expiration", genHost("test-expiration"), stop)
+		<-r
+
 		hosts, _ := SubscribeDown("test_expiration")
 		close(stop)
 		Convey("The name of the disappeared host should be returned", func() {
 			select {
 			case host, ok := <-hosts:
 				So(ok, ShouldBeTrue)
-				So(host, ShouldEqual, "test-expiration")
+				So(host, ShouldEqual, uuid)
 			}
 		})
 	})
@@ -81,33 +83,7 @@ func TestSubscribeNew(t *testing.T) {
 		hosts, _ := SubscribeNew("test_new")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost("test-new")
-		Register("test_new", newHost, nil, stop)
-		Convey("A host should be available in the channel", func() {
-			host, ok := <-hosts
-			So(ok, ShouldBeTrue)
-			So(host, ShouldResemble, newHost)
-		})
-	})
-}
-
-func TestSubscribeUpdate(t *testing.T) {
-	stop1 := make(chan struct{})
-	stop2 := make(chan struct{})
-	defer close(stop2)
-
-	Convey("When the service 'test' is watched and a host updates its data", t, func() {
-		newHost := genHost("test-update")
-		r := Register("test_upd", newHost, nil, stop1)
-		<-r
-		close(stop1)
-
-		hosts, _ := SubscribeUpdate("test_upd")
-		newHost.Password = "newpass"
-		r = Register("test_upd", newHost, &Infos{
-			Critical: true,
-		}, stop2)
-		<-r
-
+		Register("test_new", newHost, stop)
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
 			So(ok, ShouldBeTrue)

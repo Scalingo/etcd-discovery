@@ -8,6 +8,7 @@ import (
 	errgo "gopkg.in/errgo.v1"
 
 	etcd "github.com/coreos/etcd/client"
+	uuid "github.com/nu7hatch/gouuid"
 	"golang.org/x/net/context"
 )
 
@@ -15,10 +16,17 @@ const (
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, stop chan struct{}) chan Credentials {
-	if len(host.Name) == 0 {
-		host.Name = hostname
+func Register(service string, host *Host, stop chan struct{}) (string, chan Credentials) {
+	uuid, _ := uuid.NewV4()
+
+	hostUuid := uuid.String()
+	host.Uuid = hostUuid
+
+	if len(host.PrivateHostname) == 0 {
+		host.PrivateHostname = hostname
 	}
+
+	host.Name = service
 
 	serviceInfos := &Service{
 		Name:     service,
@@ -29,7 +37,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 	}
 
 	if host.Public {
-		serviceInfos.Hostname = host.Name
+		serviceInfos.Hostname = host.Hostname
 		serviceInfos.Ports = host.Ports
 	}
 
@@ -38,7 +46,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 
 	watcherStopper := make(chan struct{})
 
-	hostKey := fmt.Sprintf("/services/%s/%s", service, host.Name)
+	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUuid)
 	hostJson, _ := json.Marshal(&host)
 	hostValue := string(hostJson)
 
@@ -107,7 +115,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 		}
 	}()
 
-	return publicCredentialsChan
+	return hostUuid, publicCredentialsChan
 }
 
 func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
