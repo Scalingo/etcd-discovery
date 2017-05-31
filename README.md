@@ -61,7 +61,7 @@ This will create two different etcd keys:
    "uuid": "your-service-uuid-node-1.internal.dev",
    "ports":{
       "http":"80",
-      "https:"443"
+      "https":"443"
    }
 }
 ```
@@ -71,13 +71,13 @@ This will create two different etcd keys:
 {
    "name": "my-service",
    "critical": true,
-   "hostname": "public-domain.dev"
+   "hostname": "public-domain.dev",
    "user": "user",
-   "password: "password",
+   "password": "password",
    "ports": {
       "http": "80",
       "https": "443"
-   }
+   },
    "public": true
 }
 ```
