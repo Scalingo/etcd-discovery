@@ -19,7 +19,7 @@ const (
 func Register(service string, host *Host, stop chan struct{}) (string, chan Credentials) {
 	uuid, _ := uuid.NewV4()
 
-	hostUuid := uuid.String()
+	hostUuid := fmt.Sprintf("%s-%s", uuid.String(), host.PrivateHostname)
 	host.Uuid = hostUuid
 
 	if len(host.PrivateHostname) == 0 {

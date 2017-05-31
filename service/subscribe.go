@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"path"
 
 	"golang.org/x/net/context"
@@ -30,7 +29,6 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcd.Error) {
 			}
 
 			if res.Action == "expire" || res.Action == "delete" {
-				log.Println("SEND ")
 				expirations <- path.Base(res.Node.Key)
 			}
 		}

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,7 +17,6 @@ func TestServiceAll(t *testing.T) {
 	})
 
 	Convey("With two services", t, func() {
-		log.Println("COUILLLE PUTAIN DE MERDE !!!!!!!!")
 		host1 := genHost("test1")
 		host2 := genHost("test2")
 		_, c1 := Register("test-get-222", host1, make(chan struct{}))
