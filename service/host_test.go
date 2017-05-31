@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -81,5 +82,70 @@ func TestHostsString(t *testing.T) {
 	Convey("With an empty list", t, func() {
 		hosts := Hosts{}
 		So(hosts.String(), ShouldEqual, "")
+	})
+}
+
+func TestGetHostResponse(t *testing.T) {
+	Convey("With an errored response", t, func() {
+		response := &GetHostResponse{
+			err:  errors.New("TestError"),
+			host: nil,
+		}
+
+		Convey("The err method should return an error", func() {
+			So(response.Err(), ShouldNotBeNil)
+			So(response.Err().Error(), ShouldEqual, "TestError")
+		})
+
+		Convey("The Host method should return an error", func() {
+			host, err := response.Host()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "TestError")
+			So(host, ShouldBeNil)
+		})
+
+		Convey("The Url method should return an error", func() {
+			url, err := response.Url("http", "/path")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "TestError")
+			So(url, ShouldEqual, "")
+		})
+
+		Convey("The PrivateUrl should return an error", func() {
+			url, err := response.PrivateUrl("http", "/path")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "TestError")
+			So(url, ShouldEqual, "")
+		})
+	})
+
+	Convey("With a valid response", t, func() {
+		host := genHost("test-service")
+		response := &GetHostResponse{
+			err:  nil,
+			host: host,
+		}
+
+		Convey("The err method should not return an error", func() {
+			So(response.Err(), ShouldBeNil)
+		})
+
+		Convey("The Host method should return a valid host", func() {
+			h, err := response.Host()
+			So(err, ShouldBeNil)
+			So(h, ShouldResemble, host)
+		})
+
+		Convey("The Url method should return a valid url", func() {
+			url, err := response.Url("http", "/path")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
+		})
+
+		Convey("The Private Url should return a valid url", func() {
+			url, err := response.PrivateUrl("http", "/path")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "http://user:password@test-service-private.dev:20000/path")
+		})
 	})
 }

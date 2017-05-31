@@ -61,9 +61,9 @@ func TestSubscribeDown(t *testing.T) {
 
 	Convey("When the service 'test' is watched and a host expired", t, func() {
 		uuid, r := Register("test_expiration", genHost("test-expiration"), stop)
+		hosts, _ := SubscribeDown("test_expiration")
 		<-r
 
-		hosts, _ := SubscribeDown("test_expiration")
 		close(stop)
 		Convey("The name of the disappeared host should be returned", func() {
 			select {

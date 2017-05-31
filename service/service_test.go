@@ -8,7 +8,7 @@ import (
 
 func TestServiceAll(t *testing.T) {
 	Convey("With no services", t, func() {
-		s, err := Get("service-test-get-1")
+		s, err := Get("service-test-get-1").Service()
 		So(err, ShouldBeNil)
 
 		hosts, err := s.All()
@@ -25,7 +25,7 @@ func TestServiceAll(t *testing.T) {
 		<-c1
 		<-c2
 
-		s, err := Get("test-get-222")
+		s, err := Get("test-get-222").Service()
 		hosts, err := s.All()
 		So(err, ShouldBeNil)
 		So(len(hosts), ShouldEqual, 2)
@@ -40,7 +40,7 @@ func TestServiceAll(t *testing.T) {
 
 func TestServiceFirst(t *testing.T) {
 	Convey("With no services", t, func() {
-		s, err := Get("service-test-1")
+		s, err := Get("service-test-1").Service()
 		So(err, ShouldBeNil)
 		host, err := s.First()
 		So(err, ShouldNotBeNil)
@@ -53,7 +53,7 @@ func TestServiceFirst(t *testing.T) {
 		_, c := Register("test-truc", host1, make(chan struct{}))
 		<-c
 
-		s, err := Get("test-truc")
+		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
 		host, err := s.First()
 		So(err, ShouldBeNil)
@@ -64,7 +64,7 @@ func TestServiceFirst(t *testing.T) {
 
 func TestServiceOne(t *testing.T) {
 	Convey("With no services", t, func() {
-		s, err := Get("service-test-1")
+		s, err := Get("service-test-1").Service()
 		So(err, ShouldBeNil)
 		host, err := s.One()
 		So(err, ShouldNotBeNil)
@@ -77,7 +77,7 @@ func TestServiceOne(t *testing.T) {
 		_, c := Register("test-truc", host1, make(chan struct{}))
 		<-c
 
-		s, err := Get("test-truc")
+		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
 		host, err := s.One()
 		So(err, ShouldBeNil)
@@ -96,7 +96,7 @@ func TestServiceUrl(t *testing.T) {
 
 			<-c
 
-			s, err := Get("service-url-1")
+			s, err := Get("service-url-1").Service()
 			So(err, ShouldBeNil)
 			url, err := s.Url("http", "/path")
 			So(err, ShouldBeNil)
@@ -109,7 +109,7 @@ func TestServiceUrl(t *testing.T) {
 
 			<-c
 
-			s, err := Get("service-url-3")
+			s, err := Get("service-url-3").Service()
 			So(err, ShouldBeNil)
 			url, err := s.Url("http", "/path")
 			So(err, ShouldBeNil)
@@ -122,7 +122,7 @@ func TestServiceUrl(t *testing.T) {
 
 			<-c
 
-			s, err := Get("service-url-4")
+			s, err := Get("service-url-4").Service()
 			So(err, ShouldBeNil)
 			url, err := s.Url("htjp", "/path")
 			So(err, ShouldNotBeNil)

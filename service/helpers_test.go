@@ -1,7 +1,6 @@
 package service
 
 func genHost(name string) *Host {
-	// Empty if no arg, custom name otherways
 	return &Host{
 		Name:     "test-service",
 		Hostname: "public.dev",
@@ -17,5 +16,19 @@ func genHost(name string) *Host {
 		},
 		Critical: true,
 		Uuid:     "1234",
+	}
+}
+
+func genService(name string) *Service {
+	return &Service{
+		Name:     name,
+		Critical: true,
+		Hostname: "public.dev",
+		User:     "user",
+		Password: "password",
+		Ports: Ports{
+			"http": "80",
+		},
+		Public: true,
 	}
 }

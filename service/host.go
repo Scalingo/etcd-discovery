@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	errgo "gopkg.in/errgo.v1"
 )
 
 type Ports map[string]string
@@ -72,6 +74,52 @@ func (h *Host) PrivateUrl(scheme, path string) (string, error) {
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",
 			scheme, h.PrivateHostname, port, path)
+	}
+	return url, nil
+}
+
+type HostResponse interface {
+	Err() error
+	Host() (*Host, error)
+	Url(scheme, path string) (string, error)
+	PrivateUrl(scheme, path string) (string, error)
+}
+
+type GetHostResponse struct {
+	err  error
+	host *Host
+}
+
+func (q *GetHostResponse) Err() error {
+	return q.err
+}
+
+func (q *GetHostResponse) Host() (*Host, error) {
+	if q.err != nil {
+		return nil, errgo.Mask(q.err)
+	}
+
+	return q.host, nil
+}
+
+func (q *GetHostResponse) Url(scheme, path string) (string, error) {
+	if q.err != nil {
+		return "", errgo.Mask(q.err)
+	}
+	url, err := q.host.Url(scheme, path)
+	if err != nil {
+		return "", errgo.Mask(err)
+	}
+	return url, nil
+}
+
+func (q *GetHostResponse) PrivateUrl(scheme, path string) (string, error) {
+	if q.err != nil {
+		return "", errgo.Mask(q.err)
+	}
+	url, err := q.host.PrivateUrl(scheme, path)
+	if err != nil {
+		return "", errgo.Mask(err)
 	}
 	return url, nil
 }
