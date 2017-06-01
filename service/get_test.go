@@ -71,7 +71,7 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		Convey("Url should return an error", func() {
-			url, err := response.Url("http", "/path")
+			url, err := response.URL("http", "/path")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "TestError")
 			So(url, ShouldEqual, "")
@@ -114,7 +114,7 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		Convey("Url should return a valid url", func() {
-			url, err := response.Url("http", "/path")
+			url, err := response.URL("http", "/path")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "http://user:password@public.dev:80/path")
 		})

@@ -98,7 +98,7 @@ func TestServiceUrl(t *testing.T) {
 
 			s, err := Get("service-url-1").Service()
 			So(err, ShouldBeNil)
-			url, err := s.Url("http", "/path")
+			url, err := s.URL("http", "/path")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "http://public.dev:10000/path")
 		})
@@ -111,7 +111,7 @@ func TestServiceUrl(t *testing.T) {
 
 			s, err := Get("service-url-3").Service()
 			So(err, ShouldBeNil)
-			url, err := s.Url("http", "/path")
+			url, err := s.URL("http", "/path")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 		})
@@ -124,7 +124,7 @@ func TestServiceUrl(t *testing.T) {
 
 			s, err := Get("service-url-4").Service()
 			So(err, ShouldBeNil)
-			url, err := s.Url("htjp", "/path")
+			url, err := s.URL("htjp", "/path")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "unknown scheme")
 			So(len(url), ShouldEqual, 0)

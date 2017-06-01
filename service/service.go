@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 
 	etcd "github.com/coreos/etcd/client"
@@ -73,15 +72,14 @@ func (s *Service) One() (*Host, error) {
 	return hosts[rand.Int()%len(hosts)], nil
 }
 
-func (s *Service) Url(scheme, path string) (string, error) {
-	log.Println(s.Public)
+func (s *Service) URL(scheme, path string) (string, error) {
 	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
 
-		url, err := host.Url(scheme, path)
+		url, err := host.URL(scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
 		}

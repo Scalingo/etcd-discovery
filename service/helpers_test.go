@@ -15,7 +15,7 @@ func genHost(name string) *Host {
 			"http": "20000",
 		},
 		Critical: true,
-		Uuid:     "1234",
+		UUID:     "1234",
 	}
 }
 

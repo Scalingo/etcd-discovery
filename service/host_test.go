@@ -13,21 +13,21 @@ func TestHostUrl(t *testing.T) {
 		host.User = ""
 		host.Password = ""
 
-		url, err := host.Url("http", "/path")
+		url, err := host.URL("http", "/path")
 		So(err, ShouldBeNil)
 		So(url, ShouldEqual, "http://public.dev:10000/path")
 	})
 
 	Convey("With a host with a password", t, func() {
 		host := genHost("test")
-		url, err := host.Url("http", "/path")
+		url, err := host.URL("http", "/path")
 		So(err, ShouldBeNil)
 		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 	})
 
 	Convey("When the port does'nt exists", t, func() {
 		host := genHost("test")
-		url, err := host.Url("htjp", "/path")
+		url, err := host.URL("htjp", "/path")
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "unknown scheme")
 		So(len(url), ShouldEqual, 0)
@@ -40,21 +40,21 @@ func TestHostPrivateUrl(t *testing.T) {
 		host.User = ""
 		host.Password = ""
 
-		url, err := host.PrivateUrl("http", "/path")
+		url, err := host.PrivateURL("http", "/path")
 		So(err, ShouldBeNil)
 		So(url, ShouldEqual, "http://test-private.dev:20000/path")
 	})
 
 	Convey("With a host with a password", t, func() {
 		host := genHost("test")
-		url, err := host.PrivateUrl("http", "/path")
+		url, err := host.PrivateURL("http", "/path")
 		So(err, ShouldBeNil)
 		So(url, ShouldEqual, "http://user:password@test-private.dev:20000/path")
 	})
 
 	Convey("When the port does'nt exists", t, func() {
 		host := genHost("test")
-		url, err := host.PrivateUrl("htjp", "/path")
+		url, err := host.PrivateURL("htjp", "/path")
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "unknown scheme")
 		So(len(url), ShouldEqual, 0)
@@ -63,7 +63,7 @@ func TestHostPrivateUrl(t *testing.T) {
 	Convey("When the host does not support private urls", t, func() {
 		host := genHost("test")
 		host.PrivateHostname = ""
-		url, err := host.PrivateUrl("http", "/path")
+		url, err := host.PrivateURL("http", "/path")
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "This service does not support private urls")
 		So(len(url), ShouldEqual, 0)
@@ -104,15 +104,15 @@ func TestGetHostResponse(t *testing.T) {
 			So(host, ShouldBeNil)
 		})
 
-		Convey("The Url method should return an error", func() {
-			url, err := response.Url("http", "/path")
+		Convey("The URL method should return an error", func() {
+			url, err := response.URL("http", "/path")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "TestError")
 			So(url, ShouldEqual, "")
 		})
 
-		Convey("The PrivateUrl should return an error", func() {
-			url, err := response.PrivateUrl("http", "/path")
+		Convey("The PrivateURL should return an error", func() {
+			url, err := response.PrivateURL("http", "/path")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "TestError")
 			So(url, ShouldEqual, "")
@@ -136,14 +136,14 @@ func TestGetHostResponse(t *testing.T) {
 			So(h, ShouldResemble, host)
 		})
 
-		Convey("The Url method should return a valid url", func() {
-			url, err := response.Url("http", "/path")
+		Convey("The URL method should return a valid url", func() {
+			url, err := response.URL("http", "/path")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 		})
 
-		Convey("The Private Url should return a valid url", func() {
-			url, err := response.PrivateUrl("http", "/path")
+		Convey("The Private URL should return a valid url", func() {
+			url, err := response.PrivateURL("http", "/path")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "http://user:password@test-service-private.dev:20000/path")
 		})
