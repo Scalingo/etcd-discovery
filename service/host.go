@@ -80,9 +80,15 @@ func (h *Host) URL(scheme, path string) (string, error) {
 }
 
 // PrivateURL will provide a valid url to contact this service on the Private network
+// this method will fallback to the URL method if the host does not provide any PrivateURL
 func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	if len(h.PrivateHostname) == 0 {
-		return "", errors.New("This service does not support private urls")
+		url, err := h.URL(scheme, path)
+		if err != nil {
+			return "", errgo.Mask(err)
+		} else {
+			return url, nil
+		}
 	}
 	var url, port string
 	var ok bool

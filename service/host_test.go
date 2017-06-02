@@ -60,13 +60,12 @@ func TestHostPrivateUrl(t *testing.T) {
 		So(len(url), ShouldEqual, 0)
 	})
 
-	Convey("When the host does not support private urls", t, func() {
+	Convey("When the host does not support private urls, it should fall back to URL", t, func() {
 		host := genHost("test")
 		host.PrivateHostname = ""
 		url, err := host.PrivateURL("http", "/path")
-		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldEqual, "This service does not support private urls")
-		So(len(url), ShouldEqual, 0)
+		So(err, ShouldBeNil)
+		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 	})
 }
 
