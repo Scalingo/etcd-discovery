@@ -18,43 +18,50 @@ API
 /*
  * First argument is the name of the service
  * Then a struct containing the service informations
-    * The Name attribute is optional, the variable is taken from the environment variable HOSTNAME or from os.Hostname()
- * Then a struct containint the service informations.
-    * The PublicHostname, User and Password will be fetched from the host informations if empty
  * The stop channel exists if you want to be able to stop the registeration
- *
- * It will return a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
+ * It will return the service uuid and a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
  */
 stopper := make(chan struct{})
-changes := service.Register(
-  "mon-service",
+uuid, changes := service.Register(
+  "my-service",
   &service.Host{
-    Name: "172.17.0.1",
+    Hostname: "public-domain.dev",
     Ports: service.Ports{
-      "http":  "8080",
-      "https": "80443",
+      "http":  "80",
+      "https": "443",
     },
     Critical:       true,
     User:           gopassword.Generate(10),
     Password:       gopassword.Generate(10),
-    PublicHostname: "scalingo.dev",
-    PublicPorts: service.ports{
-      "http":  "80",
-      "https": "443",
+    Public: true,
+    PrivateHostname: "node-1.internal.dev",
+    PrivatePorts: service.ports{
+      "http":  "8080",
+      "https": "80443",
     },
   }, stopper)
 ```
 
 This will create two different etcd keys:
 
-* `/services/name_of_service/hostname_` containing:
+* `/services/name_of_service/you-service-uuid-node-1.internal.dev` containing:
 ```json
 {
-   "name": "hostname_",
+   "name": "public-domain.dev",
+   "service_name": "my-service",
    "user": "user",
    "password": "secret",
+   "public": true,
+   "private_hostname": "node-1.internal.dev",
+   "private_ports": {
+      "http": "8080",
+      "https": "80443"
+   },
+   "critcal": true,
+   "uuid": "your-service-uuid-node-1.internal.dev",
    "ports":{
-      "http":"1234"
+      "http":"80",
+      "https":"443"
    }
 }
 ```
@@ -62,8 +69,16 @@ This will create two different etcd keys:
 * `/service_infos/name_of_service` containing:
 ```json
 {
-   "name": "name_of_service",
-   "critical": false
+   "name": "my-service",
+   "critical": true,
+   "hostname": "public-domain.dev",
+   "user": "user",
+   "password": "password",
+   "ports": {
+      "http": "80",
+      "https": "443"
+   },
+   "public": true
 }
 ```
 

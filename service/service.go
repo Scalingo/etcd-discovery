@@ -31,6 +31,9 @@ func (s *Service) All() (Hosts, error) {
 	})
 
 	if err != nil {
+		if etcd.IsKeyNotFound(err) {
+			return Hosts{}, nil
+		}
 		return nil, errgo.Notef(err, "Unable to fetch services")
 	}
 
@@ -69,14 +72,14 @@ func (s *Service) One() (*Host, error) {
 	return hosts[rand.Int()%len(hosts)], nil
 }
 
-func (s *Service) Url(scheme, path string) (string, error) {
+func (s *Service) URL(scheme, path string) (string, error) {
 	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
 
-		url, err := host.Url(scheme, path)
+		url, err := host.URL(scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
@@ -98,7 +101,7 @@ func (s *Service) Url(scheme, path string) (string, error) {
 		)
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s",
-			scheme, hostname, port, path,
+			scheme, s.Hostname, port, path,
 		)
 	}
 	return url, nil

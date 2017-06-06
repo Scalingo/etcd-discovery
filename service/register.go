@@ -8,17 +8,30 @@ import (
 	errgo "gopkg.in/errgo.v1"
 
 	etcd "github.com/coreos/etcd/client"
+	uuid "github.com/nu7hatch/gouuid"
 	"golang.org/x/net/context"
 )
 
 const (
+	// HEARTBEAT_DURATION time in second between two registration. The host will be deleted if etcd didn't received any new registration in those 5 seocnds
 	HEARTBEAT_DURATION = 5
 )
 
-func Register(service string, host *Host, stop chan struct{}) chan Credentials {
-	if len(host.Name) == 0 {
-		host.Name = hostname
+// Register a host with a service name and a host description. The last chan is a stop method. If something is written on this channel, any goroutines launch by this method will stop.
+// This will return a string, which represents the service UUID and a credential chan which will be updated each time this service will have a new set of credentials.
+//
+// This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
+func Register(service string, host *Host, stop chan struct{}) (string, chan Credentials) {
+	uuid, _ := uuid.NewV4()
+
+	hostUuid := fmt.Sprintf("%s-%s", uuid.String(), host.PrivateHostname)
+	host.UUID = hostUuid
+
+	if len(host.PrivateHostname) == 0 {
+		host.PrivateHostname = hostname
 	}
+
+	host.Name = service
 
 	serviceInfos := &Service{
 		Name:     service,
@@ -29,7 +42,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 	}
 
 	if host.Public {
-		serviceInfos.Hostname = host.Name
+		serviceInfos.Hostname = host.Hostname
 		serviceInfos.Ports = host.Ports
 	}
 
@@ -38,7 +51,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 
 	watcherStopper := make(chan struct{})
 
-	hostKey := fmt.Sprintf("/services/%s/%s", service, host.Name)
+	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUuid)
 	hostJson, _ := json.Marshal(&host)
 	hostValue := string(hostJson)
 
@@ -107,7 +120,7 @@ func Register(service string, host *Host, stop chan struct{}) chan Credentials {
 		}
 	}()
 
-	return publicCredentialsChan
+	return hostUuid, publicCredentialsChan
 }
 
 func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {

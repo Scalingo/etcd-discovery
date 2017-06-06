@@ -72,34 +72,3 @@ func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.Error) {
 	}()
 	return hosts, errs
 }
-
-func SubscribeUpdate(service string) (<-chan *Host, <-chan *etcd.Error) {
-	hosts := make(chan *Host)
-	errs := make(chan *etcd.Error)
-	watcher := Subscribe(service)
-	go func() {
-		var (
-			res *etcd.Response
-			err error
-		)
-		for {
-			res, err = watcher.Next(context.Background())
-			if err != nil {
-				break
-			}
-
-			if res.Action == "update" || (res.PrevNode != nil && res.Action == "set") {
-				host, err := buildHostFromNode(res.Node)
-				if err == nil {
-					hosts <- host
-				}
-			}
-		}
-		if err != nil {
-			errs <- err.(*etcd.Error)
-		}
-		close(hosts)
-		close(errs)
-	}()
-	return hosts, errs
-}
