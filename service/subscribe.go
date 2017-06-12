@@ -8,10 +8,12 @@ import (
 	etcd "github.com/coreos/etcd/client"
 )
 
+// Subscribe to every event that happen to a service
 func Subscribe(service string) etcd.Watcher {
 	return KAPI().Watcher("/services/"+service, &etcd.WatcherOptions{Recursive: true})
 }
 
+// SubscribeDown return a channel that will notice you everytime a host loose his etcd registration
 func SubscribeDown(service string) (<-chan string, <-chan *etcd.Error) {
 	expirations := make(chan string)
 	errs := make(chan *etcd.Error)
@@ -41,6 +43,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcd.Error) {
 	return expirations, errs
 }
 
+// SubscribeNew return a channel that will notice you everytime a new host is registred.
 func SubscribeNew(service string) (<-chan *Host, <-chan *etcd.Error) {
 	hosts := make(chan *Host)
 	errs := make(chan *etcd.Error)
