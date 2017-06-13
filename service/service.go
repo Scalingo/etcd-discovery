@@ -10,8 +10,9 @@ import (
 	errgo "gopkg.in/errgo.v1"
 )
 
+// Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
 type Service struct {
-	Name     string `json:"name"`
+	Name     string `json:"name"`               // Name of the service
 	Critical bool   `json:"critical"`           // Is the service critical to the infrastructure health?
 	Hostname string `json:"hostname,omitempty"` // The service private hostname
 	User     string `json:"user,omitempty"`     // The service username
@@ -20,11 +21,13 @@ type Service struct {
 	Public   bool   `json:"public,omitempty"`   // Is the service public?
 }
 
+// Credentials store service credentials
 type Credentials struct {
 	User     string
 	Password string
 }
 
+// All return all hosts associated to a service
 func (s *Service) All() (Hosts, error) {
 	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcd.GetOptions{
 		Recursive: true,
@@ -45,6 +48,7 @@ func (s *Service) All() (Hosts, error) {
 	return hosts, nil
 }
 
+// First return the first host of this service
 func (s *Service) First() (*Host, error) {
 	hosts, err := s.All()
 	if err != nil {
@@ -58,6 +62,7 @@ func (s *Service) First() (*Host, error) {
 	return hosts[0], nil
 }
 
+// One return a random host from all the available hosts of this service.
 func (s *Service) One() (*Host, error) {
 	hosts, err := s.All()
 
@@ -72,6 +77,7 @@ func (s *Service) One() (*Host, error) {
 	return hosts[rand.Int()%len(hosts)], nil
 }
 
+// URL return the public url of this service. If this service do not have an public url, this will return an url to a random host.
 func (s *Service) URL(scheme, path string) (string, error) {
 	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
