@@ -71,6 +71,13 @@ func TestRegister(t *testing.T) {
 			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
+
+		Convey("When the privatehostname is not set, it must take the node hostname", func() {
+			host := genHost("HelloWorld")
+			host.PrivateHostname = ""
+			uuid, _ := Register("hello_world", host, make(chan struct{}))
+			So(uuid, ShouldEndWith, hostname)
+		})
 	})
 }
 

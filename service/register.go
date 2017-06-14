@@ -22,16 +22,15 @@ const (
 //
 // This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
 func Register(service string, host *Host, stop chan struct{}) (string, chan Credentials) {
+	if len(host.PrivateHostname) == 0 {
+		host.PrivateHostname = hostname
+	}
+	host.Name = service
+
 	uuid, _ := uuid.NewV4()
 
 	hostUuid := fmt.Sprintf("%s-%s", uuid.String(), host.PrivateHostname)
 	host.UUID = hostUuid
-
-	if len(host.PrivateHostname) == 0 {
-		host.PrivateHostname = hostname
-	}
-
-	host.Name = service
 
 	serviceInfos := &Service{
 		Name:     service,
