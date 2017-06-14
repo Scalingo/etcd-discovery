@@ -79,8 +79,8 @@ func TestRegister(t *testing.T) {
 		Convey("When the privatehostname is not set, it must take the node hostname", func() {
 			host := genHost("HelloWorld")
 			host.PrivateHostname = ""
-			uuid, _ := Register("hello_world", host, make(chan struct{}))
-			So(uuid, ShouldEndWith, hostname)
+			w := Register("hello_world", host, make(chan struct{}))
+			So(w.UUID(), ShouldEndWith, hostname)
 		})
 	})
 }
