@@ -21,10 +21,10 @@ func TestGet(t *testing.T) {
 	Convey("With registred services", t, func() {
 		stop1, stop2 := make(chan struct{}), make(chan struct{})
 		host1, host2 := genHost("host1"), genHost("host2")
-		_, r1 := Register("test_service_get", host1, stop1)
-		_, r2 := Register("test_service_get", host2, stop2)
-		<-r1
-		<-r2
+		w1 := Register("test_service_get", host1, stop1)
+		w2 := Register("test_service_get", host2, stop2)
+		w1.WaitRegistration()
+		w2.WaitRegistration()
 		Convey("We should have 2 hosts", func() {
 			hosts, err := Get("test_service_get").All()
 			So(err, ShouldBeNil)

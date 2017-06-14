@@ -60,16 +60,16 @@ func TestSubscribeDown(t *testing.T) {
 	stop := make(chan struct{})
 
 	Convey("When the service 'test' is watched and a host expired", t, func() {
-		uuid, r := Register("test_expiration", genHost("test-expiration"), stop)
+		w := Register("test_expiration", genHost("test-expiration"), stop)
 		hosts, _ := SubscribeDown("test_expiration")
-		<-r
+		w.WaitRegistration()
 
 		close(stop)
 		Convey("The name of the disappeared host should be returned", func() {
 			select {
 			case host, ok := <-hosts:
 				So(ok, ShouldBeTrue)
-				So(host, ShouldEqual, uuid)
+				So(host, ShouldEqual, w.UUID())
 			}
 		})
 	})

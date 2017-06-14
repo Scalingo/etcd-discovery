@@ -21,7 +21,8 @@ const (
 // This will return a string, which represents the service UUID and a credential chan which will be updated each time this service will have a new set of credentials.
 //
 // This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
-func Register(service string, host *Host, stop chan struct{}) (string, chan Credentials) {
+func Register(service string, host *Host, stop chan struct{}) *Registration {
+
 	if len(host.PrivateHostname) == 0 {
 		host.PrivateHostname = hostname
 	}
@@ -119,7 +120,7 @@ func Register(service string, host *Host, stop chan struct{}) (string, chan Cred
 		}
 	}()
 
-	return hostUuid, publicCredentialsChan
+	return NewRegistration(hostUuid, publicCredentialsChan)
 }
 
 func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
