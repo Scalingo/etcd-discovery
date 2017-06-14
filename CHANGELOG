@@ -1,3 +1,7 @@
+# v5.0.1
+
+* Use the host private hostname if the hostname is not set for the uuid generation
+
 # v5.0
 
 * Add the notion of Public URL
