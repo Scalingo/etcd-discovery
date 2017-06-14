@@ -22,7 +22,7 @@ API
  * It will return the service uuid and a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
  */
 stopper := make(chan struct{})
-uuid, changes := service.Register(
+registration := service.Register(
   "my-service",
   &service.Host{
     Hostname: "public-domain.dev",

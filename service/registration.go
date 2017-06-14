@@ -5,13 +5,15 @@ import (
 	"sync"
 )
 
+// RegistrationWrapper wreap the uuid and the credential channel to provide a more user friendly API for the Register Method
 type RegistrationWrapper interface {
-	Ready() bool
-	WaitRegistration()
-	Credentials() (Credentials, error)
-	UUID() string
+	Ready() bool                       // Ready return strue if the service registred yet? This method should no be blocking
+	WaitRegistration()                 // WaitRegistration wait for the first registration
+	Credentials() (Credentials, error) // Credentials return the current credentials or an error if the service is not registred yet
+	UUID() string                      // UUID return the host UUID
 }
 
+// Registration is the RegistrationWrapper implementation used by the Register method
 type Registration struct {
 	credChan       chan (Credentials)
 	readyChan      chan bool
@@ -21,6 +23,7 @@ type Registration struct {
 	curCredentials *Credentials
 }
 
+// NewRegistration initialize the Registration struct
 func NewRegistration(uuid string, cred chan Credentials) *Registration {
 	r := &Registration{
 		credChan:       cred,
@@ -34,10 +37,15 @@ func NewRegistration(uuid string, cred chan Credentials) *Registration {
 	return r
 }
 
+// WaitRegistration wait for the first registration to happen, meaning that the service is succesfulled registred to the etcd service
 func (w *Registration) WaitRegistration() {
+	if w.ready {
+		return
+	}
 	<-w.readyChan
 }
 
+// Ready is a non blocking method that return true if the service is registred to the etcd service false otherwise
 func (w *Registration) Ready() bool {
 	w.mutex.Lock()
 	ready := w.ready
@@ -45,10 +53,12 @@ func (w *Registration) Ready() bool {
 	return ready
 }
 
+// UUID of the current host
 func (w *Registration) UUID() string {
 	return w.uuid
 }
 
+// Credentials return the service credentials or an error if the service is not registred yet
 func (w *Registration) Credentials() (Credentials, error) {
 	w.mutex.Lock()
 	cred := w.curCredentials
