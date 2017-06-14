@@ -39,7 +39,7 @@ func NewRegistration(uuid string, cred chan Credentials) *Registration {
 
 // WaitRegistration wait for the first registration to happen, meaning that the service is succesfulled registred to the etcd service
 func (w *Registration) WaitRegistration() {
-	if w.ready {
+	if w.Ready() {
 		return
 	}
 	<-w.readyChan
