@@ -84,10 +84,12 @@ func TestSubscribeNew(t *testing.T) {
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost("test-new")
 		Register("test_new", newHost, stop)
+		newHost.Name = "test_new"
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
 			So(ok, ShouldBeTrue)
-			So(host, ShouldResemble, newHost)
+			newHost.UUID = host.UUID
+			So(host, ShouldResemble, &newHost)
 		})
 	})
 }

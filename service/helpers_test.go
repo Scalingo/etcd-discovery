@@ -1,7 +1,7 @@
 package service
 
-func genHost(name string) *Host {
-	return &Host{
+func genHost(name string) Host {
+	return Host{
 		Name:     "test-service",
 		Hostname: "public.dev",
 		Ports: Ports{

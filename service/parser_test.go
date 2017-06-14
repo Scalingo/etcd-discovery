@@ -49,8 +49,8 @@ func TestBuildHostsFromNodes(t *testing.T) {
 		hosts, err := buildHostsFromNodes(sampleNodes)
 		So(err, ShouldBeNil)
 		So(len(hosts), ShouldEqual, 2)
-		So(hosts[0], ShouldResemble, sampleResult)
-		So(hosts[1], ShouldResemble, sampleResult)
+		So(hosts[0], ShouldResemble, &sampleResult)
+		So(hosts[1], ShouldResemble, &sampleResult)
 	})
 }
 
@@ -58,7 +58,7 @@ func TestBuildHostFromNode(t *testing.T) {
 	Convey("Given a sample response, we got a filled Host", t, func() {
 		host, err := buildHostFromNode(sampleNode)
 		So(err, ShouldBeNil)
-		So(host, ShouldResemble, sampleResult)
+		So(host, ShouldResemble, &sampleResult)
 	})
 }
 

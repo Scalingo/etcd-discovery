@@ -74,7 +74,7 @@ func TestHostsString(t *testing.T) {
 		host1 := genHost("test")
 		host2 := genHost("test")
 		host1.PrivateHostname = ""
-		hosts := Hosts{host1, host2}
+		hosts := Hosts{&host1, &host2}
 		So(hosts.String(), ShouldEqual, "public.dev, test-private.dev")
 	})
 
@@ -122,7 +122,7 @@ func TestGetHostResponse(t *testing.T) {
 		host := genHost("test-service")
 		response := &GetHostResponse{
 			err:  nil,
-			host: host,
+			host: &host,
 		}
 
 		Convey("The err method should not return an error", func() {
@@ -132,7 +132,7 @@ func TestGetHostResponse(t *testing.T) {
 		Convey("The Host method should return a valid host", func() {
 			h, err := response.Host()
 			So(err, ShouldBeNil)
-			So(h, ShouldResemble, host)
+			So(h, ShouldResemble, &host)
 		})
 
 		Convey("The URL method should return a valid url", func() {

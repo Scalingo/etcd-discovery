@@ -58,7 +58,7 @@ func TestServiceFirst(t *testing.T) {
 		host, err := s.First()
 		So(err, ShouldBeNil)
 		So(host, ShouldNotBeNil)
-		So(host.Name, ShouldEqual, host1.Name)
+		So(host.PrivateHostname, ShouldEqual, host1.PrivateHostname)
 	})
 }
 
@@ -82,7 +82,7 @@ func TestServiceOne(t *testing.T) {
 		host, err := s.One()
 		So(err, ShouldBeNil)
 		So(host, ShouldNotBeNil)
-		So(host.Name, ShouldEqual, host1.Name)
+		So(host.PrivateHostname, ShouldEqual, host1.PrivateHostname)
 	})
 }
 

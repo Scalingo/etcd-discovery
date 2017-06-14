@@ -20,8 +20,7 @@ const (
 // Register a host with a service name and a host description. The last chan is a stop method. If something is written on this channel, any goroutines launch by this method will stop.
 //
 // This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
-func Register(service string, host *Host, stop chan struct{}) *Registration {
-
+func Register(service string, host Host, stop chan struct{}) *Registration {
 	if len(host.PrivateHostname) == 0 {
 		host.PrivateHostname = hostname
 	}

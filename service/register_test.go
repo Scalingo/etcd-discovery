@@ -16,6 +16,7 @@ func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
+			host.Name = "test_register"
 			w := Register("test_register", host, make(chan struct{}))
 			w.WaitRegistration()
 			uuid := w.UUID()
@@ -26,7 +27,8 @@ func TestRegister(t *testing.T) {
 			json.Unmarshal([]byte(res.Node.Value), &h)
 
 			So(path.Base(res.Node.Key), ShouldEqual, uuid)
-			So(h, ShouldResemble, host)
+			host.UUID = h.UUID
+			So(h, ShouldResemble, &host)
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
