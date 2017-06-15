@@ -19,11 +19,11 @@ func TestServiceAll(t *testing.T) {
 	Convey("With two services", t, func() {
 		host1 := genHost("test1")
 		host2 := genHost("test2")
-		_, c1 := Register("test-get-222", host1, make(chan struct{}))
-		_, c2 := Register("test-get-222", host2, make(chan struct{}))
+		w1 := Register("test-get-222", host1, make(chan struct{}))
+		w2 := Register("test-get-222", host2, make(chan struct{}))
 
-		<-c1
-		<-c2
+		w1.WaitRegistration()
+		w2.WaitRegistration()
 
 		s, err := Get("test-get-222").Service()
 		hosts, err := s.All()
@@ -50,15 +50,15 @@ func TestServiceFirst(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		_, c := Register("test-truc", host1, make(chan struct{}))
-		<-c
+		w := Register("test-truc", host1, make(chan struct{}))
+		w.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
 		host, err := s.First()
 		So(err, ShouldBeNil)
 		So(host, ShouldNotBeNil)
-		So(host.Name, ShouldEqual, host1.Name)
+		So(host.PrivateHostname, ShouldEqual, host1.PrivateHostname)
 	})
 }
 
@@ -74,15 +74,15 @@ func TestServiceOne(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		_, c := Register("test-truc", host1, make(chan struct{}))
-		<-c
+		w := Register("test-truc", host1, make(chan struct{}))
+		w.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
 		host, err := s.One()
 		So(err, ShouldBeNil)
 		So(host, ShouldNotBeNil)
-		So(host.Name, ShouldEqual, host1.Name)
+		So(host.PrivateHostname, ShouldEqual, host1.PrivateHostname)
 	})
 }
 
@@ -92,9 +92,8 @@ func TestServiceUrl(t *testing.T) {
 			host := genHost("test")
 			host.User = ""
 			host.Password = ""
-			_, c := Register("service-url-1", host, make(chan struct{}))
-
-			<-c
+			w := Register("service-url-1", host, make(chan struct{}))
+			w.WaitRegistration()
 
 			s, err := Get("service-url-1").Service()
 			So(err, ShouldBeNil)
@@ -105,9 +104,8 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("With a host with a password", func() {
 			host := genHost("test")
-			_, c := Register("service-url-3", host, make(chan struct{}))
-
-			<-c
+			w := Register("service-url-3", host, make(chan struct{}))
+			w.WaitRegistration()
 
 			s, err := Get("service-url-3").Service()
 			So(err, ShouldBeNil)
@@ -118,9 +116,8 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("When the port does'nt exists", func() {
 			host := genHost("test")
-			_, c := Register("service-url-4", host, make(chan struct{}))
-
-			<-c
+			w := Register("service-url-4", host, make(chan struct{}))
+			w.WaitRegistration()
 
 			s, err := Get("service-url-4").Service()
 			So(err, ShouldBeNil)

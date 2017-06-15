@@ -16,8 +16,10 @@ func TestRegister(t *testing.T) {
 	Convey("After registering service test", t, func() {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
-			uuid, c := Register("test_register", host, make(chan struct{}))
-			<-c
+			host.Name = "test_register"
+			w := Register("test_register", host, make(chan struct{}))
+			w.WaitRegistration()
+			uuid := w.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
@@ -25,12 +27,14 @@ func TestRegister(t *testing.T) {
 			json.Unmarshal([]byte(res.Node.Value), &h)
 
 			So(path.Base(res.Node.Key), ShouldEqual, uuid)
-			So(h, ShouldResemble, host)
+			host.UUID = h.UUID
+			So(h, ShouldResemble, &host)
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			uuid, c := Register("test2_register", host, make(chan struct{}))
-			<-c
+			w := Register("test2_register", host, make(chan struct{}))
+			w.WaitRegistration()
+			uuid := w.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 			now := time.Now()
@@ -50,8 +54,8 @@ func TestRegister(t *testing.T) {
 				Public:   true,
 				Critical: true,
 			}
-			_, c := Register("test3_register", host, make(chan struct{}))
-			<-c
+			w := Register("test3_register", host, make(chan struct{}))
+			w.WaitRegistration()
 			res, err := KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
@@ -64,8 +68,8 @@ func TestRegister(t *testing.T) {
 		Convey("After sending stop, the service should disappear", func() {
 			stop := make(chan struct{})
 			host := genHost("test-disappear")
-			_, c := Register("test4_register", host, stop)
-			<-c
+			w := Register("test4_register", host, stop)
+			w.WaitRegistration()
 			close(stop)
 			time.Sleep(100 * time.Millisecond)
 			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
@@ -75,8 +79,8 @@ func TestRegister(t *testing.T) {
 		Convey("When the privatehostname is not set, it must take the node hostname", func() {
 			host := genHost("HelloWorld")
 			host.PrivateHostname = ""
-			uuid, _ := Register("hello_world", host, make(chan struct{}))
-			So(uuid, ShouldEndWith, hostname)
+			w := Register("hello_world", host, make(chan struct{}))
+			So(w.UUID(), ShouldEndWith, hostname)
 		})
 	})
 }
@@ -92,19 +96,23 @@ func TestWatcher(t *testing.T) {
 		host2.User = "host2"
 		host2.Password = "password2"
 
-		_, c1 := Register("test-watcher", host1, make(chan struct{}))
+		w1 := Register("test-watcher", host1, make(chan struct{}))
 
-		cred1 := <-c1
+		w1.WaitRegistration()
+		cred1, _ := w1.Credentials()
 		So(cred1.User, ShouldEqual, "host1")
 		So(cred1.Password, ShouldEqual, "password1")
 
-		_, c2 := Register("test-watcher", host2, make(chan struct{}))
+		w2 := Register("test-watcher", host2, make(chan struct{}))
 
-		cred2 := <-c2
+		w2.WaitRegistration()
+
+		cred2, _ := w2.Credentials()
 		So(cred2.User, ShouldEqual, "host2")
 		So(cred2.Password, ShouldEqual, "password2")
 
-		cred1 = <-c1
+		time.Sleep(1 * time.Second)
+		cred1, _ = w1.Credentials()
 		So(cred1.User, ShouldEqual, "host2")
 		So(cred1.Password, ShouldEqual, "password2")
 	})
