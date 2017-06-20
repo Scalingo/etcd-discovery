@@ -1,3 +1,7 @@
+# v6.0.1
+
+* Try to auto-fill the private_hostname and private_ports if the service is'nt public
+
 # v6.0
 
 * Add the Registration struct to help Register provide a more user firendly API

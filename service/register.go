@@ -21,10 +21,19 @@ const (
 //
 // This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
 func Register(service string, host Host, stop chan struct{}) *Registration {
+
+	if !host.Public && len(host.PrivateHostname) == 0 {
+		host.PrivateHostname = host.Hostname
+	}
+
 	if len(host.PrivateHostname) == 0 {
 		host.PrivateHostname = hostname
 	}
 	host.Name = service
+
+	if len(host.PrivateHostname) == 0 && len(host.PrivatePorts) == 0 {
+		host.PrivatePorts = host.Ports
+	}
 
 	uuid, _ := uuid.NewV4()
 
