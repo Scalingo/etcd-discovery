@@ -1,3 +1,8 @@
+# v6.0.2
+
+* Fix: Auto-fill wont work if the hostname exists
+* Reset the AfterIndex if we've lost the etcd-watcher
+
 # v6.0.1
 
 * Try to auto-fill the private_hostname and private_ports if the service is'nt public

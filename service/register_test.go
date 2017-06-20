@@ -82,6 +82,16 @@ func TestRegister(t *testing.T) {
 			w := Register("hello_world", host, make(chan struct{}))
 			So(w.UUID(), ShouldEndWith, hostname)
 		})
+		Convey("When the private ports is not set and the service is private, it should take the public_ports", func() {
+			host := genHost("HelloWorld2")
+			host.Public = false
+			host.PrivatePorts = Ports{}
+			w := Register("hello_world2", host, make(chan struct{}))
+			w.WaitRegistration()
+			h, err := Get("hello_world2").First().Host()
+			So(err, ShouldBeNil)
+			So(len(h.PrivatePorts), ShouldEqual, 1)
+		})
 	})
 }
 

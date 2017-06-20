@@ -31,7 +31,7 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 	}
 	host.Name = service
 
-	if len(host.PrivateHostname) == 0 && len(host.PrivatePorts) == 0 {
+	if len(host.PrivateHostname) != 0 && len(host.PrivatePorts) == 0 {
 		host.PrivatePorts = host.Ports
 	}
 
@@ -152,6 +152,7 @@ func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop 
 				if err != nil {
 					// We've lost the connexion to etcd. Speel 1s and retry
 					logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+					id = 0
 					time.Sleep(1 * time.Second)
 					done <- struct{}{}
 					return
