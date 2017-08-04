@@ -43,14 +43,14 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 	serviceInfos := &Service{
 		Name:     service,
 		Critical: host.Critical,
-		User:     host.User,
-		Password: host.Password,
 		Public:   host.Public,
 	}
 
 	if host.Public {
 		serviceInfos.Hostname = host.Hostname
 		serviceInfos.Ports = host.Ports
+		serviceInfos.Password = host.Password
+		serviceInfos.User = host.User
 	}
 
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
