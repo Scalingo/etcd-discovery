@@ -106,6 +106,11 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 				host.Password = credentials.Password
 				serviceInfos.User = credentials.User
 				serviceInfos.Password = credentials.Password
+
+				// Re-marshal the host
+				hostJson, _ = json.Marshal(&host)
+				hostValue = string(hostJson)
+
 				// synchro the host informations
 				hostRegistration(hostKey, hostValue)
 				// and transmit them to the client
