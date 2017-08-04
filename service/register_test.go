@@ -117,13 +117,28 @@ func TestWatcher(t *testing.T) {
 
 		w2.WaitRegistration()
 
-		cred2, _ := w2.Credentials()
-		So(cred2.User, ShouldEqual, "host2")
-		So(cred2.Password, ShouldEqual, "password2")
+		Convey("it should send the new passwords", func() {
+			cred2, _ := w2.Credentials()
+			So(cred2.User, ShouldEqual, "host2")
+			So(cred2.Password, ShouldEqual, "password2")
 
-		time.Sleep(1 * time.Second)
-		cred1, _ = w1.Credentials()
-		So(cred1.User, ShouldEqual, "host2")
-		So(cred1.Password, ShouldEqual, "password2")
+			time.Sleep(1 * time.Second)
+			cred1, _ = w1.Credentials()
+			So(cred1.User, ShouldEqual, "host2")
+			So(cred1.Password, ShouldEqual, "password2")
+		})
+
+		Convey("it should update the host key", func() {
+			for _, w := range []*Registration{w1, w2} {
+				res, err := KAPI().Get(context.Background(), "/services/test-watcher/"+w.UUID(), &etcd.GetOptions{})
+				So(err, ShouldBeNil)
+
+				h := &Host{}
+				json.Unmarshal([]byte(res.Node.Value), &h)
+				So(h.User, ShouldEqual, "host2")
+				So(h.Password, ShouldEqual, "password2")
+			}
+
+		})
 	})
 }
