@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 
 func TestRegistrationReady(t *testing.T) {
 	Convey("When a new registration is created", t, func() {
-		r := NewRegistration("1234", make(chan Credentials))
+		r := NewRegistration(context.Background(), "1234", make(chan Credentials))
 		Convey("it must send false", func() {
 			So(r.Ready(), ShouldBeFalse)
 		})
@@ -17,7 +18,7 @@ func TestRegistrationReady(t *testing.T) {
 
 	Convey("After a service registration", t, func() {
 		cred := make(chan Credentials)
-		r := NewRegistration("1234", cred)
+		r := NewRegistration(context.Background(), "1234", cred)
 		cred <- Credentials{
 			User:     "Moi",
 			Password: "Lui",
@@ -33,7 +34,7 @@ func TestWaitRegistration(t *testing.T) {
 	Convey("It must wait for a service registration", t, func() {
 		order := make([]bool, 2)
 		cred := make(chan Credentials)
-		r := NewRegistration("1234", cred)
+		r := NewRegistration(context.Background(), "1234", cred)
 		registrationChan := make(chan bool)
 		go func() {
 			for {
@@ -64,14 +65,14 @@ func TestWaitRegistration(t *testing.T) {
 
 func TestUUID(t *testing.T) {
 	Convey("It must send the original UUID", t, func() {
-		r := NewRegistration("test-test-123", make(chan Credentials))
+		r := NewRegistration(context.Background(), "test-test-123", make(chan Credentials))
 		So(r.UUID(), ShouldEqual, "test-test-123")
 	})
 }
 
 func TestCredentials(t *testing.T) {
 	Convey("Before a service registration", t, func() {
-		r := NewRegistration("test", make(chan Credentials))
+		r := NewRegistration(context.Background(), "test", make(chan Credentials))
 		Convey("It should return an error", func() {
 			_, err := r.Credentials()
 			So(err, ShouldNotBeNil)
@@ -81,7 +82,7 @@ func TestCredentials(t *testing.T) {
 
 	Convey("After a service registration", t, func() {
 		cred := make(chan Credentials)
-		r := NewRegistration("test", cred)
+		r := NewRegistration(context.Background(), "test", cred)
 		cred <- Credentials{
 			User:     "1",
 			Password: "2",
@@ -97,7 +98,7 @@ func TestCredentials(t *testing.T) {
 
 	Convey("After a credential update", t, func() {
 		cred := make(chan Credentials)
-		r := NewRegistration("test", cred)
+		r := NewRegistration(context.Background(), "test", cred)
 		cred <- Credentials{
 			User:     "1",
 			Password: "2",

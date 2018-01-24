@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -19,12 +20,13 @@ func TestGetNoHost(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	Convey("With registred services", t, func() {
-		stop1, stop2 := make(chan struct{}), make(chan struct{})
+		ctx1, cancel1 := context.WithCancel(context.Background())
+		ctx2, cancel2 := context.WithCancel(context.Background())
 		host1, host2 := genHost("host1"), genHost("host2")
 		host1.Name = "test_service_get"
 		host2.Name = "test_service_get"
-		w1 := Register("test_service_get", host1, stop1)
-		w2 := Register("test_service_get", host2, stop2)
+		w1 := Register(ctx1, "test_service_get", host1)
+		w2 := Register(ctx2, "test_service_get", host2)
 		w1.WaitRegistration()
 		w2.WaitRegistration()
 		Convey("We should have 2 hosts", func() {
@@ -44,8 +46,8 @@ func TestGet(t *testing.T) {
 			}
 			So(err, ShouldBeNil)
 		})
-		close(stop1)
-		close(stop2)
+		cancel1()
+		cancel2()
 	})
 }
 

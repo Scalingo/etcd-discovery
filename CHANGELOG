@@ -1,3 +1,7 @@
+# v7.0.0
+
+* Use context.Context to handle lifecycle of the registration
+
 # v6.0.2
 
 * Fix: Auto-fill wont work if the hostname exists

@@ -18,11 +18,12 @@ API
 /*
  * First argument is the name of the service
  * Then a struct containing the service informations
- * The stop channel exists if you want to be able to stop the registeration
+ * The registeration will stop when the context will be canceled.
  * It will return the service uuid and a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
  */
-stopper := make(chan struct{})
+ctx, cancel := context.WithCancel(context.Background())
 registration := service.Register(
+  ctx,
   "my-service",
   &service.Host{
     Hostname: "public-domain.dev",
@@ -39,7 +40,7 @@ registration := service.Register(
       "http":  "8080",
       "https": "80443",
     },
-  }, stopper)
+  })
 ```
 
 This will create two different etcd keys:

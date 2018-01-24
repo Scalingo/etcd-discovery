@@ -57,14 +57,14 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestSubscribeDown(t *testing.T) {
-	stop := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 
 	Convey("When the service 'test' is watched and a host expired", t, func() {
-		w := Register("test_expiration", genHost("test-expiration"), stop)
+		w := Register(ctx, "test_expiration", genHost("test-expiration"))
 		hosts, _ := SubscribeDown("test_expiration")
 		w.WaitRegistration()
 
-		close(stop)
+		cancel()
 		Convey("The name of the disappeared host should be returned", func() {
 			select {
 			case host, ok := <-hosts:
@@ -76,14 +76,14 @@ func TestSubscribeDown(t *testing.T) {
 }
 
 func TestSubscribeNew(t *testing.T) {
-	stop := make(chan struct{})
-	defer close(stop)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	Convey("When the service 'test' is watched and a host registered", t, func() {
 		hosts, _ := SubscribeNew("test_new")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost("test-new")
-		Register("test_new", newHost, stop)
+		Register(ctx, "test_new", newHost)
 		newHost.Name = "test_new"
 		Convey("A host should be available in the channel", func() {
 			host, ok := <-hosts
