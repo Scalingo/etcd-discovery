@@ -13,15 +13,19 @@ import (
 )
 
 const (
-	// HEARTBEAT_DURATION time in second between two registration. The host will be deleted if etcd didn't received any new registration in those 5 seocnds
+	// HEARTBEAT_DURATION time in second between two registration. The host will
+	// be deleted if etcd didn't received any new registration in those 5 seocnds
 	HEARTBEAT_DURATION = 5
 )
 
-// Register a host with a service name and a host description. The last chan is a stop method. If something is written on this channel, any goroutines launch by this method will stop.
+// Register a host with a service name and a host description. The last chan is
+// a stop method. If something is written on this channel, any goroutines
+// launch by this method will stop.
 //
-// This service will launch two go routines. The first one will maintain the registration every 5 seconds and the second one will check if the service credentials don't change and notify otherwise
-func Register(service string, host Host, stop chan struct{}) *Registration {
-
+// This service will launch two go routines. The first one will maintain the
+// registration every 5 seconds and the second one will check if the service
+// credentials don't change and notify otherwise
+func Register(ctx context.Context, service string, host Host) *Registration {
 	if !host.Public && len(host.PrivateHostname) == 0 {
 		host.PrivateHostname = host.Hostname
 	}
@@ -56,8 +60,6 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
 	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
 
-	watcherStopper := make(chan struct{})
-
 	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUuid)
 	hostJson, _ := json.Marshal(&host)
 	hostValue := string(hostJson)
@@ -87,18 +89,17 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 		}
 
 		if host.Public {
-			go watch(serviceKey, id, privateCredentialsChan, watcherStopper)
+			go watch(ctx, serviceKey, id, privateCredentialsChan)
 		}
 
 		for {
 			select {
-			case <-stop:
+			case <-ctx.Done():
 				_, err := KAPI().Delete(context.Background(), hostKey, &etcd.DeleteOptions{Recursive: false})
 				if err != nil {
 					logger.Println("fail to remove key", hostKey)
 				}
 				ticker.Stop()
-				watcherStopper <- struct{}{}
 				return
 			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
 				// We update our cache
@@ -132,52 +133,40 @@ func Register(service string, host Host, stop chan struct{}) *Registration {
 		}
 	}()
 
-	return NewRegistration(hostUuid, publicCredentialsChan)
+	return NewRegistration(ctx, hostUuid, publicCredentialsChan)
 }
 
-func watch(serviceKey string, id uint64, credentialsChan chan Credentials, stop chan struct{}) {
-	done := make(chan struct{}, 1) // Signal received when the watcher found a modification or has lost the connexion to etcd
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	done <- struct{}{} // Bootstrap to launch the first watcher instance
-
-	// id is the index of the last modification made to the key. The watcher will start watching for modifications done after
-	// this index. This will prevent packet or modification lost.
+func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan chan Credentials) {
+	// id is the index of the last modification made to the key. The watcher will
+	// start watching for modifications done after this index. This will prevent
+	// packet or modification lost.
 
 	for {
-		select {
-		case <-stop:
-			cancelFunc()
+		watcher := KAPI().Watcher(serviceKey, &etcd.WatcherOptions{
+			AfterIndex: id,
+		})
+		resp, err := watcher.Next(ctx)
+		if err == context.Canceled {
 			return
-		case <-done:
-			go func() {
-				watcher := KAPI().Watcher(serviceKey, &etcd.WatcherOptions{
-					AfterIndex: id,
-				})
-				resp, err := watcher.Next(ctx)
-				if err != nil {
-					// We've lost the connexion to etcd. Speel 1s and retry
-					logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
-					id = 0
-					time.Sleep(1 * time.Second)
-					done <- struct{}{}
-					return
-				}
-				var serviceInfos Service
-				err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
-				if err != nil {
-					logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
-					time.Sleep(1 * time.Second)
-					done <- struct{}{}
-					return
-				}
-				// We've got the modification, send it to the register agent
-				id = resp.Node.ModifiedIndex
-				credentialsChan <- Credentials{
-					User:     serviceInfos.User,
-					Password: serviceInfos.Password,
-				}
-				done <- struct{}{} // Restart the process
-			}()
+		}
+
+		if err != nil {
+			// We've lost the connexion to etcd. Speel 1s and retry
+			logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+			id = 0
+			time.Sleep(1 * time.Second)
+		}
+		var serviceInfos Service
+		err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
+		if err != nil {
+			logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+			time.Sleep(1 * time.Second)
+		}
+		// We've got the modification, send it to the register agent
+		id = resp.Node.ModifiedIndex
+		credentialsChan <- Credentials{
+			User:     serviceInfos.User,
+			Password: serviceInfos.Password,
 		}
 	}
 }

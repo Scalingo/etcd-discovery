@@ -17,7 +17,7 @@ func TestRegister(t *testing.T) {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
 			host.Name = "test_register"
-			w := Register("test_register", host, make(chan struct{}))
+			w := Register(context.Background(), "test_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
@@ -32,7 +32,7 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			w := Register("test2_register", host, make(chan struct{}))
+			w := Register(context.Background(), "test2_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+uuid, &etcd.GetOptions{})
@@ -54,7 +54,7 @@ func TestRegister(t *testing.T) {
 				Public:   true,
 				Critical: true,
 			}
-			w := Register("test3_register", host, make(chan struct{}))
+			w := Register(context.Background(), "test3_register", host)
 			w.WaitRegistration()
 			res, err := KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
 			So(err, ShouldBeNil)
@@ -65,12 +65,12 @@ func TestRegister(t *testing.T) {
 			So(service, ShouldResemble, infos)
 		})
 
-		Convey("After sending stop, the service should disappear", func() {
-			stop := make(chan struct{})
+		Convey("After cancelling context, the service should disappear", func() {
+			ctx, cancel := context.WithCancel(context.Background())
 			host := genHost("test-disappear")
-			w := Register("test4_register", host, stop)
+			w := Register(ctx, "test4_register", host)
 			w.WaitRegistration()
-			close(stop)
+			cancel()
 			time.Sleep(100 * time.Millisecond)
 			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
@@ -79,14 +79,14 @@ func TestRegister(t *testing.T) {
 		Convey("When the privatehostname is not set, it must take the node hostname", func() {
 			host := genHost("HelloWorld")
 			host.PrivateHostname = ""
-			w := Register("hello_world", host, make(chan struct{}))
+			w := Register(context.Background(), "hello_world", host)
 			So(w.UUID(), ShouldEndWith, hostname)
 		})
 		Convey("When the private ports is not set and the service is private, it should take the public_ports", func() {
 			host := genHost("HelloWorld2")
 			host.Public = false
 			host.PrivatePorts = Ports{}
-			w := Register("hello_world2", host, make(chan struct{}))
+			w := Register(context.Background(), "hello_world2", host)
 			w.WaitRegistration()
 			h, err := Get("hello_world2").First().Host()
 			So(err, ShouldBeNil)
@@ -106,14 +106,14 @@ func TestWatcher(t *testing.T) {
 		host2.User = "host2"
 		host2.Password = "password2"
 
-		w1 := Register("test-watcher", host1, make(chan struct{}))
+		w1 := Register(context.Background(), "test-watcher", host1)
 
 		w1.WaitRegistration()
 		cred1, _ := w1.Credentials()
 		So(cred1.User, ShouldEqual, "host1")
 		So(cred1.Password, ShouldEqual, "password1")
 
-		w2 := Register("test-watcher", host2, make(chan struct{}))
+		w2 := Register(context.Background(), "test-watcher", host2)
 
 		w2.WaitRegistration()
 

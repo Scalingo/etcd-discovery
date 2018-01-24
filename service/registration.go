@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"sync"
 )
@@ -24,7 +25,7 @@ type Registration struct {
 }
 
 // NewRegistration initialize the Registration struct
-func NewRegistration(uuid string, cred chan Credentials) *Registration {
+func NewRegistration(ctx context.Context, uuid string, cred chan Credentials) *Registration {
 	r := &Registration{
 		credChan:       cred,
 		readyChan:      make(chan bool, 1),
@@ -33,7 +34,7 @@ func NewRegistration(uuid string, cred chan Credentials) *Registration {
 		mutex:          sync.Mutex{},
 		curCredentials: nil,
 	}
-	go r.worker()
+	go r.worker(ctx)
 	return r
 }
 
@@ -69,15 +70,19 @@ func (w *Registration) Credentials() (Credentials, error) {
 	return *cred, nil
 }
 
-func (w *Registration) worker() {
+func (w *Registration) worker(ctx context.Context) {
 	for {
-		newCred := <-w.credChan
-		w.mutex.Lock()
-		w.curCredentials = &newCred
-		if !w.ready {
-			w.readyChan <- true
+		select {
+		case <-ctx.Done():
+			return
+		case newCred := <-w.credChan:
+			w.mutex.Lock()
+			w.curCredentials = &newCred
+			if !w.ready {
+				w.readyChan <- true
+			}
+			w.ready = true
+			w.mutex.Unlock()
 		}
-		w.ready = true
-		w.mutex.Unlock()
 	}
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -19,8 +20,8 @@ func TestServiceAll(t *testing.T) {
 	Convey("With two services", t, func() {
 		host1 := genHost("test1")
 		host2 := genHost("test2")
-		w1 := Register("test-get-222", host1, make(chan struct{}))
-		w2 := Register("test-get-222", host2, make(chan struct{}))
+		w1 := Register(context.Background(), "test-get-222", host1)
+		w2 := Register(context.Background(), "test-get-222", host2)
 
 		w1.WaitRegistration()
 		w2.WaitRegistration()
@@ -50,7 +51,7 @@ func TestServiceFirst(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		w := Register("test-truc", host1, make(chan struct{}))
+		w := Register(context.Background(), "test-truc", host1)
 		w.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
@@ -74,7 +75,7 @@ func TestServiceOne(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		w := Register("test-truc", host1, make(chan struct{}))
+		w := Register(context.Background(), "test-truc", host1)
 		w.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
@@ -92,7 +93,7 @@ func TestServiceUrl(t *testing.T) {
 			host := genHost("test")
 			host.User = ""
 			host.Password = ""
-			w := Register("service-url-1", host, make(chan struct{}))
+			w := Register(context.Background(), "service-url-1", host)
 			w.WaitRegistration()
 
 			s, err := Get("service-url-1").Service()
@@ -104,7 +105,7 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("With a host with a password", func() {
 			host := genHost("test")
-			w := Register("service-url-3", host, make(chan struct{}))
+			w := Register(context.Background(), "service-url-3", host)
 			w.WaitRegistration()
 
 			s, err := Get("service-url-3").Service()
@@ -116,7 +117,7 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("When the port does'nt exists", func() {
 			host := genHost("test")
-			w := Register("service-url-4", host, make(chan struct{}))
+			w := Register(context.Background(), "service-url-4", host)
 			w.WaitRegistration()
 
 			s, err := Get("service-url-4").Service()
