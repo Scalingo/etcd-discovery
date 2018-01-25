@@ -38,10 +38,11 @@ registration, err := service.Register(
       "http":  "8080",
       "https": "80443",
     },
-	},
+  },
 )
 if err != nil {
-  // Handle error
+  // Register return an error if it fails to initialize
+  // Then, it reconnects automatically to etcd etc. if required
 }
 
 // ...
