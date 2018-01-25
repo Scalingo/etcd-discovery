@@ -17,9 +17,12 @@ func TestRegister(t *testing.T) {
 		host := genHost("test-register")
 		Convey("It should be available with etcd", func() {
 			host.Name = "test_register"
-			w := Register(context.Background(), "test_register", host)
-			w.WaitRegistration()
-			uuid := w.UUID()
+			r, err := Register("test_register", host)
+			So(err, ShouldBeNil)
+			r.WaitRegistration()
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+			uuid := r.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
@@ -32,9 +35,12 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
-			w := Register(context.Background(), "test2_register", host)
-			w.WaitRegistration()
-			uuid := w.UUID()
+			r, err := Register("test2_register", host)
+			So(err, ShouldBeNil)
+			r.WaitRegistration()
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+			uuid := r.UUID()
 			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 			now := time.Now()
@@ -54,8 +60,12 @@ func TestRegister(t *testing.T) {
 				Public:   true,
 				Critical: true,
 			}
-			w := Register(context.Background(), "test3_register", host)
-			w.WaitRegistration()
+
+			r, err := Register("test3_register", host)
+			So(err, ShouldBeNil)
+			r.WaitRegistration()
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
 			res, err := KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
@@ -66,28 +76,35 @@ func TestRegister(t *testing.T) {
 		})
 
 		Convey("After cancelling context, the service should disappear", func() {
-			ctx, cancel := context.WithCancel(context.Background())
 			host := genHost("test-disappear")
-			w := Register(ctx, "test4_register", host)
-			w.WaitRegistration()
-			cancel()
+			r, err := Register("test4_register", host)
+			So(err, ShouldBeNil)
+			r.WaitRegistration()
+			So(r.Stop(), ShouldBeNil)
+
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
+			_, err = KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
 
 		Convey("When the privatehostname is not set, it must take the node hostname", func() {
 			host := genHost("HelloWorld")
 			host.PrivateHostname = ""
-			w := Register(context.Background(), "hello_world", host)
-			So(w.UUID(), ShouldEndWith, hostname)
+			r, err := Register("hello_world", host)
+			So(err, ShouldBeNil)
+			So(r.UUID(), ShouldEndWith, hostname)
+			So(r.Stop(), ShouldBeNil)
 		})
 		Convey("When the private ports is not set and the service is private, it should take the public_ports", func() {
 			host := genHost("HelloWorld2")
 			host.Public = false
 			host.PrivatePorts = Ports{}
-			w := Register(context.Background(), "hello_world2", host)
-			w.WaitRegistration()
+
+			r, err := Register("hello_world2", host)
+			So(err, ShouldBeNil)
+			r.WaitRegistration()
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
 			h, err := Get("hello_world2").First().Host()
 			So(err, ShouldBeNil)
 			So(len(h.PrivatePorts), ShouldEqual, 1)
@@ -106,31 +123,34 @@ func TestWatcher(t *testing.T) {
 		host2.User = "host2"
 		host2.Password = "password2"
 
-		w1 := Register(context.Background(), "test-watcher", host1)
+		r1, err := Register("test-watcher", host1)
+		So(err, ShouldBeNil)
+		r1.WaitRegistration()
+		Reset(func() { So(r1.Stop(), ShouldBeNil) })
 
-		w1.WaitRegistration()
-		cred1, _ := w1.Credentials()
+		cred1, _ := r1.Credentials()
 		So(cred1.User, ShouldEqual, "host1")
 		So(cred1.Password, ShouldEqual, "password1")
 
-		w2 := Register(context.Background(), "test-watcher", host2)
-
-		w2.WaitRegistration()
+		r2, err := Register("test-watcher", host2)
+		So(err, ShouldBeNil)
+		r2.WaitRegistration()
+		Reset(func() { So(r2.Stop(), ShouldBeNil) })
 
 		Convey("it should send the new passwords", func() {
-			cred2, _ := w2.Credentials()
+			cred2, _ := r2.Credentials()
 			So(cred2.User, ShouldEqual, "host2")
 			So(cred2.Password, ShouldEqual, "password2")
 
 			time.Sleep(1 * time.Second)
-			cred1, _ = w1.Credentials()
+			cred1, _ = r1.Credentials()
 			So(cred1.User, ShouldEqual, "host2")
 			So(cred1.Password, ShouldEqual, "password2")
 		})
 
 		Convey("it should update the host key", func() {
-			for _, w := range []*Registration{w1, w2} {
-				res, err := KAPI().Get(context.Background(), "/services/test-watcher/"+w.UUID(), &etcd.GetOptions{})
+			for _, r := range []*Registration{r1, r2} {
+				res, err := KAPI().Get(context.Background(), "/services/test-watcher/"+r.UUID(), &etcd.GetOptions{})
 				So(err, ShouldBeNil)
 
 				h := &Host{}

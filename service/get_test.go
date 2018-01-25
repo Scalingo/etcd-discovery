@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -19,21 +18,24 @@ func TestGetNoHost(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	Convey("With registred services", t, func() {
-		ctx1, cancel1 := context.WithCancel(context.Background())
-		ctx2, cancel2 := context.WithCancel(context.Background())
+	Convey("With registered services", t, func() {
 		host1, host2 := genHost("host1"), genHost("host2")
 		host1.Name = "test_service_get"
 		host2.Name = "test_service_get"
-		w1 := Register(ctx1, "test_service_get", host1)
-		w2 := Register(ctx2, "test_service_get", host2)
-		w1.WaitRegistration()
-		w2.WaitRegistration()
+
+		r1, err := Register("test_service_get", host1)
+		So(err, ShouldBeNil)
+		r2, err := Register("test_service_get", host2)
+		So(err, ShouldBeNil)
+
+		r1.WaitRegistration()
+		r2.WaitRegistration()
+
 		Convey("We should have 2 hosts", func() {
 			hosts, err := Get("test_service_get").All()
 			So(err, ShouldBeNil)
 			So(len(hosts), ShouldEqual, 2)
-			if hosts[0].UUID == w1.UUID() {
+			if hosts[0].UUID == r1.UUID() {
 				host1.UUID = hosts[0].UUID
 				host2.UUID = hosts[1].UUID
 				So(hosts[0], ShouldResemble, &host1)
@@ -46,8 +48,8 @@ func TestGet(t *testing.T) {
 			}
 			So(err, ShouldBeNil)
 		})
-		cancel1()
-		cancel2()
+		So(r1.Stop(), ShouldBeNil)
+		So(r2.Stop(), ShouldBeNil)
 	})
 }
 

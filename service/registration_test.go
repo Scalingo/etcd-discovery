@@ -1,119 +1,116 @@
 package service
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestRegistrationReady(t *testing.T) {
+func TestRegistration_Ready(t *testing.T) {
+	host := genHost("test-registration-ready")
+	service := Service{
+		Name:     host.Name,
+		Hostname: "public.dev",
+	}
+
 	Convey("When a new registration is created", t, func() {
-		r := NewRegistration(context.Background(), "1234", make(chan Credentials))
+		r, err := NewRegistration(host, service)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r.Stop(), ShouldBeNil) })
+
 		Convey("it must send false", func() {
 			So(r.Ready(), ShouldBeFalse)
 		})
 	})
 
-	Convey("After a service registration", t, func() {
-		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "1234", cred)
-		cred <- Credentials{
-			User:     "Moi",
-			Password: "Lui",
-		}
+	// Convey("After a service registration", t, func() {
+	// 	r, err := NewRegistration(host, service)
+	// 	So(err, ShouldBeNil)
+	// 	Reset(func() { So(r.Stop(), ShouldBeNil) })
 
-		Convey("it must send true", func() {
-			So(r.Ready(), ShouldBeTrue)
-		})
-	})
+	// 	Convey("it must send true", func() {
+	// 		So(r.Ready(), ShouldBeTrue)
+	// 	})
+	// })
 }
 
-func TestWaitRegistration(t *testing.T) {
+func TestRegistration_WaitRegistration(t *testing.T) {
+	host := genHost("test-wait-registration")
+	service := Service{
+		Name:     host.Name,
+		Hostname: "public.dev",
+		User:     host.User,
+		Password: host.Password,
+	}
+
 	Convey("It must wait for a service registration", t, func() {
-		order := make([]bool, 2)
-		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "1234", cred)
-		registrationChan := make(chan bool)
-		go func() {
-			for {
-				r.WaitRegistration()
-				registrationChan <- true
-			}
-		}()
-		timer := time.NewTimer(1 * time.Second)
-		for i := 0; i < 2; i++ {
-			select {
-			case <-timer.C:
-				order[i] = true
-			case <-registrationChan:
-				order[i] = false
-			}
+		r, err := NewRegistration(host, service)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r.Stop(), ShouldBeNil) })
 
-			timer.Reset(1 * time.Second)
-			cred <- Credentials{
-				User:     "Salut",
-				Password: "Toi",
-			}
-		}
+		creds, err := r.Credentials()
+		So(err, ShouldNotBeNil)
 
-		So(order[0], ShouldBeTrue)
-		So(order[1], ShouldBeFalse)
+		r.WaitRegistration()
+		creds, err = r.Credentials()
+		So(err, ShouldBeNil)
+		So(creds.User, ShouldEqual, host.User)
+		So(creds.Password, ShouldEqual, host.Password)
 	})
 }
 
-func TestUUID(t *testing.T) {
+func TestRegistration_UUID(t *testing.T) {
+	host := genHost("test-registration-uuid")
+	service := Service{
+		Name:     host.Name,
+		Hostname: "public.dev",
+	}
+
 	Convey("It must send the original UUID", t, func() {
-		r := NewRegistration(context.Background(), "test-test-123", make(chan Credentials))
-		So(r.UUID(), ShouldEqual, "test-test-123")
+		r, err := NewRegistration(host, service)
+		So(err, ShouldBeNil)
+		So(r.UUID(), ShouldEqual, host.UUID)
+		So(r.Stop(), ShouldBeNil)
 	})
 }
 
-func TestCredentials(t *testing.T) {
-	Convey("Before a service registration", t, func() {
-		r := NewRegistration(context.Background(), "test", make(chan Credentials))
-		Convey("It should return an error", func() {
-			_, err := r.Credentials()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "Not ready")
-		})
-	})
+func TestRegistration_Credentials(t *testing.T) {
+	host := genHost("test-registration-credentials")
+	service := Service{
+		Name:     host.Name,
+		Hostname: "public.dev",
+		User:     host.User,
+		Password: host.Password,
+	}
+	host2 := genHost("test-registration-credentials")
 
-	Convey("After a service registration", t, func() {
-		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "test", cred)
-		cred <- Credentials{
-			User:     "1",
-			Password: "2",
-		}
-
-		Convey("It should return the new credentials", func() {
-			c, err := r.Credentials()
-			So(err, ShouldBeNil)
-			So(c.User, ShouldEqual, "1")
-			So(c.Password, ShouldEqual, "2")
-		})
-	})
+	// First usecase has been tested in TestRegistration_WaitRegistration
 
 	Convey("After a credential update", t, func() {
-		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "test", cred)
-		cred <- Credentials{
-			User:     "1",
-			Password: "2",
-		}
-		cred <- Credentials{
-			User:     "3",
-			Password: "4",
-		}
+		r, err := NewRegistration(host, service)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+		r.WaitRegistration()
+		c, err := r.Credentials()
+		So(err, ShouldBeNil)
+		So(c.User, ShouldEqual, host.User)
+		So(c.Password, ShouldEqual, host.Password)
+
+		service.User = host2.User
+		service.Password = host2.Password
+		r2, err := NewRegistration(host2, service)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r2.Stop(), ShouldBeNil) })
 
 		Convey("It should return the new credentials", func() {
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
+
 			c, err := r.Credentials()
 			So(err, ShouldBeNil)
-			So(c.User, ShouldEqual, "3")
-			So(c.Password, ShouldEqual, "4")
+			So(c.User, ShouldEqual, host2.User)
+			So(c.Password, ShouldEqual, host2.Password)
 		})
 	})
 }

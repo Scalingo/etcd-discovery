@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,11 +19,15 @@ func TestServiceAll(t *testing.T) {
 	Convey("With two services", t, func() {
 		host1 := genHost("test1")
 		host2 := genHost("test2")
-		w1 := Register(context.Background(), "test-get-222", host1)
-		w2 := Register(context.Background(), "test-get-222", host2)
+		r1, err := Register("test-get-222", host1)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r1.Stop(), ShouldBeNil) })
+		r2, err := Register("test-get-222", host2)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r2.Stop(), ShouldBeNil) })
 
-		w1.WaitRegistration()
-		w2.WaitRegistration()
+		r1.WaitRegistration()
+		r2.WaitRegistration()
 
 		s, err := Get("test-get-222").Service()
 		hosts, err := s.All()
@@ -51,8 +54,11 @@ func TestServiceFirst(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		w := Register(context.Background(), "test-truc", host1)
-		w.WaitRegistration()
+
+		r, err := Register("test-truc", host1)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r.Stop(), ShouldBeNil) })
+		r.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
@@ -75,8 +81,11 @@ func TestServiceOne(t *testing.T) {
 
 	Convey("With a service", t, func() {
 		host1 := genHost("test1")
-		w := Register(context.Background(), "test-truc", host1)
-		w.WaitRegistration()
+		r, err := Register("test-truc", host1)
+		So(err, ShouldBeNil)
+		Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+		r.WaitRegistration()
 
 		s, err := Get("test-truc").Service()
 		So(err, ShouldBeNil)
@@ -93,8 +102,12 @@ func TestServiceUrl(t *testing.T) {
 			host := genHost("test")
 			host.User = ""
 			host.Password = ""
-			w := Register(context.Background(), "service-url-1", host)
-			w.WaitRegistration()
+
+			r, err := Register("service-url-1", host)
+			So(err, ShouldBeNil)
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+			r.WaitRegistration()
 
 			s, err := Get("service-url-1").Service()
 			So(err, ShouldBeNil)
@@ -105,8 +118,12 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("With a host with a password", func() {
 			host := genHost("test")
-			w := Register(context.Background(), "service-url-3", host)
-			w.WaitRegistration()
+
+			r, err := Register("service-url-3", host)
+			So(err, ShouldBeNil)
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+			r.WaitRegistration()
 
 			s, err := Get("service-url-3").Service()
 			So(err, ShouldBeNil)
@@ -117,8 +134,12 @@ func TestServiceUrl(t *testing.T) {
 
 		Convey("When the port does'nt exists", func() {
 			host := genHost("test")
-			w := Register(context.Background(), "service-url-4", host)
-			w.WaitRegistration()
+
+			r, err := Register("service-url-4", host)
+			So(err, ShouldBeNil)
+			Reset(func() { So(r.Stop(), ShouldBeNil) })
+
+			r.WaitRegistration()
 
 			s, err := Get("service-url-4").Service()
 			So(err, ShouldBeNil)

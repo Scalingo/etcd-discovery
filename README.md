@@ -21,9 +21,7 @@ API
  * The registeration will stop when the context will be canceled.
  * It will return the service uuid and a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
  */
-ctx, cancel := context.WithCancel(context.Background())
-registration := service.Register(
-  ctx,
+registration, err := service.Register(
   "my-service",
   &service.Host{
     Hostname: "public-domain.dev",
@@ -40,7 +38,19 @@ registration := service.Register(
       "http":  "8080",
       "https": "80443",
     },
-  })
+	},
+)
+if err != nil {
+  // Handle error
+}
+
+// ...
+
+// To release properly resources
+err = registration.Stop()
+if err != nil {
+  // Do something with error
+}
 ```
 
 This will create two different etcd keys:
