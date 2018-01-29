@@ -7,7 +7,7 @@ import (
 )
 
 // ServiceResponse is the interface used to provide a response to the service.Get() Method.
-// This interface provide a standard API used for mathod chaining like:
+// This interface provide a standard API used for method chaining like:
 // 	url, err := Get("my-service").First().URL()
 //
 // To provide such API, go errors need to be stored and sent at the last moment.

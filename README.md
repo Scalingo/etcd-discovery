@@ -1,5 +1,4 @@
-Etcd-discovery
-==============
+# Etcd-discovery
 
 This is a golang package for managing services over the decentralized key-value store etcd
 
@@ -9,8 +8,7 @@ To install it:
 
 `go get github.com/Scalingo/etcd-discovery/service`
 
-API
----
+## API
 
 ### Register a service
 
@@ -103,4 +101,15 @@ deadHosts := service.SubscribeDown("name_of_service")
 for hostname := range deadHosts {
   fmt.Println(hostname, "is dead, RIP")
 }
+```
+
+# Generate the mocks
+
+Generate the mocks with:
+
+```shell
+for interface in $(grep --extended-regexp --no-message --no-filename "type .* interface" ./service/* | cut -d " " -f 2)
+do
+  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/service $interface
+done
 ```
