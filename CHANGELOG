@@ -1,3 +1,7 @@
+# v7.0.1
+
+* Fix panic when loosing registration
+
 # v7.0.0
 
 * Use context.Context to handle lifecycle of the registration
