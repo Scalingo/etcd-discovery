@@ -55,7 +55,7 @@ type Host struct {
 	// Critical will be set to true is the service is critical
 	Critical bool `json:"critical,omitempty"`
 	// UUID is the service UUID, this must have the following pattern: uuid-PrivateHostname
-	UUID string `json:"uuid, omitempty"`
+	UUID string `json:"uuid,omitempty"`
 }
 
 // URL will return a valid url to contact this service on the specific protocol provided by the scheme parameter
