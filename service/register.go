@@ -151,10 +151,11 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 		}
 
 		if err != nil {
-			// We've lost the connexion to etcd. Speel 1s and retry
+			// We've lost the connexion to etcd. Sleep 1s and retry
 			logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
 			id = 0
 			time.Sleep(1 * time.Second)
+			continue
 		}
 		var serviceInfos Service
 		err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
