@@ -1,3 +1,7 @@
+# To Be Released
+
+* Use github.com/gofrs/uuid for UUID generation
+
 # v7.0.1
 
 * Fix panic when loosing registration
