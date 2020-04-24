@@ -8,7 +8,7 @@ import (
 	errgo "gopkg.in/errgo.v1"
 
 	etcd "github.com/coreos/etcd/client"
-	uuid "github.com/nu7hatch/gouuid"
+	"github.com/gofrs/uuid"
 	"golang.org/x/net/context"
 )
 
