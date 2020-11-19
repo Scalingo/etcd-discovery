@@ -1,7 +1,7 @@
 package service
 
 import (
-	etcd "github.com/coreos/etcd/client"
+	etcd "go.etcd.io/etcd/v3/client"
 	"golang.org/x/net/context"
 	errgo "gopkg.in/errgo.v1"
 )

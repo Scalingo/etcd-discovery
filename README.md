@@ -6,7 +6,7 @@ This is a golang package for managing services over the decentralized key-value 
 
 To install it:
 
-`go get github.com/Scalingo/etcd-discovery/service`
+`go get github.com/Scalingo/etcd-discovery/service/v7`
 
 ## API
 

@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	etcd "github.com/coreos/etcd/client"
+	etcd "go.etcd.io/etcd/v3/client"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

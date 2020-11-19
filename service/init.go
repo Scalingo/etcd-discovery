@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	etcd "github.com/coreos/etcd/client"
-	"github.com/coreos/etcd/pkg/transport"
+	etcd "go.etcd.io/etcd/v3/client"
+	"go.etcd.io/etcd/v3/pkg/transport"
 )
 
 var (

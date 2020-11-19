@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	etcd "github.com/coreos/etcd/client"
+	etcd "go.etcd.io/etcd/v3/client"
 )
 
 // Subscribe to every event that happen to a service
