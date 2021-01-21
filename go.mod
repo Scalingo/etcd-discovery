@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/coreos/go-semver v0.3.0 // indirect
-	github.com/gofrs/uuid v3.3.0+incompatible
+	github.com/gofrs/uuid v3.4.0+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/smartystreets/goconvey v1.6.4
