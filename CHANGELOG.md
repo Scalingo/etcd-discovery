@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v7.0.3
+
 * Bump github.com/gofrs/uuid from 3.3.0+incompatible to 3.4.0+incompatible #45
 
 ## v7.0.2
