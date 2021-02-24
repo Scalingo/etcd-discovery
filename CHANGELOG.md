@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* Bump github.com/golang/mock from 1.4.4 to 1.5.0
+
 ## v7.0.3
 
 * Bump github.com/gofrs/uuid from 3.3.0+incompatible to 3.4.0+incompatible #45
