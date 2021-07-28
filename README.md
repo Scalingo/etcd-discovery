@@ -1,4 +1,4 @@
-# Etcd Discovery v7.0.3
+# Etcd Discovery v7.1.0
 
 This is a golang package for managing services over the decentralized key-value store etcd.
 
@@ -120,13 +120,13 @@ Bump new version number in `CHANGELOG.md` and `README.md`.
 
 Commit, tag and create a new release:
 
-```sh
+```shell
 git add CHANGELOG.md README.md
-git commit -m "Bump v7.0.3"
-git tag v7.0.3
+git commit -m "Bump v7.1.0"
+git tag v7.1.0
 git push origin master
 git push --tags
-hub release create v7.0.3
+hub release create v7.1.0
 ```
 
 The title of the release should be the version number and the text of the release is the same as the changelog.

@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v7.1.0
+
 * Bump etcd client to 3.5.0 (v2.305.0) and also bump to Go 1.16
   [#49](https://github.com/Scalingo/etcd-discovery/pull/49)
 * Bump github.com/golang/mock from 1.4.4 to 1.6.0
