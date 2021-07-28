@@ -1,6 +1,6 @@
 module github.com/Scalingo/etcd-discovery/v7
 
-go 1.15
+go 1.16
 
 require (
 	github.com/gofrs/uuid v3.4.0+incompatible
