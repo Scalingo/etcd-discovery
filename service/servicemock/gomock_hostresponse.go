@@ -35,6 +35,7 @@ func (m *MockHostResponse) EXPECT() *MockHostResponseMockRecorder {
 
 // Err mocks base method
 func (m *MockHostResponse) Err() error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Err")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -42,11 +43,13 @@ func (m *MockHostResponse) Err() error {
 
 // Err indicates an expected call of Err
 func (mr *MockHostResponseMockRecorder) Err() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Err", reflect.TypeOf((*MockHostResponse)(nil).Err))
 }
 
 // Host mocks base method
 func (m *MockHostResponse) Host() (*service.Host, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Host")
 	ret0, _ := ret[0].(*service.Host)
 	ret1, _ := ret[1].(error)
@@ -55,11 +58,13 @@ func (m *MockHostResponse) Host() (*service.Host, error) {
 
 // Host indicates an expected call of Host
 func (mr *MockHostResponseMockRecorder) Host() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Host", reflect.TypeOf((*MockHostResponse)(nil).Host))
 }
 
 // PrivateURL mocks base method
 func (m *MockHostResponse) PrivateURL(arg0, arg1 string) (string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PrivateURL", arg0, arg1)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -68,11 +73,13 @@ func (m *MockHostResponse) PrivateURL(arg0, arg1 string) (string, error) {
 
 // PrivateURL indicates an expected call of PrivateURL
 func (mr *MockHostResponseMockRecorder) PrivateURL(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrivateURL", reflect.TypeOf((*MockHostResponse)(nil).PrivateURL), arg0, arg1)
 }
 
 // URL mocks base method
 func (m *MockHostResponse) URL(arg0, arg1 string) (string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "URL", arg0, arg1)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -81,5 +88,6 @@ func (m *MockHostResponse) URL(arg0, arg1 string) (string, error) {
 
 // URL indicates an expected call of URL
 func (mr *MockHostResponseMockRecorder) URL(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockHostResponse)(nil).URL), arg0, arg1)
 }
