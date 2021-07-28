@@ -1,8 +1,8 @@
 # Etcd Discovery v7.0.3
 
-This is a golang package for managing services over the decentralized key-value store etcd
+This is a golang package for managing services over the decentralized key-value store etcd.
 
-> http://github.com/coreos/etcd
+> https://github.com/etcd-io/etcd
 
 To install it:
 

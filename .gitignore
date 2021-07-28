@@ -1,4 +1,7 @@
 *.test
 .*swp
 *~
-Godeps/_workspace
+
+# IDE
+.idea/
+.vscode/
