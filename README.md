@@ -1,8 +1,8 @@
 # Etcd Discovery v7.0.3
 
-This is a golang package for managing services over the decentralized key-value store etcd
+This is a golang package for managing services over the decentralized key-value store etcd.
 
-> http://github.com/coreos/etcd
+> https://github.com/etcd-io/etcd
 
 To install it:
 
@@ -110,7 +110,7 @@ Generate the mocks with:
 ```shell
 for interface in $(grep --extended-regexp --no-message --no-filename "type .* interface" ./service/* | cut -d " " -f 2)
 do
-  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/service $interface
+  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/v7/service $interface
 done
 ```
 

@@ -35,6 +35,7 @@ func (m *MockRegistrationWrapper) EXPECT() *MockRegistrationWrapperMockRecorder 
 
 // Credentials mocks base method
 func (m *MockRegistrationWrapper) Credentials() (service.Credentials, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Credentials")
 	ret0, _ := ret[0].(service.Credentials)
 	ret1, _ := ret[1].(error)
@@ -43,11 +44,13 @@ func (m *MockRegistrationWrapper) Credentials() (service.Credentials, error) {
 
 // Credentials indicates an expected call of Credentials
 func (mr *MockRegistrationWrapperMockRecorder) Credentials() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Credentials", reflect.TypeOf((*MockRegistrationWrapper)(nil).Credentials))
 }
 
 // Ready mocks base method
 func (m *MockRegistrationWrapper) Ready() bool {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ready")
 	ret0, _ := ret[0].(bool)
 	return ret0
@@ -55,11 +58,13 @@ func (m *MockRegistrationWrapper) Ready() bool {
 
 // Ready indicates an expected call of Ready
 func (mr *MockRegistrationWrapperMockRecorder) Ready() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ready", reflect.TypeOf((*MockRegistrationWrapper)(nil).Ready))
 }
 
 // UUID mocks base method
 func (m *MockRegistrationWrapper) UUID() string {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UUID")
 	ret0, _ := ret[0].(string)
 	return ret0
@@ -67,15 +72,18 @@ func (m *MockRegistrationWrapper) UUID() string {
 
 // UUID indicates an expected call of UUID
 func (mr *MockRegistrationWrapperMockRecorder) UUID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UUID", reflect.TypeOf((*MockRegistrationWrapper)(nil).UUID))
 }
 
 // WaitRegistration mocks base method
 func (m *MockRegistrationWrapper) WaitRegistration() {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "WaitRegistration")
 }
 
 // WaitRegistration indicates an expected call of WaitRegistration
 func (mr *MockRegistrationWrapperMockRecorder) WaitRegistration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitRegistration", reflect.TypeOf((*MockRegistrationWrapper)(nil).WaitRegistration))
 }

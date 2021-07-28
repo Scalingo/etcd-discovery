@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	etcd "go.etcd.io/etcd/v3/client"
-	"go.etcd.io/etcd/v3/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	etcd "go.etcd.io/etcd/client/v2"
 )
 
 var (

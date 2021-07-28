@@ -1,15 +1,14 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	errgo "gopkg.in/errgo.v1"
-
-	etcd "go.etcd.io/etcd/v3/client"
 	"github.com/gofrs/uuid"
-	"golang.org/x/net/context"
+	etcd "go.etcd.io/etcd/client/v2"
+	"gopkg.in/errgo.v1"
 )
 
 const (
@@ -39,9 +38,8 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		host.PrivatePorts = host.Ports
 	}
 
-	uuid, _ := uuid.NewV4()
-
-	hostUuid := fmt.Sprintf("%s-%s", uuid.String(), host.PrivateHostname)
+	uuidV4, _ := uuid.NewV4()
+	hostUuid := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
 	host.UUID = hostUuid
 
 	serviceInfos := &Service{

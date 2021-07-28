@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	etcd "go.etcd.io/etcd/v3/client"
-	errgo "gopkg.in/errgo.v1"
+	etcd "go.etcd.io/etcd/client/v2"
+	"gopkg.in/errgo.v1"
 )
 
 // Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.

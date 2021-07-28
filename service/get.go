@@ -1,9 +1,10 @@
 package service
 
 import (
-	etcd "go.etcd.io/etcd/v3/client"
-	"golang.org/x/net/context"
-	errgo "gopkg.in/errgo.v1"
+	"context"
+
+	etcd "go.etcd.io/etcd/client/v2"
+	"gopkg.in/errgo.v1"
 )
 
 // ServiceResponse is the interface used to provide a response to the service.Get() Method.

@@ -1,15 +1,15 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path"
 	"testing"
 	"time"
 
-	etcd "go.etcd.io/etcd/v3/client"
 	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/net/context"
+	etcd "go.etcd.io/etcd/client/v2"
 )
 
 func TestRegister(t *testing.T) {
