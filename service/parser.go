@@ -3,9 +3,8 @@ package service
 import (
 	"encoding/json"
 
-	errgo "gopkg.in/errgo.v1"
-
-	etcd "go.etcd.io/etcd/v3/client"
+	etcd "go.etcd.io/etcd/client/v2"
+	"gopkg.in/errgo.v1"
 )
 
 func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {

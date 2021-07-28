@@ -3,8 +3,8 @@ package service
 import (
 	"testing"
 
-	etcd "go.etcd.io/etcd/v3/client"
 	. "github.com/smartystreets/goconvey/convey"
+	etcd "go.etcd.io/etcd/client/v2"
 )
 
 var (

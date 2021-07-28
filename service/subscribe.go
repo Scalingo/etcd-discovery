@@ -1,11 +1,10 @@
 package service
 
 import (
+	"context"
 	"path"
 
-	"golang.org/x/net/context"
-
-	etcd "go.etcd.io/etcd/v3/client"
+	etcd "go.etcd.io/etcd/client/v2"
 )
 
 // Subscribe to every event that happen to a service

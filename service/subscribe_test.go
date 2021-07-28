@@ -1,13 +1,12 @@
 package service
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	etcd "go.etcd.io/etcd/v3/client"
-	"golang.org/x/net/context"
-
 	. "github.com/smartystreets/goconvey/convey"
+	etcd "go.etcd.io/etcd/client/v2"
 )
 
 type resAndErr struct {
