@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/gofrs/uuid v3.4.0+incompatible
 	github.com/golang/mock v1.6.0
-	github.com/smartystreets/goconvey v1.6.4
+	github.com/smartystreets/goconvey v1.7.2
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1
 	// The latest versions of etcd have been migrated to go modules.
 	// Since this change the version of the etcd client we are currently
