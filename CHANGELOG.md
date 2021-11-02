@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* Bump go.etcd.io/etcd/client/v2 from 2.305.0 to 2.305.1
+
 ## v7.1.0
 
 * Bump etcd client to 3.5.0 (v2.305.0) and also bump to Go 1.16
