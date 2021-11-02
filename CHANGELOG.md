@@ -3,6 +3,8 @@
 ## To Be Released
 
 * Bump go.etcd.io/etcd/client/v2 from 2.305.0 to 2.305.1
+* Bump go.etcd.io/etcd/client/pkg/v3 from 3.5.0 to 3.5.1
+* Bump github.com/smartystreets/goconvey from 1.6.4 to 1.7.2
 
 ## v7.1.0
 
