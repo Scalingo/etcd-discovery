@@ -176,7 +176,6 @@ func hostRegistration(hostKey, hostJson string) error {
 		return errgo.Notef(err, "Unable to register host")
 	}
 	return nil
-
 }
 
 func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {

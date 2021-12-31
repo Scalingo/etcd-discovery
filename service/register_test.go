@@ -138,7 +138,6 @@ func TestWatcher(t *testing.T) {
 				So(h.User, ShouldEqual, "host2")
 				So(h.Password, ShouldEqual, "password2")
 			}
-
 		})
 	})
 }
