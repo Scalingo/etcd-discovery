@@ -19,7 +19,7 @@ type ServiceResponse interface {
 	Err() error
 	// Service return the Service struct representing the requested service
 	Service() (*Service, error)
-	// One return a host of the service choosen randomly
+	// One return a host of the service chosen randomly
 	One() HostResponse
 	// First return the first host of the serice
 	First() HostResponse
@@ -72,7 +72,7 @@ type GetServiceResponse struct {
 	err     error
 }
 
-// Err wil return an error if an error happend when you've called tre Get method, or nil if no error were detected.
+// Err wil return an error if an error happened when you've called tre Get method, or nil if no error were detected.
 func (q *GetServiceResponse) Err() error {
 	return q.err
 }
@@ -98,7 +98,7 @@ func (q *GetServiceResponse) All() (Hosts, error) {
 	return hosts, nil
 }
 
-// One will return a host choosen randomly in all the hosts of the service
+// One will return a host chosen randomly in all the hosts of the service
 // If the ServiceResponse is errored, the errors will be passed to the HostResponse
 func (q *GetServiceResponse) One() HostResponse {
 	if q.err != nil {
@@ -143,7 +143,7 @@ func (q *GetServiceResponse) First() HostResponse {
 	}
 }
 
-// URL build url for the specified service. If the service is not public, a random host will be choosen and an url will be generated.
+// URL build url for the specified service. If the service is not public, a random host will be chosen and an url will be generated.
 func (q *GetServiceResponse) URL(scheme, path string) (string, error) {
 	if q.err != nil {
 		return "", errgo.Mask(q.err)
