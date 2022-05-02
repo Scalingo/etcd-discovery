@@ -14,6 +14,6 @@ require (
 	//
 	// The package "go.etcd.io/etcd/client/v3" is a complete refactoring
 	// of the client and uses grpc instead of http, that we currently use.
-	go.etcd.io/etcd/client/v2 v2.305.2
+	go.etcd.io/etcd/client/v2 v2.305.4
 	gopkg.in/errgo.v1 v1.0.1
 )
