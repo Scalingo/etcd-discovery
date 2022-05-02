@@ -4,7 +4,7 @@
 
 * Bump github.com/gofrs/uuid from 3.4.0+incompatible to 4.2.0+incompatible
 * Bump go.etcd.io/etcd/client/v2 from 2.305.0 to 2.305.2
-* Bump go.etcd.io/etcd/client/pkg/v3 from 3.5.0 to 3.5.2
+* Bump go.etcd.io/etcd/client/pkg/v3 from 3.5.0 to 3.5.4
 * Bump github.com/smartystreets/goconvey from 1.6.4 to 1.7.2
 
 ## v7.1.0
