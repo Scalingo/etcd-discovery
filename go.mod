@@ -1,6 +1,6 @@
 module github.com/Scalingo/etcd-discovery/v7
 
-go 1.16
+go 1.17
 
 require (
 	github.com/gofrs/uuid v4.2.0+incompatible
@@ -16,4 +16,19 @@ require (
 	// of the client and uses grpc instead of http, that we currently use.
 	go.etcd.io/etcd/client/v2 v2.305.4
 	gopkg.in/errgo.v1 v1.0.1
+)
+
+require (
+	github.com/coreos/go-semver v0.3.0 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
+	github.com/json-iterator/go v1.1.11 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/smartystreets/assertions v1.2.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.17.0 // indirect
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
 )
