@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v7.1.1
+
 * chore(go): use go 1.17
 * Bump github.com/gofrs/uuid from 3.4.0+incompatible to 4.2.0+incompatible
 * Bump go.etcd.io/etcd/client/v2 from 2.305.0 to 2.305.4
