@@ -2,6 +2,9 @@
 
 ## To Be Released
 
+* chore(deps): bump go.etcd.io/etcd/client/pkg/v3 from 3.5.4 to 3.5.5
+* chore(deps): bump go.etcd.io/etcd/client/v2 from 2.305.4 to 2.305.5
+
 ## v7.1.1
 
 * chore(go): use go 1.17
