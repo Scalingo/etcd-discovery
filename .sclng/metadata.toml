@@ -1,0 +1,7 @@
+dependencies = []
+description = "Services discovery over the decentralized key-value store etcd"
+flags = ["lib"]
+languages = ["go"]
+owner = "etienne@scalingo.com"
+team = "IST"
+version = "1.1.0"
