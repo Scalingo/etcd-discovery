@@ -2,7 +2,7 @@
 
 ## To Be Released
 
-* chore(deps): bump github.com/gofrs/uuid from 4.2.0+incompatible to 4.3.0+incompatible
+* chore(deps): bump github.com/gofrs/uuid from 4.2.0+incompatible to 4.3.1+incompatible
 * chore(deps): bump go.etcd.io/etcd/client/pkg/v3 from 3.5.4 to 3.5.5
 * chore(deps): bump go.etcd.io/etcd/client/v2 from 2.305.4 to 2.305.5
 
