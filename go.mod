@@ -14,7 +14,7 @@ require (
 	//
 	// The package "go.etcd.io/etcd/client/v3" is a complete refactoring
 	// of the client and uses grpc instead of http, that we currently use.
-	go.etcd.io/etcd/client/v2 v2.305.5
+	go.etcd.io/etcd/client/v2 v2.305.6
 	gopkg.in/errgo.v1 v1.0.1
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.6 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
