@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/errgo.v1"
+	errgo "gopkg.in/errgo.v1"
 )
 
 // Ports is a representation of the ports exposed by a host or a service.
