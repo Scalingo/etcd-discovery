@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v7.1.2
+
 * fix(host): automatically find scheme
 * chore(deps): bump github.com/gofrs/uuid from 4.2.0+incompatible to 4.3.1+incompatible
 * chore(deps): bump go.etcd.io/etcd/client/pkg/v3 from 3.5.4 to 3.5.6
