@@ -4,147 +4,162 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHostUrl(t *testing.T) {
-	Convey("With a host without any password", t, func() {
+	t.Run("With a host without any password", func(t *testing.T) {
 		host := genHost("test")
 		host.User = ""
 		host.Password = ""
 
 		url, err := host.URL("http", "/path")
-		So(err, ShouldBeNil)
-		So(url, ShouldEqual, "http://public.dev:10000/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://public.dev:10000/path", url)
 	})
 
-	Convey("With a host with a password", t, func() {
+	t.Run("With a host with a password", func(t *testing.T) {
 		host := genHost("test")
 		url, err := host.URL("http", "/path")
-		So(err, ShouldBeNil)
-		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
 
-	Convey("When the port does'nt exists", t, func() {
+	t.Run("When the port doesn't exists", func(t *testing.T) {
 		host := genHost("test")
 		url, err := host.URL("htjp", "/path")
-		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldEqual, "unknown scheme")
-		So(len(url), ShouldEqual, 0)
+		require.Error(t, err)
+		assert.Equal(t, "unknown scheme", err.Error())
+		assert.Equal(t, 0, len(url))
+	})
+
+	t.Run("When the scheme is not provided", func(t *testing.T) {
+		host := genHost("test")
+		url, err := host.URL("", "/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
 }
 
 func TestHostPrivateUrl(t *testing.T) {
-	Convey("With a host without any password", t, func() {
+	t.Run("With a host without any password", func(t *testing.T) {
 		host := genHost("test")
 		host.User = ""
 		host.Password = ""
 
 		url, err := host.PrivateURL("http", "/path")
-		So(err, ShouldBeNil)
-		So(url, ShouldEqual, "http://test-private.dev:20000/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://test-private.dev:20000/path", url)
 	})
 
-	Convey("With a host with a password", t, func() {
+	t.Run("With a host with a password", func(t *testing.T) {
 		host := genHost("test")
 		url, err := host.PrivateURL("http", "/path")
-		So(err, ShouldBeNil)
-		So(url, ShouldEqual, "http://user:password@test-private.dev:20000/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@test-private.dev:20000/path", url)
 	})
 
-	Convey("When the port does'nt exists", t, func() {
+	t.Run("When the port doesn't exists", func(t *testing.T) {
 		host := genHost("test")
 		url, err := host.PrivateURL("htjp", "/path")
-		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldEqual, "unknown scheme")
-		So(len(url), ShouldEqual, 0)
+		require.Error(t, err)
+		assert.Equal(t, "unknown scheme", err.Error())
+		assert.Equal(t, 0, len(url))
 	})
 
-	Convey("When the host does not support private urls, it should fall back to URL", t, func() {
+	t.Run("When the scheme is not provided", func(t *testing.T) {
+		host := genHost("test")
+		url, err := host.PrivateURL("", "/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@test-private.dev:20000/path", url)
+	})
+
+	t.Run("When the host does not support private urls, it should fall back to URL", func(t *testing.T) {
 		host := genHost("test")
 		host.PrivateHostname = ""
 		url, err := host.PrivateURL("http", "/path")
-		So(err, ShouldBeNil)
-		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
 }
 
 func TestHostsString(t *testing.T) {
-	Convey("With a list of two hosts", t, func() {
+	t.Run("With a list of two hosts", func(t *testing.T) {
 		host1 := genHost("test")
 		host2 := genHost("test")
 		host1.PrivateHostname = ""
 		hosts := Hosts{&host1, &host2}
-		So(hosts.String(), ShouldEqual, "public.dev, test-private.dev")
+		assert.Equal(t, "public.dev, test-private.dev", hosts.String())
 	})
 
-	Convey("With an empty list", t, func() {
+	t.Run("With an empty list", func(t *testing.T) {
 		hosts := Hosts{}
-		So(hosts.String(), ShouldEqual, "")
+		assert.Equal(t, "", hosts.String())
 	})
 }
 
 func TestGetHostResponse(t *testing.T) {
-	Convey("With an errored response", t, func() {
+	t.Run("With an errored response", func(t *testing.T) {
 		response := &GetHostResponse{
 			err:  errors.New("TestError"),
 			host: nil,
 		}
 
-		Convey("The err method should return an error", func() {
-			So(response.Err(), ShouldNotBeNil)
-			So(response.Err().Error(), ShouldEqual, "TestError")
+		t.Run("The err method should return an error", func(t *testing.T) {
+			require.Error(t, response.Err())
+			assert.Equal(t, "TestError", response.Err().Error())
 		})
 
-		Convey("The Host method should return an error", func() {
+		t.Run("The Host method should return an error", func(t *testing.T) {
 			host, err := response.Host()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(host, ShouldBeNil)
+			require.Error(t, err)
+			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Nil(t, host)
 		})
 
-		Convey("The URL method should return an error", func() {
+		t.Run("The URL method should return an error", func(t *testing.T) {
 			url, err := response.URL("http", "/path")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(url, ShouldEqual, "")
+			require.Error(t, err)
+			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Equal(t, "", url)
 		})
 
-		Convey("The PrivateURL should return an error", func() {
+		t.Run("The PrivateURL should return an error", func(t *testing.T) {
 			url, err := response.PrivateURL("http", "/path")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(url, ShouldEqual, "")
+			require.Error(t, err)
+			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Equal(t, "", url)
 		})
 	})
 
-	Convey("With a valid response", t, func() {
+	t.Run("With a valid response", func(t *testing.T) {
 		host := genHost("test-service")
 		response := &GetHostResponse{
 			err:  nil,
 			host: &host,
 		}
 
-		Convey("The err method should not return an error", func() {
-			So(response.Err(), ShouldBeNil)
+		t.Run("The err method should not return an error", func(t *testing.T) {
+			require.NoError(t, response.Err())
 		})
 
-		Convey("The Host method should return a valid host", func() {
+		t.Run("The Host method should return a valid host", func(t *testing.T) {
 			h, err := response.Host()
-			So(err, ShouldBeNil)
-			So(h, ShouldResemble, &host)
+			require.NoError(t, err)
+			assert.Equal(t, &host, h)
 		})
 
-		Convey("The URL method should return a valid url", func() {
+		t.Run("The URL method should return a valid url", func(t *testing.T) {
 			url, err := response.URL("http", "/path")
-			So(err, ShouldBeNil)
-			So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
+			require.NoError(t, err)
+			assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 		})
 
-		Convey("The Private URL should return a valid url", func() {
+		t.Run("The Private URL should return a valid url", func(t *testing.T) {
 			url, err := response.PrivateURL("http", "/path")
-			So(err, ShouldBeNil)
-			So(url, ShouldEqual, "http://user:password@test-service-private.dev:20000/path")
+			require.NoError(t, err)
+			assert.Equal(t, "http://user:password@test-service-private.dev:20000/path", url)
 		})
 	})
 }
