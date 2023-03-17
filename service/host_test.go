@@ -148,7 +148,6 @@ func TestGetHostResponse(t *testing.T) {
 			h, err := response.Host()
 			require.NoError(t, err)
 			assert.Equal(t, &host, h)
-			//c.So(h, c.ShouldResemble, &host)
 		})
 
 		t.Run("The URL method should return a valid url", func(t *testing.T) {
