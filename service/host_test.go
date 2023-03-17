@@ -25,12 +25,19 @@ func TestHostUrl(t *testing.T) {
 		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 	})
 
-	Convey("When the port does'nt exists", t, func() {
+	Convey("When the port doesn't exists", t, func() {
 		host := genHost("test")
 		url, err := host.URL("htjp", "/path")
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "unknown scheme")
 		So(len(url), ShouldEqual, 0)
+	})
+
+	Convey("When the scheme is not provided", t, func() {
+		host := genHost("test")
+		url, err := host.URL("", "/path")
+		So(err, ShouldBeNil)
+		So(url, ShouldEqual, "http://user:password@public.dev:10000/path")
 	})
 }
 
@@ -52,12 +59,19 @@ func TestHostPrivateUrl(t *testing.T) {
 		So(url, ShouldEqual, "http://user:password@test-private.dev:20000/path")
 	})
 
-	Convey("When the port does'nt exists", t, func() {
+	Convey("When the port doesn't exists", t, func() {
 		host := genHost("test")
 		url, err := host.PrivateURL("htjp", "/path")
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "unknown scheme")
 		So(len(url), ShouldEqual, 0)
+	})
+
+	Convey("When the scheme is not provided", t, func() {
+		host := genHost("test")
+		url, err := host.PrivateURL("", "/path")
+		So(err, ShouldBeNil)
+		So(url, ShouldEqual, "http://user:password@test-private.dev:20000/path")
 	})
 
 	Convey("When the host does not support private urls, it should fall back to URL", t, func() {

@@ -11,10 +11,11 @@ import (
 // Ports is a representation of the ports exposed by a host or a service.
 // The key is the protocol name and the value is the port used for this protocol.
 // Typical usage is:
-// 	Ports{
+//
+//	Ports{
 //		"http":"80",
 //		"https": "443",
-//  }
+//	}
 type Ports map[string]string
 
 // Hosts will represent a slice of hosts
@@ -23,7 +24,7 @@ type Hosts []*Host
 func (hs Hosts) String() string {
 	names := []string{}
 	for _, h := range hs {
-		if len(h.PrivateHostname) != 0 {
+		if h.PrivateHostname != "" {
 			names = append(names, h.PrivateHostname)
 		} else {
 			names = append(names, h.Hostname)
@@ -60,11 +61,22 @@ type Host struct {
 
 // URL will return a valid url to contact this service on the specific protocol provided by the scheme parameter
 func (h *Host) URL(scheme, path string) (string, error) {
-	var url string
-	var port string
-	var ok bool
-	if port, ok = h.Ports[scheme]; !ok {
-		return "", errors.New("unknown scheme")
+	var (
+		url  string
+		port string
+		ok   bool
+		err  error
+	)
+
+	if scheme != "" {
+		if port, ok = h.Ports[scheme]; !ok {
+			return "", errors.New("unknown scheme")
+		}
+	} else {
+		scheme, port, err = h.findSchemeAndPort(h.Ports)
+		if err != nil {
+			return "", errors.New("find scheme and port")
+		}
 	}
 
 	if h.User != "" {
@@ -82,7 +94,7 @@ func (h *Host) URL(scheme, path string) (string, error) {
 // PrivateURL will provide a valid url to contact this service on the Private network
 // this method will fallback to the URL method if the host does not provide any PrivateURL
 func (h *Host) PrivateURL(scheme, path string) (string, error) {
-	if len(h.PrivateHostname) == 0 {
+	if h.PrivateHostname == "" {
 		url, err := h.URL(scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
@@ -90,13 +102,26 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 			return url, nil
 		}
 	}
-	var url, port string
-	var ok bool
-	if port, ok = h.PrivatePorts[scheme]; !ok {
-		return "", errors.New("unknown scheme")
+
+	var (
+		url  string
+		port string
+		ok   bool
+		err  error
+	)
+
+	if scheme != "" {
+		if port, ok = h.PrivatePorts[scheme]; !ok {
+			return "", errors.New("unknown scheme")
+		}
+	} else {
+		scheme, port, err = h.findSchemeAndPort(h.PrivatePorts)
+		if err != nil {
+			return "", errors.New("find scheme and port")
+		}
 	}
 
-	if len(h.User) != 0 {
+	if h.User != "" {
 		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
 			scheme, h.User, h.Password, h.PrivateHostname, port, path,
 		)
@@ -107,9 +132,20 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	return url, nil
 }
 
+func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
+	schemes := [2]string{"http", "https"}
+	for _, scheme := range schemes {
+		if port, ok := ports[scheme]; ok {
+			return scheme, port, nil
+		}
+	}
+	return "", "", errgo.New("scheme not found")
+}
+
 // HostResponse is the interface used to provide a single host response.
 // This interface provide a standard API used fot method chaining like:
-// 	Get("my-service").First().Url()
+//
+//	Get("my-service").First().Url()
 //
 // To provide such API errores need to be stored and sent at the last moment.
 // To do so each "final" methods (like URL or Host) will check if the Response is errored before
