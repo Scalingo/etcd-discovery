@@ -43,8 +43,8 @@ github.com/smartystreets/goconvey/convey/reporting
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# go.etcd.io/etcd/api/v3 v3.5.7
-## explicit; go 1.17
+# go.etcd.io/etcd/api/v3 v3.5.8
+## explicit; go 1.19
 go.etcd.io/etcd/api/v3/version
 # go.etcd.io/etcd/client/pkg/v3 v3.5.7
 ## explicit; go 1.17
