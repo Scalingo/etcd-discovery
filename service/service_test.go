@@ -29,6 +29,7 @@ func TestServiceAll(t *testing.T) {
 		w2.WaitRegistration()
 
 		s, err := Get(ctx, "test-get-222").Service()
+		So(err, ShouldBeNil)
 		hosts, err := s.All()
 		So(err, ShouldBeNil)
 		So(len(hosts), ShouldEqual, 2)
