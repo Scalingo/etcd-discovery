@@ -88,7 +88,7 @@ func TestRegister(t *testing.T) {
 			host.PrivatePorts = Ports{}
 			w := Register(context.Background(), "hello_world2", host)
 			w.WaitRegistration()
-			h, err := Get("hello_world2").First().Host()
+			h, err := Get(context.Background(), "hello_world2").First().Host()
 			So(err, ShouldBeNil)
 			So(len(h.PrivatePorts), ShouldEqual, 1)
 		})

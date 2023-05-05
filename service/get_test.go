@@ -11,7 +11,8 @@ import (
 func TestGetNoHost(t *testing.T) {
 	Convey("Without any service", t, func() {
 		Convey("Get should return an empty slice", func() {
-			hosts, err := Get("test_no_service").All()
+			ctx := context.Background()
+			hosts, err := Get(ctx, "test_no_service").All()
 			So(err, ShouldBeNil)
 			So(len(hosts), ShouldEqual, 0)
 		})
@@ -20,8 +21,9 @@ func TestGetNoHost(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	Convey("With registred services", t, func() {
-		ctx1, cancel1 := context.WithCancel(context.Background())
-		ctx2, cancel2 := context.WithCancel(context.Background())
+		ctx := context.Background()
+		ctx1, cancel1 := context.WithCancel(ctx)
+		ctx2, cancel2 := context.WithCancel(ctx)
 		host1, host2 := genHost("host1"), genHost("host2")
 		host1.Name = "test_service_get"
 		host2.Name = "test_service_get"
@@ -30,7 +32,7 @@ func TestGet(t *testing.T) {
 		w1.WaitRegistration()
 		w2.WaitRegistration()
 		Convey("We should have 2 hosts", func() {
-			hosts, err := Get("test_service_get").All()
+			hosts, err := Get(ctx, "test_service_get").All()
 			So(err, ShouldBeNil)
 			So(len(hosts), ShouldEqual, 2)
 			if hosts[0].UUID == w1.UUID() {

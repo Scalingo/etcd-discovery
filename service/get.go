@@ -9,7 +9,8 @@ import (
 
 // ServiceResponse is the interface used to provide a response to the service.Get() Method.
 // This interface provide a standard API used for method chaining like:
-// 	url, err := Get("my-service").First().URL()
+//
+//	url, err := Get("my-service").First().URL()
 //
 // To provide such API, go errors need to be stored and sent at the last moment.
 // To do so, each "final" method (like Url or All), will check if the Response is errored, before
@@ -30,12 +31,13 @@ type ServiceResponse interface {
 }
 
 // Get a service by its name. This method does not directly return the Service, but a ServiceResponse. This permit method chaining like:
-// 	url, err := Get("my-service").First().URL()
+//
+//	url, err := Get(ctx, "my-service").First().URL()
 //
 // If there was an error during the acquisition of the service, this error will be stored in the ServiceResponse. Final methods will check for this error before doing actual logic.
 // If the service is not found, we won't render an error, but will return a service with minimal informations. This is done to provide maximal backwerd compatibility since older versions does not register themself to the "/services_infos" directory.
-func Get(service string) ServiceResponse {
-	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
+func Get(ctx context.Context, service string) ServiceResponse {
+	res, err := KAPI().Get(ctx, "/services_infos/"+service, nil)
 
 	if err != nil {
 		if etcd.IsKeyNotFound(err) {
