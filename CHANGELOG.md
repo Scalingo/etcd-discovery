@@ -3,6 +3,7 @@
 ## To Be Released
 
 * Add a context as parameter to the Get method 
+
 ## v7.1.2
 
 * fix(host): automatically find scheme
