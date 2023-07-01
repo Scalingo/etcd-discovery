@@ -28,14 +28,14 @@ github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/smartystreets/assertions v1.13.1
+# github.com/smarty/assertions v1.15.0
 ## explicit; go 1.18
-github.com/smartystreets/assertions
-github.com/smartystreets/assertions/internal/go-diff/diffmatchpatch
-github.com/smartystreets/assertions/internal/go-render/render
-github.com/smartystreets/assertions/internal/oglematchers
-# github.com/smartystreets/goconvey v1.7.2
-## explicit; go 1.16
+github.com/smarty/assertions
+github.com/smarty/assertions/internal/go-diff/diffmatchpatch
+github.com/smarty/assertions/internal/go-render/render
+github.com/smarty/assertions/internal/oglematchers
+# github.com/smartystreets/goconvey v1.8.1
+## explicit; go 1.18
 github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/gotest
 github.com/smartystreets/goconvey/convey/reporting
