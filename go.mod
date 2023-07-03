@@ -3,7 +3,7 @@ module github.com/Scalingo/etcd-discovery/v7
 go 1.20
 
 require (
-	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/golang/mock v1.6.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.8.4
