@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
