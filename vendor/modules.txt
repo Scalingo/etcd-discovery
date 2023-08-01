@@ -28,7 +28,7 @@ github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/smarty/assertions v1.15.0
+# github.com/smarty/assertions v1.15.1
 ## explicit; go 1.18
 github.com/smarty/assertions
 github.com/smarty/assertions/internal/go-diff/diffmatchpatch
