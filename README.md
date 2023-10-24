@@ -1,16 +1,20 @@
 # Etcd Discovery v7.1.2
 
-This is a golang package for managing services over the decentralized key-value store etcd.
-
-> https://github.com/etcd-io/etcd
+This is a Go package for managing services over the decentralized key-value store [etcd](https://github.com/etcd-io/etcd).
 
 To install it:
 
-`go get github.com/Scalingo/etcd-discovery/v7/service`
+```sh
+go get github.com/Scalingo/etcd-discovery/v7/service
+```
+
+Registering a service consists of providing a public hostname or/and a private hostname:
+* A public hostname resolves to an IP address usable from everywhere on the internet.
+* A private hostname resolves to an IP address usable from the private network of the company.
 
 ## API
 
-### Register a service
+### Register a Service
 
 ```go
 /*
@@ -30,8 +34,8 @@ registration := service.Register(
       "https": "443",
     },
     Critical:       true,
-    User:           gopassword.Generate(10),
-    Password:       gopassword.Generate(10),
+    User:           gopassword.Generate(32),
+    Password:       gopassword.Generate(32),
     Public: true,
     PrivateHostname: "node-1.internal.dev",
     PrivatePorts: service.ports{
@@ -41,9 +45,12 @@ registration := service.Register(
   })
 ```
 
+The `Public` attribute specifies whether a service has a public hostname or not. If set to false, setting the `Hostname` is equivalent to setting the `PrivateHostname`.
+
 This will create two different etcd keys:
 
 * `/services/name_of_service/you-service-uuid-node-1.internal.dev` containing:
+
 ```json
 {
    "name": "public-domain.dev",
@@ -66,6 +73,7 @@ This will create two different etcd keys:
 ```
 
 * `/service_infos/name_of_service` containing:
+
 ```json
 {
    "name": "my-service",
@@ -81,7 +89,7 @@ This will create two different etcd keys:
 }
 ```
 
-### Subscribe to new service
+### Subscribe to New Service
 
 When a service is added from another host, if you want your application to
 notice it and communicating with it, it is necessary to watch these
@@ -94,7 +102,7 @@ for host := range newHosts {
 }
 ```
 
-### Watch down services
+### Watch Down Services
 
 ```go
 deadHosts := service.SubscribeDown("name_of_service")
@@ -103,7 +111,7 @@ for hostname := range deadHosts {
 }
 ```
 
-# Generate the mocks
+# Generate the Mocks
 
 Generate the mocks with:
 
@@ -114,19 +122,28 @@ do
 done
 ```
 
-## Release a New Version
+# Release a New Version
 
 Bump new version number in `CHANGELOG.md` and `README.md`.
 
 Commit, tag and create a new release:
 
-```shell
+```sh
+version="7.1.2"
+
+git switch --create release/${version}
 git add CHANGELOG.md README.md
-git commit -m "Bump v7.1.2"
-git tag v7.1.2
-git push origin master
-git push --tags
-hub release create v7.1.2
+git commit -m "Bump v${version}"
+git push --set-upstream origin release/${version}
+gh pr create --reviewer=EtienneM --title "$(git log -1 --pretty=%B)"
+```
+
+Once the pull request merged, you can tag the new release.
+
+```sh
+git tag v${version}
+git push origin master v${version}
+gh release create v${version}
 ```
 
 The title of the release should be the version number and the text of the release is the same as the changelog.
