@@ -2,6 +2,10 @@
 
 ## To Be Released
 
+## v7.1.3
+
+* chore(deps): various updates
+
 ## v7.1.2
 
 * fix(host): automatically find scheme
