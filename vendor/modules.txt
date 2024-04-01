@@ -43,19 +43,19 @@ github.com/smartystreets/goconvey/convey/reporting
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# go.etcd.io/etcd/api/v3 v3.5.12
-## explicit; go 1.20
+# go.etcd.io/etcd/api/v3 v3.5.13
+## explicit; go 1.21
 go.etcd.io/etcd/api/v3/version
-# go.etcd.io/etcd/client/pkg/v3 v3.5.12
-## explicit; go 1.20
+# go.etcd.io/etcd/client/pkg/v3 v3.5.13
+## explicit; go 1.21
 go.etcd.io/etcd/client/pkg/v3/fileutil
 go.etcd.io/etcd/client/pkg/v3/pathutil
 go.etcd.io/etcd/client/pkg/v3/srv
 go.etcd.io/etcd/client/pkg/v3/tlsutil
 go.etcd.io/etcd/client/pkg/v3/transport
 go.etcd.io/etcd/client/pkg/v3/types
-# go.etcd.io/etcd/client/v2 v2.305.12
-## explicit; go 1.20
+# go.etcd.io/etcd/client/v2 v2.305.13
+## explicit; go 1.21
 go.etcd.io/etcd/client/v2
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
