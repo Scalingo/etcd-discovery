@@ -1,4 +1,4 @@
-# Etcd Discovery v7.1.3
+# Etcd Discovery v7.1.4
 
 This is a Go package for managing services over the decentralized key-value store [etcd](https://github.com/etcd-io/etcd).
 
@@ -129,11 +129,11 @@ Bump new version number in `CHANGELOG.md` and `README.md`.
 Commit, tag and create a new release:
 
 ```sh
-version="7.1.3"
+version="7.1.4"
 
 git switch --create release/${version}
 git add CHANGELOG.md README.md
-git commit -m "Bump v${version}"
+git commit --message="Bump v${version}"
 git push --set-upstream origin release/${version}
 gh pr create --reviewer=EtienneM --fill-first --base master
 ```

@@ -2,7 +2,10 @@
 
 ## To Be Released
 
+## v7.1.4
+
 * build(go): use go 1.22
+* build(deps): various updates
 
 ## v7.1.3
 
