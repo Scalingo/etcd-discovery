@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* build(go): use go 1.22
+
 ## v7.1.3
 
 * chore(deps): various updates
