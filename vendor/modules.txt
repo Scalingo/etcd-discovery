@@ -4,7 +4,7 @@ github.com/coreos/go-semver/semver
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/gofrs/uuid/v5 v5.3.1
+# github.com/gofrs/uuid/v5 v5.3.2
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
 # github.com/golang/mock v1.6.0
@@ -44,19 +44,20 @@ github.com/smartystreets/goconvey/convey/reporting
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# go.etcd.io/etcd/api/v3 v3.5.18
-## explicit; go 1.22
+# go.etcd.io/etcd/api/v3 v3.5.21
+## explicit; go 1.23.0
 go.etcd.io/etcd/api/v3/version
-# go.etcd.io/etcd/client/pkg/v3 v3.5.18
-## explicit; go 1.22
+# go.etcd.io/etcd/client/pkg/v3 v3.6.1
+## explicit; go 1.23.0
 go.etcd.io/etcd/client/pkg/v3/fileutil
 go.etcd.io/etcd/client/pkg/v3/pathutil
 go.etcd.io/etcd/client/pkg/v3/srv
 go.etcd.io/etcd/client/pkg/v3/tlsutil
 go.etcd.io/etcd/client/pkg/v3/transport
 go.etcd.io/etcd/client/pkg/v3/types
-# go.etcd.io/etcd/client/v2 v2.305.18
-## explicit; go 1.22
+go.etcd.io/etcd/client/pkg/v3/verify
+# go.etcd.io/etcd/client/v2 v2.305.21
+## explicit; go 1.23.0
 go.etcd.io/etcd/client/v2
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
@@ -72,11 +73,10 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/sys v0.30.0
-## explicit; go 1.18
+# golang.org/x/sys v0.31.0
+## explicit; go 1.23.0
 golang.org/x/sys/unix
-# gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
-## explicit
+golang.org/x/sys/windows
 # gopkg.in/errgo.v1 v1.0.1
 ## explicit
 gopkg.in/errgo.v1
