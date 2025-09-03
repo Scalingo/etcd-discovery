@@ -6,7 +6,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/golang/mock v1.6.0
 	github.com/smartystreets/goconvey v1.8.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.etcd.io/etcd/client/pkg/v3 v3.6.4
 	// The latest versions of etcd have been migrated to go modules.
 	// Since this change the version of the etcd client we are currently
@@ -22,7 +22,7 @@ require (
 require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gopherjs/gopherjs v1.19.0-beta1 // indirect
+	github.com/gopherjs/gopherjs v1.19.0-beta2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -32,6 +32,6 @@ require (
 	go.etcd.io/etcd/api/v3 v3.6.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
