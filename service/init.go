@@ -17,13 +17,16 @@ import (
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	etcd "go.etcd.io/etcd/client/v2"
+	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
-	logger           *log.Logger
-	clientSingleton  etcd.Client
-	clientSingletonO = &sync.Once{}
-	hostname         string
+	logger             *log.Logger
+	clientSingleton    etcd.Client
+	clientSingletonO   = &sync.Once{}
+	clientV3Singleton  *etcdv3.Client
+	clientV3SingletonO = &sync.Once{}
+	hostname           string
 )
 
 // KAPI provide a etcd KeysAPI for a client provided by the Client() method
@@ -31,13 +34,26 @@ func KAPI() etcd.KeysAPI {
 	return etcd.NewKeysAPI(Client())
 }
 
+// KAPIV3 provide a etcd KeysAPI for a client provided by the ClientV3() method
+func KAPIV3() etcdv3.KV {
+	return etcdv3.NewKV(ClientV3())
+}
+
+func LeaseV3() etcdv3.Lease {
+	return etcdv3.NewLease(ClientV3())
+}
+
+func WatchV3() etcdv3.Watcher {
+	return etcdv3.NewWatcher(ClientV3())
+}
+
 // Client will generate a valid etcd client from the following environment variables:
-//	* ETCD_HOSTS: a list of etcd hosts comma separated
-//	* ETCD_HOST: a single etcd host
-//	* ETCD_CACERT: The ca certificate
-//	* ETCD_TLS_CERT: The client tls cert
-// 	* ETCD_TLS_KEY: The client tls key
-// 	* ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
+//   - ETCD_HOSTS: a list of etcd hosts comma separated
+//   - ETCD_HOST: a single etcd host
+//   - ETCD_CACERT: The ca certificate
+//   - ETCD_TLS_CERT: The client tls cert
+//   - ETCD_TLS_KEY: The client tls key
+//   - ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
 func Client() etcd.Client {
 	clientSingletonO.Do(func() {
 		var err error
@@ -98,6 +114,67 @@ func Client() etcd.Client {
 		}
 	})
 	return clientSingleton
+}
+
+// ClientV3 will generate a valid etcd client from the following environment variables:
+//   - ETCD_HOSTS: a list of etcd hosts comma separated
+//   - ETCD_HOST: a single etcd host
+//   - ETCD_CACERT: The ca certificate
+//   - ETCD_TLS_CERT: The client tls cert
+//   - ETCD_TLS_KEY: The client tls key
+//   - ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
+func ClientV3() *etcdv3.Client {
+	clientV3SingletonO.Do(func() {
+		var err error
+
+		hosts := []string{"http://localhost:2379"}
+		if len(os.Getenv("ETCD_HOSTS")) != 0 {
+			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
+		} else if len(os.Getenv("ETCD_HOST")) != 0 {
+			hosts = []string{os.Getenv("ETCD_HOST")}
+		} else if len(os.Getenv("ETCD_1_PORT_2379_TCP_ADDR")) != 0 {
+			hosts = []string{
+				"http://" +
+					os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") +
+					":" + os.Getenv("ETCD_1_PORT_2379_TCP_PORT"),
+			}
+		}
+
+		cacert := os.Getenv("ETCD_CACERT")
+		tlskey := os.Getenv("ETCD_TLS_KEY")
+		tlscert := os.Getenv("ETCD_TLS_CERT")
+		if len(cacert) != 0 && len(tlskey) != 0 && len(tlscert) != 0 {
+			for i, host := range hosts {
+				if !strings.Contains(host, "https://") {
+					hosts[i] = strings.Replace(host, "http", "https", 1)
+				}
+			}
+
+			var tlsconfig *tls.Config
+			if os.Getenv("ETCD_TLS_INMEMORY") == "true" {
+				tlsconfig, err = tlsconfigFromMemory(tlscert, tlskey, cacert)
+			} else {
+				tlsconfig, err = tlsconfigFromFiles(tlscert, tlskey, cacert)
+			}
+			if err != nil {
+				panic(err)
+			}
+
+			c, err := etcdv3.New(etcdv3.Config{Endpoints: hosts, TLS: tlsconfig})
+			if err != nil {
+				panic(err)
+			}
+
+			clientV3Singleton = c
+		} else {
+			clientV3Singleton, err = etcdv3.New(etcdv3.Config{Endpoints: hosts})
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+
+	return clientV3Singleton
 }
 
 func init() {

@@ -99,7 +99,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				}
 				ticker.Stop()
 				return
-			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
+			case credentials := <-privateCredentialsChan: // If the credentials have been changed
 				// We update our cache
 				host.User = credentials.User
 				host.Password = credentials.Password
@@ -110,7 +110,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				hostJson, _ = json.Marshal(&host)
 				hostValue = string(hostJson)
 
-				// synchro the host informations
+				// synchro the host information
 				hostRegistration(hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
@@ -160,6 +160,7 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 		if err != nil {
 			logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
 			time.Sleep(1 * time.Second)
+			continue
 		}
 		// We've got the modification, send it to the register agent
 		id = resp.Node.ModifiedIndex
