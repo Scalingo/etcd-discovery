@@ -38,9 +38,23 @@ type ServiceResponse interface {
 // If the service is not found, we won't render an error, but will return a service with minimal informations. This is done to provide maximal backwerd compatibility since older versions does not register themself to the "/services_infos" directory.
 func Get(service string) ServiceResponse {
 	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
-
 	if err != nil {
-		if etcd.IsKeyNotFound(err) {
+		return &GetServiceResponse{
+			err:     errgo.Mask(err),
+			service: nil,
+		}
+	}
+
+	if etcd.IsKeyNotFound(err) {
+		res, err := KAPIV3().Get(context.Background(), "/services_infos/"+service)
+		if err != nil {
+			return &GetServiceResponse{
+				err:     errgo.Mask(err),
+				service: nil,
+			}
+		}
+
+		if len(res.Kvs) == 0 {
 			return &GetServiceResponse{
 				err: nil,
 				service: &Service{
@@ -48,9 +62,17 @@ func Get(service string) ServiceResponse {
 				},
 			}
 		}
+
+		s, err := buildServiceFromNodeV3(res.Kvs[0].Value)
+		if err != nil {
+			return &GetServiceResponse{
+				err:     errgo.Mask(err),
+				service: nil,
+			}
+		}
 		return &GetServiceResponse{
-			err:     errgo.Mask(err),
-			service: nil,
+			err:     nil,
+			service: s,
 		}
 	}
 
@@ -68,7 +90,7 @@ func Get(service string) ServiceResponse {
 }
 
 // GetServiceResponse is the implementation of the ServiceResponse interface used by the Get method
-// This only provide the error wrapping logic, all the actual logic for thsese mêthod are done by the Service struct.
+// This only provide the error wrapping logic, all the actual logic for these method are done by the Service struct.
 type GetServiceResponse struct {
 	service *Service
 	err     error
@@ -87,7 +109,7 @@ func (q *GetServiceResponse) Service() (*Service, error) {
 	return q.service, nil
 }
 
-// All will return a slice of all the hosts registred to the service
+// All will return a slice of all the hosts registered to the service
 func (q *GetServiceResponse) All() (Hosts, error) {
 	if q.err != nil {
 		return nil, q.err
@@ -123,7 +145,7 @@ func (q *GetServiceResponse) One() HostResponse {
 	}
 }
 
-// First will return the first host registred to the service
+// First will return the first host registered to the service
 // If the ServiceResponse is errored, the errors will be passed to the HostResponse
 func (q *GetServiceResponse) First() HostResponse {
 	if q.err != nil {
