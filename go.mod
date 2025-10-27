@@ -1,4 +1,4 @@
-module github.com/Scalingo/etcd-discovery/v7
+module github.com/Scalingo/etcd-discovery/v8
 
 go 1.24.0
 

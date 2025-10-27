@@ -5,7 +5,7 @@ This is a Go package for managing services over the decentralized key-value stor
 To install it:
 
 ```sh
-go get github.com/Scalingo/etcd-discovery/v7/service
+go get github.com/Scalingo/etcd-discovery/v8/service
 ```
 
 Registering a service consists of providing a public hostname or/and a private hostname:
@@ -118,7 +118,7 @@ Generate the mocks with:
 ```shell
 for interface in $(grep --extended-regexp --no-message --no-filename "type .* interface" ./service/* | cut -d " " -f 2)
 do
-  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/v7/service $interface
+  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/v8/service $interface
 done
 ```
 

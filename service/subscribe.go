@@ -6,7 +6,7 @@ import (
 
 	etcd "go.etcd.io/etcd/client/v2"
 
-	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 // Subscribe to every event that happen to a service

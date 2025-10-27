@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 // ServiceResponse is the interface used to provide a response to the service.Get() Method.

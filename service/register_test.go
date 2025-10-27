@@ -11,7 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	etcd "go.etcd.io/etcd/client/v2"
 
-	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 func TestRegister(t *testing.T) {

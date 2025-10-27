@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"gopkg.in/errgo.v1"
 
-	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 // Register a host with a service name and a host description. The last chan is

@@ -8,11 +8,11 @@ import (
 
 	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
-	
-	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
+
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
-// Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
+// Service store all the information about a service. This is also used to marshal services present in the /services_infos/ directory.
 type Service struct {
 	Name     string `json:"name"`               // Name of the service
 	Critical bool   `json:"critical"`           // Is the service critical to the infrastructure health?
