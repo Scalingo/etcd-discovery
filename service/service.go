@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 
 	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
@@ -31,23 +30,28 @@ type Credentials struct {
 
 // All return all hosts associated to a service
 func (s *Service) All() (Hosts, error) {
-	res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/"+s.Name, &etcd.GetOptions{
-		Recursive: true,
-	})
-
+	res, err := etcdwrapper.ListValuesForService(context.Background(), s.Name)
 	if err != nil {
-		if etcd.IsKeyNotFound(err) {
-			return Hosts{}, nil
-		}
 		return nil, errgo.Notef(err, "Unable to fetch services")
 	}
 
-	hosts, err := buildHostsFromNodes(res.Node.Nodes)
+	hosts, err := buildHostsFromNodes(res)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
 
-	return hosts, nil
+	finalHosts := Hosts{}
+	hostsMap := make(map[string]struct{})
+
+	for _, host := range hosts {
+		_, ok := hostsMap[host.UUID]
+		if !ok {
+			hostsMap[host.UUID] = struct{}{}
+			finalHosts = append(finalHosts, host)
+		}
+	}
+
+	return finalHosts, nil
 }
 
 // First return the first host of this service
