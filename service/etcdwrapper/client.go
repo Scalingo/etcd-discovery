@@ -26,22 +26,22 @@ var (
 	clientV3SingletonO = &sync.Once{}
 )
 
-// KAPI provide a etcd KeysAPI for a client provided by the Client() method
-func KAPI() etcd.KeysAPI {
-	return etcd.NewKeysAPI(Client())
+// kapi provide a etcd KeysAPI for a client provided by the Client() method
+func kapi() etcd.KeysAPI {
+	return etcd.NewKeysAPI(client())
 }
 
-// KAPIV3 provide a etcd KeysAPI for a client provided by the ClientV3() method
-func KAPIV3() etcdv3.KV {
-	return etcdv3.NewKV(ClientV3())
+// kapiV3 provide a etcd KeysAPI for a client provided by the ClientV3() method
+func kapiV3() etcdv3.KV {
+	return etcdv3.NewKV(clientV3())
 }
 
-func LeaseV3() etcdv3.Lease {
-	return etcdv3.NewLease(ClientV3())
+func leaseV3() etcdv3.Lease {
+	return etcdv3.NewLease(clientV3())
 }
 
-func WatchV3() etcdv3.Watcher {
-	return etcdv3.NewWatcher(ClientV3())
+func watcherV3() etcdv3.Watcher {
+	return etcdv3.NewWatcher(clientV3())
 }
 
 // Client will generate a valid etcd client from the following environment variables:
@@ -51,7 +51,7 @@ func WatchV3() etcdv3.Watcher {
 //   - ETCD_TLS_CERT: The client tls cert
 //   - ETCD_TLS_KEY: The client tls key
 //   - ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
-func Client() etcd.Client {
+func client() etcd.Client {
 	clientSingletonO.Do(func() {
 		var err error
 
@@ -113,14 +113,14 @@ func Client() etcd.Client {
 	return clientSingleton
 }
 
-// ClientV3 will generate a valid etcd client from the following environment variables:
+// clientV3 will generate a valid etcd client from the following environment variables:
 //   - ETCD_HOSTS: a list of etcd hosts comma separated
 //   - ETCD_HOST: a single etcd host
 //   - ETCD_CACERT: The ca certificate
 //   - ETCD_TLS_CERT: The client tls cert
 //   - ETCD_TLS_KEY: The client tls key
 //   - ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
-func ClientV3() *etcdv3.Client {
+func clientV3() *etcdv3.Client {
 	clientV3SingletonO.Do(func() {
 		var err error
 
