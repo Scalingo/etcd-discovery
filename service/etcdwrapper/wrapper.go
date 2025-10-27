@@ -19,12 +19,12 @@ const (
 )
 
 func Delete(ctx context.Context, hostKey string) error {
-	_, err := kapi().Delete(ctx, hostKey, &etcd.DeleteOptions{Recursive: false})
+	_, err := KAPI().Delete(ctx, hostKey, &etcd.DeleteOptions{Recursive: false})
 	if err != nil {
 		return err
 	}
 
-	_, err = kapiV3().Delete(ctx, hostKey)
+	_, err = KAPIV3().Delete(ctx, hostKey)
 	if err != nil {
 		return err
 	}
@@ -49,12 +49,12 @@ func Set(ctx context.Context, key, value string, withLease bool) (uint64, int64,
 		opOptions = append(opOptions, etcdv3.WithLease(lease.ID))
 	}
 
-	resV2, err := kapi().Set(ctx, key, value, opts)
+	resV2, err := KAPI().Set(ctx, key, value, opts)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	resV3, err := kapiV3().Put(ctx, key, value, opOptions...)
+	resV3, err := KAPIV3().Put(ctx, key, value, opOptions...)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -82,7 +82,7 @@ func watchV2(logger *log.Logger, ctx context.Context, serviceKey string, id uint
 	// packet or modification lost.
 
 	for {
-		watcher := kapi().Watcher(serviceKey, &etcd.WatcherOptions{
+		watcher := KAPI().Watcher(serviceKey, &etcd.WatcherOptions{
 			AfterIndex: id,
 		})
 		resp, err := watcher.Next(ctx)

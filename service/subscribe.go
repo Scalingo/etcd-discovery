@@ -5,11 +5,13 @@ import (
 	"path"
 
 	etcd "go.etcd.io/etcd/client/v2"
+
+	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 )
 
 // Subscribe to every event that happen to a service
 func Subscribe(service string) etcd.Watcher {
-	return KAPI().Watcher("/services/"+service, &etcd.WatcherOptions{Recursive: true})
+	return etcdwrapper.KAPI().Watcher("/services/"+service, &etcd.WatcherOptions{Recursive: true})
 }
 
 // SubscribeDown return a channel that will notice you everytime a host loose his etcd registration

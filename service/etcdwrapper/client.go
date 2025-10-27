@@ -26,13 +26,13 @@ var (
 	clientV3SingletonO = &sync.Once{}
 )
 
-// kapi provide a etcd KeysAPI for a client provided by the Client() method
-func kapi() etcd.KeysAPI {
+// KAPI provide a etcd KeysAPI for a client provided by the Client() method
+func KAPI() etcd.KeysAPI {
 	return etcd.NewKeysAPI(client())
 }
 
-// kapiV3 provide a etcd KeysAPI for a client provided by the ClientV3() method
-func kapiV3() etcdv3.KV {
+// KAPIV3 provide a etcd KeysAPI for a client provided by the ClientV3() method
+func KAPIV3() etcdv3.KV {
 	return etcdv3.NewKV(clientV3())
 }
 

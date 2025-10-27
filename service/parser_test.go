@@ -64,7 +64,7 @@ func TestBuildHostFromNode(t *testing.T) {
 
 func TestBuildServiceFromNode(t *testing.T) {
 	Convey("Given a sample response, we got a filled Infos", t, func() {
-		infos, err := buildServiceFromNode(sampleInfoNode)
+		infos, err := buildServiceFromNode([]byte(sampleInfoNode.Value))
 		So(err, ShouldBeNil)
 		So(infos.Critical, ShouldBeTrue)
 	})

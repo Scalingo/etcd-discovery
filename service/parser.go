@@ -28,16 +28,7 @@ func buildHostFromNode(node *etcd.Node) (*Host, error) {
 	return host, nil
 }
 
-func buildServiceFromNode(node *etcd.Node) (*Service, error) {
-	service := &Service{}
-	err := json.Unmarshal([]byte(node.Value), service)
-	if err != nil {
-		return nil, errgo.Notef(err, "Unable to unmarshal service")
-	}
-	return service, nil
-}
-
-func buildServiceFromNodeV3(val []byte) (*Service, error) {
+func buildServiceFromNode(val []byte) (*Service, error) {
 	service := &Service{}
 	err := json.Unmarshal(val, service)
 	if err != nil {

@@ -8,6 +8,8 @@ import (
 
 	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
+	
+	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 )
 
 // Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
@@ -29,7 +31,7 @@ type Credentials struct {
 
 // All return all hosts associated to a service
 func (s *Service) All() (Hosts, error) {
-	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcd.GetOptions{
+	res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/"+s.Name, &etcd.GetOptions{
 		Recursive: true,
 	})
 
