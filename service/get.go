@@ -40,14 +40,12 @@ type ServiceResponse interface {
 // If the service is not found, we won't render an error, but will return a service with minimal informations. This is done to provide maximal backwerd compatibility since older versions does not register themself to the "/services_infos" directory.
 func Get(service string) ServiceResponse {
 	res, err := etcdwrapper.KAPI().Get(context.Background(), "/services_infos/"+service, nil)
-	if err != nil {
+	if err != nil && !etcd.IsKeyNotFound(err) {
 		return &GetServiceResponse{
 			err:     errgo.Mask(err),
 			service: nil,
 		}
-	}
-
-	if etcd.IsKeyNotFound(err) {
+	} else if etcd.IsKeyNotFound(err) {
 		res, err := etcdwrapper.KAPIV3().Get(context.Background(), "/services_infos/"+service)
 		if err != nil {
 			return &GetServiceResponse{
