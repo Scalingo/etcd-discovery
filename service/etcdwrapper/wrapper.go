@@ -183,12 +183,16 @@ func ListValuesForService(ctx context.Context, name string) ([][]byte, error) {
 	}
 
 	res := [][]byte{}
-	for _, node := range resv2.Node.Nodes {
-		res = append(res, []byte(node.Value))
+	if resv2 != nil && resv2.Node != nil {
+		for _, node := range resv2.Node.Nodes {
+			res = append(res, []byte(node.Value))
+		}
 	}
 
-	for _, node := range resv3.Kvs {
-		res = append(res, node.Value)
+	if resv3 != nil {
+		for _, node := range resv3.Kvs {
+			res = append(res, node.Value)
+		}
 	}
 
 	return res, nil
