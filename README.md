@@ -89,28 +89,6 @@ This will create two different etcd keys:
 }
 ```
 
-### Subscribe to New Service
-
-When a service is added from another host, if you want your application to
-notice it and communicating with it, it is necessary to watch these
-notifications.
-
-```go
-newHosts := service.SubscribeNew("name_of_service")
-for host := range newHosts {
-  fmt.Println(host.Name, "has registered")
-}
-```
-
-### Watch Down Services
-
-```go
-deadHosts := service.SubscribeDown("name_of_service")
-for hostname := range deadHosts {
-  fmt.Println(hostname, "is dead, RIP")
-}
-```
-
 # Generate the Mocks
 
 Generate the mocks with:
