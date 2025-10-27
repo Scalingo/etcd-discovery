@@ -168,3 +168,28 @@ type service struct {
 	User     string `json:"user,omitempty"`     // The service username
 	Password string `json:"password,omitempty"` // The service password
 }
+
+func ListValuesForService(ctx context.Context, name string) ([][]byte, error) {
+	resv2, err := KAPI().Get(ctx, "/services/"+name, &etcd.GetOptions{
+		Recursive: true,
+	})
+	if err != nil && !etcd.IsKeyNotFound(err) {
+		return nil, errgo.Notef(err, "Unable to fetch v2 services")
+	}
+
+	resv3, err := KAPIV3().Get(ctx, "/services/"+name)
+	if err != nil {
+		return nil, errgo.Notef(err, "Unable to fetch v3 services")
+	}
+
+	res := [][]byte{}
+	for _, node := range resv2.Node.Nodes {
+		res = append(res, []byte(node.Value))
+	}
+
+	for _, node := range resv3.Kvs {
+		res = append(res, node.Value)
+	}
+
+	return res, nil
+}

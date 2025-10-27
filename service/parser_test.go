@@ -37,7 +37,7 @@ var (
 		}
 		`,
 	}
-	sampleNodes = etcd.Nodes{sampleNode, sampleNode}
+	sampleNodes = [][]byte{[]byte(sampleNode.Value), []byte(sampleNode.Value)}
 )
 
 var (
@@ -56,7 +56,7 @@ func TestBuildHostsFromNodes(t *testing.T) {
 
 func TestBuildHostFromNode(t *testing.T) {
 	Convey("Given a sample response, we got a filled Host", t, func() {
-		host, err := buildHostFromNode(sampleNode)
+		host, err := buildHostFromNode([]byte(sampleNode.Value))
 		So(err, ShouldBeNil)
 		So(host, ShouldResemble, &sampleResult)
 	})

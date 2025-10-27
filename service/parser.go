@@ -3,13 +3,12 @@ package service
 import (
 	"encoding/json"
 
-	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
 
-func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {
-	hosts := make(Hosts, len(nodes))
-	for i, node := range nodes {
+func buildHostsFromNodes(nodeValues [][]byte) (Hosts, error) {
+	hosts := make(Hosts, len(nodeValues))
+	for i, node := range nodeValues {
 		host, err := buildHostFromNode(node)
 		if err != nil {
 			return nil, errgo.Mask(err)
@@ -19,9 +18,9 @@ func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {
 	return hosts, nil
 }
 
-func buildHostFromNode(node *etcd.Node) (*Host, error) {
+func buildHostFromNode(nodeValue []byte) (*Host, error) {
 	host := &Host{}
-	err := json.Unmarshal([]byte(node.Value), &host)
+	err := json.Unmarshal(nodeValue, &host)
 	if err != nil {
 		return nil, errgo.Notef(err, "Unable to unmarshal host")
 	}
