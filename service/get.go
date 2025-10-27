@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 	etcd "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
@@ -37,7 +38,7 @@ type ServiceResponse interface {
 // If there was an error during the acquisition of the service, this error will be stored in the ServiceResponse. Final methods will check for this error before doing actual logic.
 // If the service is not found, we won't render an error, but will return a service with minimal informations. This is done to provide maximal backwerd compatibility since older versions does not register themself to the "/services_infos" directory.
 func Get(service string) ServiceResponse {
-	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
+	res, err := etcdwrapper.KAPI().Get(context.Background(), "/services_infos/"+service, nil)
 	if err != nil {
 		return &GetServiceResponse{
 			err:     errgo.Mask(err),
@@ -46,7 +47,7 @@ func Get(service string) ServiceResponse {
 	}
 
 	if etcd.IsKeyNotFound(err) {
-		res, err := KAPIV3().Get(context.Background(), "/services_infos/"+service)
+		res, err := etcdwrapper.KAPIV3().Get(context.Background(), "/services_infos/"+service)
 		if err != nil {
 			return &GetServiceResponse{
 				err:     errgo.Mask(err),
@@ -63,7 +64,7 @@ func Get(service string) ServiceResponse {
 			}
 		}
 
-		s, err := buildServiceFromNodeV3(res.Kvs[0].Value)
+		s, err := buildServiceFromNode(res.Kvs[0].Value)
 		if err != nil {
 			return &GetServiceResponse{
 				err:     errgo.Mask(err),
@@ -76,7 +77,7 @@ func Get(service string) ServiceResponse {
 		}
 	}
 
-	s, err := buildServiceFromNode(res.Node)
+	s, err := buildServiceFromNode([]byte(res.Node.Value))
 	if err != nil {
 		return &GetServiceResponse{
 			err:     errgo.Mask(err),

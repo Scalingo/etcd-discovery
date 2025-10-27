@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	etcd "go.etcd.io/etcd/client/v2"
+
+	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 )
 
 func TestRegister(t *testing.T) {
@@ -20,7 +22,7 @@ func TestRegister(t *testing.T) {
 			w := Register(context.Background(), "test_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
-			res, err := KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
 			h := &Host{}
@@ -31,15 +33,15 @@ func TestRegister(t *testing.T) {
 			So(h, ShouldResemble, &host)
 		})
 
-		Convey(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func() {
+		Convey(fmt.Sprintf("And the ttl must be < %d", etcdwrapper.HEARTBEAT_DURATION), func() {
 			w := Register(context.Background(), "test2_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
-			res, err := KAPI().Get(context.Background(), "/services/test2_register/"+uuid, &etcd.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/test2_register/"+uuid, &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
-			So(duration, ShouldBeLessThanOrEqualTo, HEARTBEAT_DURATION*time.Second)
+			So(duration, ShouldBeLessThanOrEqualTo, etcdwrapper.HEARTBEAT_DURATION*time.Second)
 		})
 
 		Convey("And the serivce infos must be set", func() {
@@ -56,7 +58,7 @@ func TestRegister(t *testing.T) {
 			}
 			w := Register(context.Background(), "test3_register", host)
 			w.WaitRegistration()
-			res, err := KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(context.Background(), "/services_infos/test3_register", &etcd.GetOptions{})
 			So(err, ShouldBeNil)
 
 			service := &Service{}
@@ -72,7 +74,7 @@ func TestRegister(t *testing.T) {
 			w.WaitRegistration()
 			cancel()
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
+			_, err := etcdwrapper.KAPI().Get(context.Background(), "/services/test4_register/"+host.Name, &etcd.GetOptions{})
 			So(etcd.IsKeyNotFound(err), ShouldBeTrue)
 		})
 
@@ -130,7 +132,7 @@ func TestWatcher(t *testing.T) {
 
 		Convey("it should update the host key", func() {
 			for _, w := range []*Registration{w1, w2} {
-				res, err := KAPI().Get(context.Background(), "/services/test-watcher/"+w.UUID(), &etcd.GetOptions{})
+				res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/test-watcher/"+w.UUID(), &etcd.GetOptions{})
 				So(err, ShouldBeNil)
 
 				h := &Host{}

@@ -7,6 +7,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	etcd "go.etcd.io/etcd/client/v2"
+
+	"github.com/Scalingo/etcd-discovery/v7/service/etcdwrapper"
 )
 
 type resAndErr struct {
@@ -28,7 +30,7 @@ func TestSubscribe(t *testing.T) {
 			}()
 
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Create(context.Background(), "/services/test_subs/key", "test")
+			_, err := etcdwrapper.KAPI().Create(context.Background(), "/services/test_subs/key", "test")
 			So(err, ShouldBeNil)
 
 			response := <-responsesChan
@@ -40,7 +42,7 @@ func TestSubscribe(t *testing.T) {
 			So(r.Node.Key, ShouldEqual, "/services/test_subs/key")
 			So(r.Action, ShouldEqual, "create")
 
-			_, err = KAPI().Delete(context.Background(), "/services/test_subs/key", &etcd.DeleteOptions{})
+			_, err = etcdwrapper.KAPI().Delete(context.Background(), "/services/test_subs/key", &etcd.DeleteOptions{})
 			So(err, ShouldBeNil)
 
 			response = <-responsesChan
