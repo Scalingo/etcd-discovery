@@ -3,7 +3,7 @@ module github.com/Scalingo/etcd-discovery/v7
 go 1.24.0
 
 require (
-	github.com/gofrs/uuid/v5 v5.3.2
+	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang/mock v1.6.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.11.1
@@ -15,7 +15,7 @@ require (
 	//
 	// The package "go.etcd.io/etcd/client/v3" is a complete refactoring
 	// of the client and uses grpc instead of http, that we currently use.
-	go.etcd.io/etcd/client/v2 v2.305.23
+	go.etcd.io/etcd/client/v2 v2.305.24
 	gopkg.in/errgo.v1 v1.0.1
 )
 
@@ -32,6 +32,6 @@ require (
 	go.etcd.io/etcd/api/v3 v3.6.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
