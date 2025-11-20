@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	errgo "gopkg.in/errgo.v1"
+	"gopkg.in/errgo.v1"
 )
 
 // Ports is a representation of the ports exposed by a host or a service.
@@ -75,7 +75,7 @@ func (h *Host) URL(scheme, path string) (string, error) {
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.Ports)
 		if err != nil {
-			return "", errors.New("find scheme and port")
+			return "", errgo.Notef(err, "find scheme and port")
 		}
 	}
 
@@ -117,7 +117,7 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.PrivatePorts)
 		if err != nil {
-			return "", errors.New("find scheme and port")
+			return "", errgo.Notef(err, "find scheme and port")
 		}
 	}
 
@@ -139,7 +139,7 @@ func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
 			return scheme, port, nil
 		}
 	}
-	return "", "", errgo.New("scheme not found")
+	return "", "", errors.New("scheme not found")
 }
 
 // HostResponse is the interface used to provide a single host response.
