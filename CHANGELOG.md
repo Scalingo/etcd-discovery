@@ -2,6 +2,12 @@
 
 ## To Be Released
 
+## v7.1.5
+
+* build(go): use go 1.24
+* fix: missing error wrapping
+* build(deps): various updates
+
 ## v7.1.4
 
 * build(go): use go 1.22
