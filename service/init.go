@@ -16,29 +16,29 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
-	etcd "go.etcd.io/etcd/client/v2"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 )
 
 var (
 	logger           *log.Logger
-	clientSingleton  etcd.Client
+	clientSingleton  etcdv2.Client
 	clientSingletonO = &sync.Once{}
 	hostname         string
 )
 
 // KAPI provide a etcd KeysAPI for a client provided by the Client() method
-func KAPI() etcd.KeysAPI {
-	return etcd.NewKeysAPI(Client())
+func KAPI() etcdv2.KeysAPI {
+	return etcdv2.NewKeysAPI(Client())
 }
 
 // Client will generate a valid etcd client from the following environment variables:
-//	* ETCD_HOSTS: a list of etcd hosts comma separated
-//	* ETCD_HOST: a single etcd host
-//	* ETCD_CACERT: The ca certificate
-//	* ETCD_TLS_CERT: The client tls cert
-// 	* ETCD_TLS_KEY: The client tls key
-// 	* ETCD_TLS_INMEMORY: Is the tls configuration filename or raw certificates
-func Client() etcd.Client {
+//   - ETCD_HOSTS: a list of etcd hosts comma separated
+//   - ETCD_HOST: a single etcd host
+//   - ETCD_CACERT: The CA certificate
+//   - ETCD_TLS_CERT: The client TLS cert
+//   - ETCD_TLS_KEY: The client TLS key
+//   - ETCD_TLS_INMEMORY: Is the TLS configuration filename or raw certificates
+func Client() etcdv2.Client {
 	clientSingletonO.Do(func() {
 		var err error
 
@@ -84,19 +84,26 @@ func Client() etcd.Client {
 				TLSHandshakeTimeout: 10 * time.Second,
 				TLSClientConfig:     tlsconfig,
 			}
-			c, err := etcd.New(etcd.Config{Endpoints: hosts, Transport: transport})
+			c, err := etcdv2.New(etcdv2.Config{
+				Endpoints: hosts,
+				Transport: transport,
+			})
 			if err != nil {
 				panic(err)
 			}
 
 			clientSingleton = c
 		} else {
-			clientSingleton, err = etcd.New(etcd.Config{Endpoints: hosts, Transport: etcd.DefaultTransport})
+			clientSingleton, err = etcdv2.New(etcdv2.Config{
+				Endpoints: hosts,
+				Transport: etcdv2.DefaultTransport,
+			})
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
+
 	return clientSingleton
 }
 

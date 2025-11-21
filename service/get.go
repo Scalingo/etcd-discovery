@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	etcd "go.etcd.io/etcd/client/v2"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
 
@@ -40,7 +40,7 @@ func Get(service string) ServiceResponse {
 	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
 
 	if err != nil {
-		if etcd.IsKeyNotFound(err) {
+		if etcdv2.IsKeyNotFound(err) {
 			return &GetServiceResponse{
 				err: nil,
 				service: &Service{

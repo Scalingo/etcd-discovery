@@ -8,40 +8,38 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
-	"fmt"
 	"log"
 	"math/big"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInit(t *testing.T) {
-	Convey("After initialization", t, func() {
-		Convey("client should be set", func() {
-			So(Client(), ShouldNotBeNil)
-		})
-		Convey("hostname should be set", func() {
-			So(hostname, ShouldNotBeNil)
-		})
-		Convey("the logger should be correctly parameterised", func() {
-			So(logger.Prefix(), ShouldEqual, "[etcd-discovery] ")
-			So(logger.Flags(), ShouldEqual, log.LstdFlags)
-		})
+	t.Run("client should be set", func(t *testing.T) {
+		require.NotNil(t, Client())
+	})
+
+	t.Run("hostname should be set", func(t *testing.T) {
+		require.NotNil(t, hostname)
+	})
+
+	t.Run("hostname should be set", func(t *testing.T) {
+		assert.Equal(t, "[etcd-discovery] ", logger.Prefix())
+		assert.Equal(t, log.LstdFlags, logger.Flags())
 	})
 }
 
 func TestTLSConfigFromMemory(t *testing.T) {
-	Convey("Given a certificate, key and CA file in base64", t, func() {
+	t.Run("Given a certificate, key and CA file in base64, It should return a tls.Config with client certificate", func(t *testing.T) {
 		sampleCertB64, sampleKeyB64, sampleCAB64 := sampleCert()
-		Convey("It should return a tls.Config with client certificate", func() {
-			fmt.Println(sampleKeyB64)
-			config, err := tlsconfigFromMemory(sampleCertB64, sampleKeyB64, sampleCAB64)
-			So(err, ShouldBeNil)
-			So(config, ShouldNotBeNil)
-			So(len(config.Certificates), ShouldEqual, 1)
-		})
+
+		config, err := tlsconfigFromMemory(sampleCertB64, sampleKeyB64, sampleCAB64)
+		require.NoError(t, err)
+		require.NotNil(t, config)
+		assert.Len(t, config.Certificates, 1)
 	})
 }
 
