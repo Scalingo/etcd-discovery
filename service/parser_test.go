@@ -3,12 +3,13 @@ package service
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	etcd "go.etcd.io/etcd/client/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 )
 
 var (
-	sampleNode = &etcd.Node{
+	sampleNode = &etcdv2.Node{
 		Key: "/services/test/example.org",
 		Value: `
 		{
@@ -29,7 +30,7 @@ var (
 		}
 		`,
 	}
-	sampleInfoNode = &etcd.Node{
+	sampleInfoNode = &etcdv2.Node{
 		Key: "/services_infos/test",
 		Value: `
 		{
@@ -45,27 +46,27 @@ var (
 )
 
 func TestBuildHostsFromNodes(t *testing.T) {
-	Convey("Given a sample response with 2 nodes, we got 2 hosts", t, func() {
+	t.Run("Given a sample response with 2 nodes, we got 2 hosts", func(t *testing.T) {
 		hosts, err := buildHostsFromNodes(sampleNodes)
-		So(err, ShouldBeNil)
-		So(len(hosts), ShouldEqual, 2)
-		So(hosts[0], ShouldResemble, &sampleResult)
-		So(hosts[1], ShouldResemble, &sampleResult)
+		require.NoError(t, err)
+		assert.Len(t, hosts, 2)
+		assert.Equal(t, sampleResult, *hosts[0])
+		assert.Equal(t, sampleResult, *hosts[1])
 	})
 }
 
 func TestBuildHostFromNode(t *testing.T) {
-	Convey("Given a sample response, we got a filled Host", t, func() {
+	t.Run("Given a sample response, we got a filled Host", func(t *testing.T) {
 		host, err := buildHostFromNode([]byte(sampleNode.Value))
-		So(err, ShouldBeNil)
-		So(host, ShouldResemble, &sampleResult)
+		require.NoError(t, err)
+		assert.Equal(t, sampleResult, *host)
 	})
 }
 
 func TestBuildServiceFromNode(t *testing.T) {
-	Convey("Given a sample response, we got a filled Infos", t, func() {
+	t.Run("Given a sample response, we got a filled Infos", func(t *testing.T) {
 		infos, err := buildServiceFromNode([]byte(sampleInfoNode.Value))
-		So(err, ShouldBeNil)
-		So(infos.Critical, ShouldBeTrue)
+		require.NoError(t, err)
+		assert.True(t, infos.Critical)
 	})
 }

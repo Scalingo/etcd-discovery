@@ -8,24 +8,22 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTLSConfigFromMemory(t *testing.T) {
-	Convey("Given a certificate, key and CA file in base64", t, func() {
+	t.Run("Given a certificate, key and CA file in base64, It should return a tls.Config with client certificate", func(t *testing.T) {
 		sampleCertB64, sampleKeyB64, sampleCAB64 := sampleCert()
-		Convey("It should return a tls.Config with client certificate", func() {
-			fmt.Println(sampleKeyB64)
-			config, err := tlsconfigFromMemory(sampleCertB64, sampleKeyB64, sampleCAB64)
-			So(err, ShouldBeNil)
-			So(config, ShouldNotBeNil)
-			So(len(config.Certificates), ShouldEqual, 1)
-		})
+
+		config, err := tlsconfigFromMemory(sampleCertB64, sampleKeyB64, sampleCAB64)
+		require.NoError(t, err)
+		require.NotNil(t, config)
+		assert.Len(t, config.Certificates, 1)
 	})
 }
 
