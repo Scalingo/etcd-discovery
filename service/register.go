@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	etcd "go.etcd.io/etcd/client/v2"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
 
@@ -93,7 +93,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		for {
 			select {
 			case <-ctx.Done():
-				_, err := KAPI().Delete(context.Background(), hostKey, &etcd.DeleteOptions{Recursive: false})
+				_, err := KAPI().Delete(context.Background(), hostKey, &etcdv2.DeleteOptions{Recursive: false})
 				if err != nil {
 					logger.Println("fail to remove key", hostKey)
 				}
@@ -140,7 +140,7 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 	// packet or modification lost.
 
 	for {
-		watcher := KAPI().Watcher(serviceKey, &etcd.WatcherOptions{
+		watcher := KAPI().Watcher(serviceKey, &etcdv2.WatcherOptions{
 			AfterIndex: id,
 		})
 		resp, err := watcher.Next(ctx)
@@ -171,7 +171,7 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 }
 
 func hostRegistration(hostKey, hostJson string) error {
-	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 	if err != nil {
 		return errgo.Notef(err, "Unable to register host")
 	}

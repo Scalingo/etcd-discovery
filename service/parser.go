@@ -3,11 +3,11 @@ package service
 import (
 	"encoding/json"
 
-	etcd "go.etcd.io/etcd/client/v2"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
 
-func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {
+func buildHostsFromNodes(nodes etcdv2.Nodes) (Hosts, error) {
 	hosts := make(Hosts, len(nodes))
 	for i, node := range nodes {
 		host, err := buildHostFromNode(node)
@@ -19,7 +19,7 @@ func buildHostsFromNodes(nodes etcd.Nodes) (Hosts, error) {
 	return hosts, nil
 }
 
-func buildHostFromNode(node *etcd.Node) (*Host, error) {
+func buildHostFromNode(node *etcdv2.Node) (*Host, error) {
 	host := &Host{}
 	err := json.Unmarshal([]byte(node.Value), &host)
 	if err != nil {
@@ -28,7 +28,7 @@ func buildHostFromNode(node *etcd.Node) (*Host, error) {
 	return host, nil
 }
 
-func buildServiceFromNode(node *etcd.Node) (*Service, error) {
+func buildServiceFromNode(node *etcdv2.Node) (*Service, error) {
 	service := &Service{}
 	err := json.Unmarshal([]byte(node.Value), service)
 	if err != nil {

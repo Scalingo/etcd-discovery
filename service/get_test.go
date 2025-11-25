@@ -5,138 +5,133 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetNoHost(t *testing.T) {
-	Convey("Without any service", t, func() {
-		Convey("Get should return an empty slice", func() {
-			hosts, err := Get("test_no_service").All()
-			So(err, ShouldBeNil)
-			So(len(hosts), ShouldEqual, 0)
-		})
+	t.Run("Without any service, Get should return an empty slice", func(t *testing.T) {
+		hosts, err := Get("test_no_service").All()
+		require.NoError(t, err)
+		assert.Empty(t, hosts)
 	})
 }
 
 func TestGet(t *testing.T) {
-	Convey("With registred services", t, func() {
-		ctx1, cancel1 := context.WithCancel(context.Background())
-		ctx2, cancel2 := context.WithCancel(context.Background())
-		host1, host2 := genHost("host1"), genHost("host2")
+	t.Run("With registered services, we should have 2 hosts", func(t *testing.T) {
+		ctx1, cancel1 := context.WithCancel(t.Context())
+		defer cancel1()
+		ctx2, cancel2 := context.WithCancel(t.Context())
+		defer cancel2()
+
+		host1 := genHost("host1")
+		host2 := genHost("host2")
 		host1.Name = "test_service_get"
 		host2.Name = "test_service_get"
 		w1 := Register(ctx1, "test_service_get", host1)
 		w2 := Register(ctx2, "test_service_get", host2)
 		w1.WaitRegistration()
 		w2.WaitRegistration()
-		Convey("We should have 2 hosts", func() {
-			hosts, err := Get("test_service_get").All()
-			So(err, ShouldBeNil)
-			So(len(hosts), ShouldEqual, 2)
-			if hosts[0].UUID == w1.UUID() {
-				host1.UUID = hosts[0].UUID
-				host2.UUID = hosts[1].UUID
-				So(hosts[0], ShouldResemble, &host1)
-				So(hosts[1], ShouldResemble, &host2)
-			} else {
-				host1.UUID = hosts[1].UUID
-				host2.UUID = hosts[0].UUID
-				So(hosts[1], ShouldResemble, &host1)
-				So(hosts[0], ShouldResemble, &host2)
-			}
-			So(err, ShouldBeNil)
-		})
-		cancel1()
-		cancel2()
+
+		hosts, err := Get("test_service_get").All()
+		require.NoError(t, err)
+		assert.Len(t, hosts, 2)
+
+		if hosts[0].UUID == w1.UUID() {
+			host1.UUID = hosts[0].UUID
+			host2.UUID = hosts[1].UUID
+			assert.Equal(t, host1, *hosts[0])
+			assert.Equal(t, host2, *hosts[1])
+		} else {
+			host1.UUID = hosts[1].UUID
+			host2.UUID = hosts[0].UUID
+			assert.Equal(t, host1, *hosts[1])
+			assert.Equal(t, host2, *hosts[0])
+		}
 	})
 }
 
 func TestGetServiceResponse(t *testing.T) {
-	Convey("With an errored Response", t, func() {
+	t.Run("With an errored Response", func(t *testing.T) {
+		testErrorMsg := "my test error"
 		response := &GetServiceResponse{
-			err:     errors.New("TestError"),
+			err:     errors.New(testErrorMsg),
 			service: nil,
 		}
 
-		Convey("Err should return an error", func() {
+		t.Run("Err should return an error", func(t *testing.T) {
 			err := response.Err()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
+			require.EqualError(t, err, testErrorMsg)
 		})
 
-		Convey("Service should return an error", func() {
+		t.Run("Service should return an error", func(t *testing.T) {
 			service, err := response.Service()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(service, ShouldBeNil)
+			require.EqualError(t, err, testErrorMsg)
+			assert.Nil(t, service)
 		})
 
-		Convey("All should return an error", func() {
+		t.Run("All should return an error", func(t *testing.T) {
 			h, err := response.All()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(len(h), ShouldEqual, 0)
+			require.EqualError(t, err, testErrorMsg)
+			assert.Empty(t, h)
 		})
 
-		Convey("Url should return an error", func() {
+		t.Run("Url should return an error", func(t *testing.T) {
 			url, err := response.URL("http", "/path")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "TestError")
-			So(url, ShouldEqual, "")
+			require.EqualError(t, err, testErrorMsg)
+			assert.Empty(t, url)
 		})
 
-		Convey("One should return an errored host response", func() {
+		t.Run("One should return an errored host response", func(t *testing.T) {
 			response := response.One()
-			So(response, ShouldNotBeNil)
-			So(response.Err().Error(), ShouldEqual, "TestError")
+			require.NotNil(t, response)
+			require.EqualError(t, response.Err(), testErrorMsg)
 		})
 
-		Convey("First should return an errored host response", func() {
+		t.Run("First should return an errored host response", func(t *testing.T) {
 			response := response.First()
-			So(response, ShouldNotBeNil)
-			So(response.Err().Error(), ShouldEqual, "TestError")
+			require.NotNil(t, response)
+			require.EqualError(t, response.Err(), testErrorMsg)
 		})
 	})
 
-	Convey("With a valid response", t, func() {
-		service := genService("test-service-11122233444")
+	t.Run("With a valid response", func(t *testing.T) {
+		expectedService := genService("test-service-11122233444")
 		response := &GetServiceResponse{
 			err:     nil,
-			service: service,
+			service: expectedService,
 		}
 
-		Convey("Err should be nil", func() {
-			So(response.Err(), ShouldBeNil)
+		t.Run("Err should be nil", func(t *testing.T) {
+			require.NoError(t, response.Err())
 		})
 
-		Convey("Service should respond a valid service", func() {
-			s, err := response.Service()
-			So(err, ShouldBeNil)
-			So(s, ShouldResemble, service)
+		t.Run("Service should respond a valid service", func(t *testing.T) {
+			service, err := response.Service()
+			require.NoError(t, err)
+			assert.Equal(t, expectedService, service)
 		})
 
-		Convey("All should return an empty array", func() {
+		t.Run("All should return an empty array", func(t *testing.T) {
 			hosts, err := response.All()
-			So(err, ShouldBeNil)
-			So(len(hosts), ShouldEqual, 0)
+			require.NoError(t, err)
+			assert.Empty(t, hosts)
 		})
 
-		Convey("Url should return a valid url", func() {
+		t.Run("Url should return a valid url", func(t *testing.T) {
 			url, err := response.URL("http", "/path")
-			So(err, ShouldBeNil)
-			So(url, ShouldEqual, "http://user:password@public.dev:80/path")
+			require.NoError(t, err)
+			assert.Equal(t, "http://user:password@public.dev:80/path", url)
 		})
 
-		Convey("One should pass the One error", func() {
+		t.Run("One should pass the One error", func(t *testing.T) {
 			r := response.One()
-			So(r.Err(), ShouldNotBeNil)
-			So(r.Err().Error(), ShouldEqual, "No host found for this service")
+			require.EqualError(t, r.Err(), "No host found for this service")
 		})
 
-		Convey("First should pass the First error", func() {
+		t.Run("First should pass the First error", func(t *testing.T) {
 			r := response.First()
-			So(r.Err(), ShouldNotBeNil)
-			So(r.Err().Error(), ShouldEqual, "No host found for this service")
+			require.EqualError(t, r.Err(), "No host found for this service")
 		})
 	})
 }

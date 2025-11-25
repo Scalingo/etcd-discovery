@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	etcd "go.etcd.io/etcd/client/v2"
+	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
 )
 
@@ -29,12 +29,12 @@ type Credentials struct {
 
 // All return all hosts associated to a service
 func (s *Service) All() (Hosts, error) {
-	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcd.GetOptions{
+	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcdv2.GetOptions{
 		Recursive: true,
 	})
 
 	if err != nil {
-		if etcd.IsKeyNotFound(err) {
+		if etcdv2.IsKeyNotFound(err) {
 			return Hosts{}, nil
 		}
 		return nil, errgo.Notef(err, "Unable to fetch services")

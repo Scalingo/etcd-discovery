@@ -1,40 +1,41 @@
 package service
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegistrationReady(t *testing.T) {
-	Convey("When a new registration is created", t, func() {
-		r := NewRegistration(context.Background(), "1234", make(chan Credentials))
-		Convey("it must send false", func() {
-			So(r.Ready(), ShouldBeFalse)
+	t.Run("When a new registration is created", func(t *testing.T) {
+		r := NewRegistration(t.Context(), "1234", make(chan Credentials))
+
+		t.Run("it must send false", func(t *testing.T) {
+			require.False(t, r.Ready())
 		})
 	})
 
-	Convey("After a service registration", t, func() {
+	t.Run("After a service registration", func(t *testing.T) {
 		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "1234", cred)
+		r := NewRegistration(t.Context(), "1234", cred)
 		cred <- Credentials{
 			User:     "Moi",
 			Password: "Lui",
 		}
 
-		Convey("it must send true", func() {
-			So(r.Ready(), ShouldBeTrue)
+		t.Run("it must send true", func(t *testing.T) {
+			require.True(t, r.Ready())
 		})
 	})
 }
 
 func TestWaitRegistration(t *testing.T) {
-	Convey("It must wait for a service registration", t, func() {
+	t.Run("It must wait for a service registration", func(t *testing.T) {
 		order := make([]bool, 2)
 		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "1234", cred)
+		r := NewRegistration(t.Context(), "1234", cred)
 		registrationChan := make(chan bool)
 		go func() {
 			for {
@@ -58,47 +59,46 @@ func TestWaitRegistration(t *testing.T) {
 			}
 		}
 
-		So(order[0], ShouldBeTrue)
-		So(order[1], ShouldBeFalse)
+		assert.True(t, order[0])
+		assert.False(t, order[1])
 	})
 }
 
 func TestUUID(t *testing.T) {
-	Convey("It must send the original UUID", t, func() {
-		r := NewRegistration(context.Background(), "test-test-123", make(chan Credentials))
-		So(r.UUID(), ShouldEqual, "test-test-123")
+	t.Run("It must send the original UUID", func(t *testing.T) {
+		r := NewRegistration(t.Context(), "test-test-123", make(chan Credentials))
+		assert.Equal(t, "test-test-123", r.UUID())
 	})
 }
 
 func TestCredentials(t *testing.T) {
-	Convey("Before a service registration", t, func() {
-		r := NewRegistration(context.Background(), "test", make(chan Credentials))
-		Convey("It should return an error", func() {
+	t.Run("Before a service registration", func(t *testing.T) {
+		r := NewRegistration(t.Context(), "test", make(chan Credentials))
+		t.Run("It should return an error", func(t *testing.T) {
 			_, err := r.Credentials()
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "Not ready")
+			require.EqualError(t, err, "Not ready")
 		})
 	})
 
-	Convey("After a service registration", t, func() {
+	t.Run("After a service registration", func(t *testing.T) {
 		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "test", cred)
+		r := NewRegistration(t.Context(), "test", cred)
 		cred <- Credentials{
 			User:     "1",
 			Password: "2",
 		}
 
-		Convey("It should return the new credentials", func() {
+		t.Run("It should return the new credentials", func(t *testing.T) {
 			c, err := r.Credentials()
-			So(err, ShouldBeNil)
-			So(c.User, ShouldEqual, "1")
-			So(c.Password, ShouldEqual, "2")
+			require.NoError(t, err)
+			assert.Equal(t, "1", c.User)
+			assert.Equal(t, "2", c.Password)
 		})
 	})
 
-	Convey("After a credential update", t, func() {
+	t.Run("After a credential update", func(t *testing.T) {
 		cred := make(chan Credentials)
-		r := NewRegistration(context.Background(), "test", cred)
+		r := NewRegistration(t.Context(), "test", cred)
 		cred <- Credentials{
 			User:     "1",
 			Password: "2",
@@ -108,12 +108,12 @@ func TestCredentials(t *testing.T) {
 			Password: "4",
 		}
 
-		Convey("It should return the new credentials", func() {
+		t.Run("It should return the new credentials", func(t *testing.T) {
 			time.Sleep(1 * time.Second)
 			c, err := r.Credentials()
-			So(err, ShouldBeNil)
-			So(c.User, ShouldEqual, "3")
-			So(c.Password, ShouldEqual, "4")
+			require.NoError(t, err)
+			assert.Equal(t, "3", c.User)
+			assert.Equal(t, "4", c.Password)
 		})
 	})
 }
