@@ -45,7 +45,7 @@ func TestServiceFirst(t *testing.T) {
 		s, err := Get("service-test-1").Service()
 		require.NoError(t, err)
 		host, err := s.First()
-		require.EqualError(t, err, "No host found for this service")
+		require.EqualError(t, err, "no host found for this service")
 		assert.Nil(t, host)
 	})
 
@@ -70,7 +70,7 @@ func TestServiceOne(t *testing.T) {
 		require.NoError(t, err)
 
 		host, err := s.One()
-		require.EqualError(t, err, "No host found for this service")
+		require.EqualError(t, err, "no host found for this service")
 		assert.Nil(t, host)
 	})
 

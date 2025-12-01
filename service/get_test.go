@@ -126,12 +126,12 @@ func TestGetServiceResponse(t *testing.T) {
 
 		t.Run("One should pass the One error", func(t *testing.T) {
 			r := response.One()
-			require.EqualError(t, r.Err(), "No host found for this service")
+			require.EqualError(t, r.Err(), "no host found for this service")
 		})
 
 		t.Run("First should pass the First error", func(t *testing.T) {
 			r := response.First()
-			require.EqualError(t, r.Err(), "No host found for this service")
+			require.EqualError(t, r.Err(), "no host found for this service")
 		})
 	})
 }
