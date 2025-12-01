@@ -32,7 +32,7 @@ type Credentials struct {
 func (s *Service) All() (Hosts, error) {
 	res, err := etcdwrapper.ListValuesForService(context.Background(), s.Name)
 	if err != nil {
-		return nil, errgo.Notef(err, "Unable to fetch services")
+		return nil, errgo.Notef(err, "unable to fetch services")
 	}
 
 	hosts, err := buildHostsFromNodes(res)
@@ -62,7 +62,7 @@ func (s *Service) First() (*Host, error) {
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, errors.New("no host found for this service")
 	}
 
 	return hosts[0], nil
@@ -77,7 +77,7 @@ func (s *Service) One() (*Host, error) {
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, errors.New("no host found for this service")
 	}
 
 	return hosts[rand.Int()%len(hosts)], nil

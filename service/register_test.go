@@ -28,14 +28,14 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, err)
 
 			h := &Host{}
-			json.Unmarshal([]byte(res.Node.Value), &h)
+			_ = json.Unmarshal([]byte(res.Node.Value), &h)
 
 			assert.Equal(t, uuid, path.Base(res.Node.Key))
 			host.UUID = h.UUID
 			assert.Equal(t, host, *h)
 		})
 
-		t.Run(fmt.Sprintf("And the ttl must be < %d", etcdwrapper.HEARTBEAT_DURATION), func(t *testing.T) {
+		t.Run(fmt.Sprintf("And the ttl must be < %d", etcdwrapper.HeartbeatDuration), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
@@ -46,7 +46,7 @@ func TestRegister(t *testing.T) {
 
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
-			assert.LessOrEqual(t, duration, etcdwrapper.HEARTBEAT_DURATION*time.Second)
+			assert.LessOrEqual(t, duration, etcdwrapper.HeartbeatDuration*time.Second)
 		})
 
 		t.Run("And the serivce infos must be set", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, err)
 
 			service := &Service{}
-			json.Unmarshal([]byte(res.Node.Value), &service)
+			_ = json.Unmarshal([]byte(res.Node.Value), &service)
 			assert.Equal(t, infos, service)
 		})
 
@@ -148,7 +148,7 @@ func TestWatcher(t *testing.T) {
 				require.NoError(t, err)
 
 				h := &Host{}
-				json.Unmarshal([]byte(res.Node.Value), &h)
+				_ = json.Unmarshal([]byte(res.Node.Value), &h)
 				assert.Equal(t, "host2", h.User)
 				assert.Equal(t, "password2", h.Password)
 			}

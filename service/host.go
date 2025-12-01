@@ -98,9 +98,9 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 		url, err := h.URL(scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
-		} else {
-			return url, nil
 		}
+
+		return url, nil
 	}
 
 	var (

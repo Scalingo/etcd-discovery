@@ -17,7 +17,7 @@ import (
 // To provide such API, go errors need to be stored and sent at the last moment.
 // To do so, each "final" method (like Url or All), will check if the Response is errored, before
 // continuing to their own logic.
-type ServiceResponse interface {
+type ServiceResponse interface { //nolint: revive
 	// Err is the method used to check if the Response is errored.
 	Err() error
 	// Service return the Service struct representing the requested service

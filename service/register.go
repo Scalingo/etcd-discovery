@@ -20,22 +20,22 @@ import (
 // registration every 5 seconds and the second one will check if the service
 // credentials don't change and notify otherwise
 func Register(ctx context.Context, service string, host Host) *Registration {
-	if !host.Public && len(host.PrivateHostname) == 0 {
+	if !host.Public && host.PrivateHostname == "" {
 		host.PrivateHostname = host.Hostname
 	}
 
-	if len(host.PrivateHostname) == 0 {
+	if host.PrivateHostname == "" {
 		host.PrivateHostname = hostname
 	}
 	host.Name = service
 
-	if len(host.PrivateHostname) != 0 && len(host.PrivatePorts) == 0 {
+	if host.PrivateHostname != "" && len(host.PrivatePorts) == 0 {
 		host.PrivatePorts = host.Ports
 	}
 
 	uuidV4, _ := uuid.NewV4()
-	hostUuid := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
-	host.UUID = hostUuid
+	hostUUID := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
+	host.UUID = hostUUID
 
 	serviceInfos := &Service{
 		Name:     service,
@@ -53,16 +53,16 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
 	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
 
-	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUuid)
-	hostJson, _ := json.Marshal(&host)
-	hostValue := string(hostJson)
+	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUUID) //nolint: perfsprint
+	hostJSON, _ := json.Marshal(&host)
+	hostValue := string(hostJSON)
 
-	serviceKey := fmt.Sprintf("/services_infos/%s", service)
-	serviceJson, _ := json.Marshal(serviceInfos)
-	serviceValue := string(serviceJson)
+	serviceKey := fmt.Sprintf("/services_infos/%s", service) //nolint: perfsprint
+	serviceJSON, _ := json.Marshal(serviceInfos)
+	serviceValue := string(serviceJSON)
 
 	go func() {
-		ticker := time.NewTicker((etcdwrapper.HEARTBEAT_DURATION - 1) * time.Second)
+		ticker := time.NewTicker((etcdwrapper.HeartbeatDuration - 1) * time.Second)
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
@@ -102,11 +102,11 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				serviceInfos.Password = credentials.Password
 
 				// Re-marshal the host
-				hostJson, _ = json.Marshal(&host)
-				hostValue = string(hostJson)
+				hostJSON, _ = json.Marshal(&host)
+				hostValue = string(hostJSON)
 
 				// synchro the host information
-				hostRegistration(ctx, hostKey, hostValue)
+				_ = hostRegistration(ctx, hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
@@ -127,12 +127,12 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 	}()
 
-	return NewRegistration(ctx, hostUuid, publicCredentialsChan)
+	return NewRegistration(ctx, hostUUID, publicCredentialsChan)
 }
 
 func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, credentialsChan chan Credentials) {
 	for {
-		watchChan := etcdwrapper.Watch(logger, ctx, serviceKey, idV2, idV3)
+		watchChan := etcdwrapper.Watch(ctx, logger, serviceKey, idV2, idV3)
 		watchRes := <-watchChan
 		credentialsChan <- Credentials{
 			User:     watchRes.User,
@@ -141,16 +141,16 @@ func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, cred
 	}
 }
 
-func hostRegistration(ctx context.Context, hostKey, hostJson string) error {
-	_, _, err := etcdwrapper.Set(ctx, hostKey, hostJson, true)
+func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
+	_, _, err := etcdwrapper.Set(ctx, hostKey, hostJSON, true)
 	if err != nil {
 		return errgo.Notef(err, "Unable to register host")
 	}
 	return nil
 }
 
-func serviceRegistration(ctx context.Context, serviceKey, serviceJson string) (uint64, int64, error) {
-	idxV2, idxV3, err := etcdwrapper.Set(ctx, serviceKey, serviceJson, false)
+func serviceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, int64, error) {
+	idxV2, idxV3, err := etcdwrapper.Set(ctx, serviceKey, serviceJSON, false)
 	if err != nil {
 		return 0, 0, errgo.Notef(err, "Unable to register service")
 	}

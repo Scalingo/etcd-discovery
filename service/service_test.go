@@ -27,6 +27,7 @@ func TestServiceAll(t *testing.T) {
 		w2.WaitRegistration()
 
 		s, err := Get("test-get-222").Service()
+		require.NoError(t, err)
 		hosts, err := s.All()
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)

@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// HEARTBEAT_DURATION time in second between two registration. The host will
+	// HeartbeatDuration time in second between two registration. The host will
 	// be deleted if etcd didn't received any new registration in those 5 seocnds
-	HEARTBEAT_DURATION = 5
+	HeartbeatDuration = 5
 )
 
 func Delete(ctx context.Context, hostKey string) error {
@@ -40,9 +40,9 @@ func Set(ctx context.Context, key, value string, withLease bool) (uint64, int64,
 	var opts *etcd.SetOptions
 	var opOptions []etcdv3.OpOption
 	if withLease {
-		opts = &etcd.SetOptions{TTL: HEARTBEAT_DURATION * time.Second}
+		opts = &etcd.SetOptions{TTL: HeartbeatDuration * time.Second}
 
-		lease, err := leaseV3().Grant(ctx, int64(HEARTBEAT_DURATION))
+		lease, err := leaseV3().Grant(ctx, int64(HeartbeatDuration))
 		if err != nil {
 			return 0, 0, errgo.Notef(err, "Unable to create lease for host registration")
 		}
@@ -62,21 +62,21 @@ func Set(ctx context.Context, key, value string, withLease bool) (uint64, int64,
 	return resV2.Node.ModifiedIndex, resV3.Header.GetRevision(), nil
 }
 
-type watchResponse struct {
+type WatchResponse struct {
 	User     string
 	Password string
 }
 
-func Watch(logger *log.Logger, ctx context.Context, key string, idxV2 uint64, idxV3 int64) <-chan watchResponse {
-	watchChan := make(chan watchResponse)
+func Watch(ctx context.Context, logger *log.Logger, key string, idxV2 uint64, idxV3 int64) <-chan WatchResponse {
+	watchChan := make(chan WatchResponse)
 
-	go watchV2(logger, ctx, key, idxV2, watchChan)
-	go watchV3(logger, ctx, key, idxV3, watchChan)
+	go watchV2(ctx, logger, key, idxV2, watchChan)
+	go watchV3(ctx, logger, key, idxV3, watchChan)
 
 	return watchChan
 }
 
-func watchV2(logger *log.Logger, ctx context.Context, serviceKey string, id uint64, watchChan chan watchResponse) {
+func watchV2(ctx context.Context, logger *log.Logger, serviceKey string, id uint64, watchChan chan WatchResponse) {
 	// id is the index of the last modification made to the key. The watcher will
 	// start watching for modifications done after this index. This will prevent
 	// packet or modification lost.
@@ -106,7 +106,7 @@ func watchV2(logger *log.Logger, ctx context.Context, serviceKey string, id uint
 		}
 		// We've got the modification, send it to the register agent
 		id = resp.Node.ModifiedIndex
-		watchResponse := watchResponse{
+		watchResponse := WatchResponse{ //nolint: staticcheck
 			User:     serviceInfos.User,
 			Password: serviceInfos.Password,
 		}
@@ -114,7 +114,7 @@ func watchV2(logger *log.Logger, ctx context.Context, serviceKey string, id uint
 	}
 }
 
-func watchV3(logger *log.Logger, ctx context.Context, serviceKey string, rev int64, watchChan chan watchResponse) {
+func watchV3(ctx context.Context, logger *log.Logger, serviceKey string, rev int64, watchChan chan WatchResponse) {
 	// rev is the revision of the last modification made to the key. The watcher will
 	// start watching for modifications done after this revision. This will prevent
 	// packet or modification lost.
@@ -149,7 +149,7 @@ func watchV3(logger *log.Logger, ctx context.Context, serviceKey string, rev int
 				}
 				// We've got the modification, send it to the register agent
 				startRev = ev.Kv.ModRevision + 1
-				watchResponse := watchResponse{
+				watchResponse := WatchResponse{ //nolint: staticcheck
 					User:     serviceInfos.User,
 					Password: serviceInfos.Password,
 				}

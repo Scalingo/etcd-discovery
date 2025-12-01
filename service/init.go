@@ -11,7 +11,7 @@ var (
 )
 
 func init() {
-	if len(os.Getenv("HOSTNAME")) != 0 {
+	if os.Getenv("HOSTNAME") != "" {
 		hostname = os.Getenv("HOSTNAME")
 	} else {
 		h, err := os.Hostname()
