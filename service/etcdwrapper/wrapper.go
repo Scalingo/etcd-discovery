@@ -106,10 +106,11 @@ func watchV2(logger *log.Logger, ctx context.Context, serviceKey string, id uint
 		}
 		// We've got the modification, send it to the register agent
 		id = resp.Node.ModifiedIndex
-		watchChan <- watchResponse{
+		watchResponse := watchResponse{
 			User:     serviceInfos.User,
 			Password: serviceInfos.Password,
 		}
+		watchChan <- watchResponse
 	}
 }
 
@@ -148,10 +149,11 @@ func watchV3(logger *log.Logger, ctx context.Context, serviceKey string, rev int
 				}
 				// We've got the modification, send it to the register agent
 				startRev = ev.Kv.ModRevision + 1
-				watchChan <- watchResponse{
+				watchResponse := watchResponse{
 					User:     serviceInfos.User,
 					Password: serviceInfos.Password,
 				}
+				watchChan <- watchResponse
 			}
 		}
 

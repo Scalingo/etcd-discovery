@@ -66,14 +66,14 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
-		idV2, idV3, err := serviceRegistration(serviceKey, serviceValue)
+		idV2, idV3, err := serviceRegistration(ctx, serviceKey, serviceValue)
 		for err != nil {
-			idV2, idV3, err = serviceRegistration(serviceKey, serviceValue)
+			idV2, idV3, err = serviceRegistration(ctx, serviceKey, serviceValue)
 		}
 
-		err = hostRegistration(hostKey, hostValue)
+		err = hostRegistration(ctx, hostKey, hostValue)
 		for err != nil {
-			err = hostRegistration(hostKey, hostValue)
+			err = hostRegistration(ctx, hostKey, hostValue)
 		}
 
 		publicCredentialsChan <- Credentials{
@@ -88,7 +88,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		for {
 			select {
 			case <-ctx.Done():
-				err := etcdwrapper.Delete(context.Background(), hostKey)
+				err := etcdwrapper.Delete(ctx, hostKey)
 				if err != nil {
 					logger.Println("fail to remove key", hostKey)
 				}
@@ -106,11 +106,11 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				hostValue = string(hostJson)
 
 				// synchro the host information
-				hostRegistration(hostKey, hostValue)
+				hostRegistration(ctx, hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
-				err := hostRegistration(hostKey, hostValue)
+				err := hostRegistration(ctx, hostKey, hostValue)
 				// If for any random reason, there is an error,
 				// we retry every second until it's ok.
 				for err != nil {
@@ -118,7 +118,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 					logger.Printf("lost registration of '%v': %v (v2: %v) (v3: %v)", service, err, endpointsV2, endpointsV3)
 					time.Sleep(1 * time.Second)
 
-					err = hostRegistration(hostKey, hostValue)
+					err = hostRegistration(ctx, hostKey, hostValue)
 					if err == nil {
 						logger.Printf("recover registration of '%v'", service)
 					}
@@ -133,26 +133,24 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, credentialsChan chan Credentials) {
 	for {
 		watchChan := etcdwrapper.Watch(logger, ctx, serviceKey, idV2, idV3)
-		select {
-		case watchRes := <-watchChan:
-			credentialsChan <- Credentials{
-				User:     watchRes.User,
-				Password: watchRes.Password,
-			}
+		watchRes := <-watchChan
+		credentialsChan <- Credentials{
+			User:     watchRes.User,
+			Password: watchRes.Password,
 		}
 	}
 }
 
-func hostRegistration(hostKey, hostJson string) error {
-	_, _, err := etcdwrapper.Set(context.Background(), hostKey, hostJson, true)
+func hostRegistration(ctx context.Context, hostKey, hostJson string) error {
+	_, _, err := etcdwrapper.Set(ctx, hostKey, hostJson, true)
 	if err != nil {
 		return errgo.Notef(err, "Unable to register host")
 	}
 	return nil
 }
 
-func serviceRegistration(serviceKey, serviceJson string) (uint64, int64, error) {
-	idxV2, idxV3, err := etcdwrapper.Set(context.Background(), serviceKey, serviceJson, false)
+func serviceRegistration(ctx context.Context, serviceKey, serviceJson string) (uint64, int64, error) {
+	idxV2, idxV3, err := etcdwrapper.Set(ctx, serviceKey, serviceJson, false)
 	if err != nil {
 		return 0, 0, errgo.Notef(err, "Unable to register service")
 	}

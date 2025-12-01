@@ -56,11 +56,11 @@ func client() etcdv2.Client {
 		var err error
 
 		hosts := []string{"http://localhost:2379"}
-		if len(os.Getenv("ETCD_HOSTS")) != 0 {
+		if os.Getenv("ETCD_HOSTS") != "" {
 			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
-		} else if len(os.Getenv("ETCD_HOST")) != 0 {
+		} else if os.Getenv("ETCD_HOST") != "" {
 			hosts = []string{os.Getenv("ETCD_HOST")}
-		} else if len(os.Getenv("ETCD_1_PORT_2379_TCP_ADDR")) != 0 {
+		} else if os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") != "" {
 			hosts = []string{
 				"http://" +
 					os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") +
@@ -71,7 +71,7 @@ func client() etcdv2.Client {
 		cacert := os.Getenv("ETCD_CACERT")
 		tlskey := os.Getenv("ETCD_TLS_KEY")
 		tlscert := os.Getenv("ETCD_TLS_CERT")
-		if len(cacert) != 0 && len(tlskey) != 0 && len(tlscert) != 0 {
+		if cacert != "" && tlskey != "" && tlscert != "" {
 			for i, host := range hosts {
 				if !strings.Contains(host, "https://") {
 					hosts[i] = strings.Replace(host, "http", "https", 1)
@@ -125,11 +125,11 @@ func clientV3() *etcdv3.Client {
 		var err error
 
 		hosts := []string{"http://localhost:2379"}
-		if len(os.Getenv("ETCD_HOSTS")) != 0 {
+		if os.Getenv("ETCD_HOSTS") != "" {
 			hosts = strings.Split(os.Getenv("ETCD_HOSTS"), ",")
-		} else if len(os.Getenv("ETCD_HOST")) != 0 {
+		} else if os.Getenv("ETCD_HOST") != "" {
 			hosts = []string{os.Getenv("ETCD_HOST")}
-		} else if len(os.Getenv("ETCD_1_PORT_2379_TCP_ADDR")) != 0 {
+		} else if os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") != "" {
 			hosts = []string{
 				"http://" +
 					os.Getenv("ETCD_1_PORT_2379_TCP_ADDR") +
@@ -140,7 +140,7 @@ func clientV3() *etcdv3.Client {
 		cacert := os.Getenv("ETCD_CACERT")
 		tlskey := os.Getenv("ETCD_TLS_KEY")
 		tlscert := os.Getenv("ETCD_TLS_CERT")
-		if len(cacert) != 0 && len(tlskey) != 0 && len(tlscert) != 0 {
+		if cacert != "" && tlskey != "" && tlscert != "" {
 			for i, host := range hosts {
 				if !strings.Contains(host, "https://") {
 					hosts[i] = strings.Replace(host, "http", "https", 1)

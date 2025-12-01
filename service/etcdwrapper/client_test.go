@@ -38,7 +38,7 @@ func sampleCert() (string, string, string) {
 		panic(err)
 	}
 	privpem := new(bytes.Buffer)
-	pem.Encode(privpem, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+	_ = pem.Encode(privpem, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
 	priv64 := base64.StdEncoding.EncodeToString(privpem.Bytes())
 
 	template := x509.Certificate{
@@ -59,7 +59,7 @@ func sampleCert() (string, string, string) {
 	}
 
 	capem := new(bytes.Buffer)
-	pem.Encode(capem, &pem.Block{Type: "CERTIFICATE", Bytes: caCert})
+	_ = pem.Encode(capem, &pem.Block{Type: "CERTIFICATE", Bytes: caCert})
 	ca64 := base64.StdEncoding.EncodeToString(capem.Bytes())
 
 	childTemplate := x509.Certificate{
@@ -79,7 +79,7 @@ func sampleCert() (string, string, string) {
 	}
 
 	certpem := new(bytes.Buffer)
-	pem.Encode(certpem, &pem.Block{Type: "CERTIFICATE", Bytes: certCert})
+	_ = pem.Encode(certpem, &pem.Block{Type: "CERTIFICATE", Bytes: certCert})
 	cert64 := base64.StdEncoding.EncodeToString(certpem.Bytes())
 
 	return cert64, priv64, ca64

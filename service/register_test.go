@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	etcd "go.etcd.io/etcd/client/v2"
 	etcdv2 "go.etcd.io/etcd/client/v2"
 
 	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
@@ -25,7 +24,7 @@ func TestRegister(t *testing.T) {
 			w := Register(t.Context(), "test_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
-			res, err := etcdwrapper.KAPI().Get(context.Background(), "/services/test_register/"+uuid, &etcd.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(t.Context(), "/services/test_register/"+uuid, &etcdv2.GetOptions{})
 			require.NoError(t, err)
 
 			h := &Host{}
