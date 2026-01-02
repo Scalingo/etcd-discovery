@@ -76,7 +76,7 @@ func TestCredentials(t *testing.T) {
 		r := NewRegistration(t.Context(), "test", make(chan Credentials))
 		t.Run("It should return an error", func(t *testing.T) {
 			_, err := r.Credentials()
-			require.EqualError(t, err, "Not ready")
+			require.EqualError(t, err, "not ready")
 		})
 	})
 

@@ -31,7 +31,7 @@ func TestHostUrl(t *testing.T) {
 		url, err := host.URL("htjp", "/path")
 		require.Error(t, err)
 		assert.Equal(t, "unknown scheme", err.Error())
-		assert.Equal(t, 0, len(url))
+		assert.Empty(t, url)
 	})
 
 	t.Run("When the scheme is not provided", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestHostPrivateUrl(t *testing.T) {
 		url, err := host.PrivateURL("htjp", "/path")
 		require.Error(t, err)
 		assert.Equal(t, "unknown scheme", err.Error())
-		assert.Equal(t, 0, len(url))
+		assert.Empty(t, url)
 	})
 
 	t.Run("When the scheme is not provided", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestHostsString(t *testing.T) {
 
 	t.Run("With an empty list", func(t *testing.T) {
 		hosts := Hosts{}
-		assert.Equal(t, "", hosts.String())
+		assert.Empty(t, hosts.String())
 	})
 }
 
@@ -122,14 +122,14 @@ func TestGetHostResponse(t *testing.T) {
 			url, err := response.URL("http", "/path")
 			require.Error(t, err)
 			assert.Equal(t, "TestError", response.Err().Error())
-			assert.Equal(t, "", url)
+			assert.Empty(t, url)
 		})
 
 		t.Run("The PrivateURL should return an error", func(t *testing.T) {
 			url, err := response.PrivateURL("http", "/path")
 			require.Error(t, err)
 			assert.Equal(t, "TestError", response.Err().Error())
-			assert.Equal(t, "", url)
+			assert.Empty(t, url)
 		})
 	})
 
