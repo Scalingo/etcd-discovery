@@ -142,7 +142,8 @@ func watchV3(ctx context.Context, logger *log.Logger, serviceKey string, rev int
 					continue
 				}
 				var serviceInfos service
-				if err := json.Unmarshal(ev.Kv.Value, &serviceInfos); err != nil {
+				err := json.Unmarshal(ev.Kv.Value, &serviceInfos)
+				if err != nil {
 					logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, clientV3().Endpoints())
 					time.Sleep(1 * time.Second)
 					continue
