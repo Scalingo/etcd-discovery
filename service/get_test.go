@@ -10,10 +10,16 @@ import (
 )
 
 func TestGetNoHost(t *testing.T) {
-	t.Run("Without any service, Get should return an empty slice", func(t *testing.T) {
+	t.Run("Without any service, Get should return ErrNoServiceFound and a nil slice", func(t *testing.T) {
 		hosts, err := Get("test_no_service").All()
-		require.NoError(t, err)
-		assert.Empty(t, hosts)
+		require.EqualError(t, err, ErrNoServiceFound.Error())
+		assert.Nil(t, hosts)
+	})
+
+	t.Run("Without any service, Get().One().Host() should return ErrNoServiceFound", func(t *testing.T) {
+		host, err := Get("test_no_service").One().Host()
+		require.EqualError(t, err, ErrNoServiceFound.Error())
+		assert.Nil(t, host)
 	})
 }
 
@@ -112,10 +118,10 @@ func TestGetServiceResponse(t *testing.T) {
 			assert.Equal(t, expectedService, service)
 		})
 
-		t.Run("All should return an empty array", func(t *testing.T) {
+		t.Run("All should return ErrNoServiceFound when the backing service has no hosts key", func(t *testing.T) {
 			hosts, err := response.All()
-			require.NoError(t, err)
-			assert.Empty(t, hosts)
+			require.EqualError(t, err, ErrNoServiceFound.Error())
+			assert.Nil(t, hosts)
 		})
 
 		t.Run("Url should return a valid url", func(t *testing.T) {
@@ -123,15 +129,66 @@ func TestGetServiceResponse(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@public.dev:80/path", url)
 		})
+	})
+}
 
-		t.Run("One should pass the One error", func(t *testing.T) {
-			r := response.One()
-			require.EqualError(t, r.Err(), "No host found for this service")
-		})
+func TestGetForShard(t *testing.T) {
+	const testShardID = "shard-0"
 
-		t.Run("First should pass the First error", func(t *testing.T) {
-			r := response.First()
-			require.EqualError(t, r.Err(), "No host found for this service")
-		})
+	t.Run("With two shards, it should only return hosts from requested shard", func(t *testing.T) {
+		ctx1, cancel1 := context.WithCancel(t.Context())
+		defer cancel1()
+		ctx2, cancel2 := context.WithCancel(t.Context())
+		defer cancel2()
+
+		hostShard0 := genHost("host-shard-0")
+		hostShard0.Shard = testShardID
+		hostShard0.Hostname = "host-shard-0.dev"
+
+		hostShard1 := genHost("host-shard-1")
+		hostShard1.Shard = testShard1ID
+		hostShard1.Hostname = "host-shard-1.dev"
+
+		w1 := Register(ctx1, "test_service_get_for_shard", hostShard0)
+		w2 := Register(ctx2, "test_service_get_for_shard", hostShard1)
+		w1.WaitRegistration()
+		w2.WaitRegistration()
+
+		hosts, err := GetForShard("test_service_get_for_shard", testShardID).All()
+		require.NoError(t, err)
+		require.Len(t, hosts, 1)
+		assert.Equal(t, testShardID, hosts[0].Shard)
+
+		host, err := GetForShard("test_service_get_for_shard", testShard1ID).First().Host()
+		require.NoError(t, err)
+		assert.Equal(t, testShard1ID, host.Shard)
+		assert.Equal(t, "host-shard-1.dev", host.Hostname)
+
+		url, err := GetForShard("test_service_get_for_shard", testShard1ID).URL("http", "/path")
+		require.NoError(t, err)
+		assert.Equal(t, "http://user:password@host-shard-1.dev:10000/path", url)
+	})
+
+	t.Run("When no host matches the shard, it should return shard-specific no-host errors", func(t *testing.T) {
+		host := genHost("host-no-match")
+		host.Shard = testShardID
+		w := Register(t.Context(), "test_service_get_for_shard_no_match", host)
+		w.WaitRegistration()
+
+		hosts, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).All()
+		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		assert.Nil(t, hosts)
+
+		emptyHost, err := GetForShard("test_service_get_for_shard_no_match", "shard-1").First().Host()
+		require.EqualError(t, err, "fetch hosts: "+ErrNoHostFoundOnShard.Error())
+		assert.Nil(t, emptyHost)
+
+		oneHost, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).One().Host()
+		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		assert.Nil(t, oneHost)
+
+		url, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).URL("http", "/path")
+		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		assert.Empty(t, url)
 	})
 }

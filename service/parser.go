@@ -21,7 +21,7 @@ func buildHostsFromNodes(nodes etcdv2.Nodes) (Hosts, error) {
 
 func buildHostFromNode(node *etcdv2.Node) (*Host, error) {
 	host := &Host{}
-	err := json.Unmarshal([]byte(node.Value), &host)
+	err := json.Unmarshal([]byte(node.Value), host)
 	if err != nil {
 		return nil, errgo.Notef(err, "Unable to unmarshal host")
 	}
