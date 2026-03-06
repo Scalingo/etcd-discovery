@@ -9,7 +9,7 @@ import (
 )
 
 // Ports is a representation of the ports exposed by a host or a service.
-// The key is the protocol name and the value is the port used for this protocol.
+// The key is the protocol name, and the value is the port used for this protocol.
 // Typical usage is:
 //
 //	Ports{
@@ -33,7 +33,8 @@ func (hs Hosts) String() string {
 	return strings.Join(names, ", ")
 }
 
-// Host store all the host informations. This is also used to store the host in the etcd services directory.
+// Host stores all the host information.
+// This is also used to store the host in the etcd services directory.
 type Host struct {
 	// Hostname  must be a publicly available IP/FQDN if the service is public or a private IP/FQDN id the service is private.
 	Hostname string `json:"name"`
@@ -55,6 +56,10 @@ type Host struct {
 	PrivatePorts Ports `json:"private_ports,omitempty"`
 	// Critical will be set to true is the service is critical
 	Critical bool `json:"critical,omitempty"`
+	// Shard identifies instances of this service deployed on a shard.
+	//
+	// This field is an empty string if the service is not sharded.
+	Shard string `json:"shard,omitempty"`
 	// UUID is the service UUID, this must have the following pattern: uuid-PrivateHostname
 	UUID string `json:"uuid,omitempty"`
 }
@@ -92,7 +97,7 @@ func (h *Host) URL(scheme, path string) (string, error) {
 }
 
 // PrivateURL will provide a valid url to contact this service on the Private network
-// this method will fallback to the URL method if the host does not provide any PrivateURL
+// this method will fall back to the URL method if the host does not provide any PrivateURL
 func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	if h.PrivateHostname == "" {
 		url, err := h.URL(scheme, path)
@@ -143,12 +148,12 @@ func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
 }
 
 // HostResponse is the interface used to provide a single host response.
-// This interface provide a standard API used fot method chaining like:
+// This interface provides a standard API used for method chaining like:
 //
-//	Get("my-service").First().Url()
+//	url, err := Get("my-service").First().URL("http", "/")
 //
-// To provide such API errores need to be stored and sent at the last moment.
-// To do so each "final" methods (like URL or Host) will check if the Response is errored before
+// To provide such API errors need to be stored and sent at the last moment.
+// To do so, each "final" method (like URL or Host) will check if the Response is errored before
 // continuing to their own logic.
 type HostResponse interface {
 	Err() error
@@ -172,7 +177,7 @@ func (q *GetHostResponse) Err() error {
 // Host will return the host represented by this error.
 func (q *GetHostResponse) Host() (*Host, error) {
 	if q.err != nil {
-		return nil, errgo.Mask(q.err)
+		return nil, q.err
 	}
 
 	return q.host, nil
@@ -181,11 +186,11 @@ func (q *GetHostResponse) Host() (*Host, error) {
 // URL will return the public URL of this host
 func (q *GetHostResponse) URL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", q.err
 	}
 	url, err := q.host.URL(scheme, path)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", err
 	}
 	return url, nil
 }
@@ -193,11 +198,11 @@ func (q *GetHostResponse) URL(scheme, path string) (string, error) {
 // PrivateURL will return the private URL of this host
 func (q *GetHostResponse) PrivateURL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", q.err
 	}
 	url, err := q.host.PrivateURL(scheme, path)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", err
 	}
 	return url, nil
 }
