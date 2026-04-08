@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"math/rand"
 
-	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
-// Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
+// Service store all the information about a service. This is also used to marshal services present in the /services_infos/ directory.
 type Service struct {
 	Name     string `json:"name"`               // Name of the service
 	Critical bool   `json:"critical"`           // Is the service critical to the infrastructure health?
@@ -29,23 +30,28 @@ type Credentials struct {
 
 // All return all hosts associated to a service
 func (s *Service) All() (Hosts, error) {
-	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcdv2.GetOptions{
-		Recursive: true,
-	})
-
+	res, err := etcdwrapper.ListValuesForService(context.Background(), s.Name)
 	if err != nil {
-		if etcdv2.IsKeyNotFound(err) {
-			return Hosts{}, nil
-		}
-		return nil, errgo.Notef(err, "Unable to fetch services")
+		return nil, errgo.Notef(err, "unable to fetch services")
 	}
 
-	hosts, err := buildHostsFromNodes(res.Node.Nodes)
+	hosts, err := buildHostsFromNodes(res)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
 
-	return hosts, nil
+	finalHosts := Hosts{}
+	hostsMap := make(map[string]struct{})
+
+	for _, host := range hosts {
+		_, ok := hostsMap[host.UUID]
+		if !ok {
+			hostsMap[host.UUID] = struct{}{}
+			finalHosts = append(finalHosts, host)
+		}
+	}
+
+	return finalHosts, nil
 }
 
 // First return the first host of this service
@@ -56,7 +62,7 @@ func (s *Service) First() (*Host, error) {
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, errors.New("no host found for this service")
 	}
 
 	return hosts[0], nil
@@ -71,7 +77,7 @@ func (s *Service) One() (*Host, error) {
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, errors.New("no host found for this service")
 	}
 
 	return hosts[rand.Int()%len(hosts)], nil

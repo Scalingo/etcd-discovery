@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	etcdv2 "go.etcd.io/etcd/client/v2"
+
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 func TestRegister(t *testing.T) {
@@ -22,29 +24,29 @@ func TestRegister(t *testing.T) {
 			w := Register(t.Context(), "test_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
-			res, err := KAPI().Get(t.Context(), "/services/test_register/"+uuid, &etcdv2.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(t.Context(), "/services/test_register/"+uuid, &etcdv2.GetOptions{})
 			require.NoError(t, err)
 
 			h := &Host{}
-			json.Unmarshal([]byte(res.Node.Value), &h)
+			_ = json.Unmarshal([]byte(res.Node.Value), &h)
 
 			assert.Equal(t, uuid, path.Base(res.Node.Key))
 			host.UUID = h.UUID
 			assert.Equal(t, host, *h)
 		})
 
-		t.Run(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func(t *testing.T) {
+		t.Run(fmt.Sprintf("And the ttl must be < %d", etcdwrapper.HeartbeatDuration), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
 			w.WaitRegistration()
 			uuid := w.UUID()
-			res, err := KAPI().Get(t.Context(),
+			res, err := etcdwrapper.KAPI().Get(t.Context(),
 				"/services/test2_register/"+uuid, &etcdv2.GetOptions{},
 			)
 			require.NoError(t, err)
 
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
-			assert.LessOrEqual(t, duration, HEARTBEAT_DURATION*time.Second)
+			assert.LessOrEqual(t, duration, etcdwrapper.HeartbeatDuration*time.Second)
 		})
 
 		t.Run("And the serivce infos must be set", func(t *testing.T) {
@@ -61,11 +63,11 @@ func TestRegister(t *testing.T) {
 			}
 			w := Register(t.Context(), "test3_register", host)
 			w.WaitRegistration()
-			res, err := KAPI().Get(t.Context(), "/services_infos/test3_register", &etcdv2.GetOptions{})
+			res, err := etcdwrapper.KAPI().Get(t.Context(), "/services_infos/test3_register", &etcdv2.GetOptions{})
 			require.NoError(t, err)
 
 			service := &Service{}
-			json.Unmarshal([]byte(res.Node.Value), &service)
+			_ = json.Unmarshal([]byte(res.Node.Value), &service)
 			assert.Equal(t, infos, service)
 		})
 
@@ -75,8 +77,10 @@ func TestRegister(t *testing.T) {
 			w := Register(ctx, "test4_register", host)
 			w.WaitRegistration()
 			cancel()
+
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(t.Context(),
+
+			_, err := etcdwrapper.KAPI().Get(t.Context(),
 				"/services/test4_register/"+host.Name, &etcdv2.GetOptions{},
 			)
 			require.Error(t, err)
@@ -140,11 +144,11 @@ func TestWatcher(t *testing.T) {
 
 		t.Run("it should update the host key", func(t *testing.T) {
 			for _, w := range []*Registration{w1, w2} {
-				res, err := KAPI().Get(t.Context(), "/services/test-watcher/"+w.UUID(), &etcdv2.GetOptions{})
+				res, err := etcdwrapper.KAPI().Get(t.Context(), "/services/test-watcher/"+w.UUID(), &etcdv2.GetOptions{})
 				require.NoError(t, err)
 
 				h := &Host{}
-				json.Unmarshal([]byte(res.Node.Value), &h)
+				_ = json.Unmarshal([]byte(res.Node.Value), &h)
 				assert.Equal(t, "host2", h.User)
 				assert.Equal(t, "password2", h.Password)
 			}

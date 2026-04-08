@@ -7,14 +7,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	etcdv2 "go.etcd.io/etcd/client/v2"
 	"gopkg.in/errgo.v1"
-)
 
-const (
-	// HEARTBEAT_DURATION time in second between two registration. The host will
-	// be deleted if etcd didn't received any new registration in those 5 seocnds
-	HEARTBEAT_DURATION = 5
+	"github.com/Scalingo/etcd-discovery/v8/service/etcdwrapper"
 )
 
 // Register a host with a service name and a host description. The last chan is
@@ -25,22 +20,22 @@ const (
 // registration every 5 seconds and the second one will check if the service
 // credentials don't change and notify otherwise
 func Register(ctx context.Context, service string, host Host) *Registration {
-	if !host.Public && len(host.PrivateHostname) == 0 {
+	if !host.Public && host.PrivateHostname == "" {
 		host.PrivateHostname = host.Hostname
 	}
 
-	if len(host.PrivateHostname) == 0 {
+	if host.PrivateHostname == "" {
 		host.PrivateHostname = hostname
 	}
 	host.Name = service
 
-	if len(host.PrivateHostname) != 0 && len(host.PrivatePorts) == 0 {
+	if host.PrivateHostname != "" && len(host.PrivatePorts) == 0 {
 		host.PrivatePorts = host.Ports
 	}
 
 	uuidV4, _ := uuid.NewV4()
-	hostUuid := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
-	host.UUID = hostUuid
+	hostUUID := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
+	host.UUID = hostUUID
 
 	serviceInfos := &Service{
 		Name:     service,
@@ -58,27 +53,27 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
 	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
 
-	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUuid)
-	hostJson, _ := json.Marshal(&host)
-	hostValue := string(hostJson)
+	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUUID) //nolint: perfsprint
+	hostJSON, _ := json.Marshal(&host)
+	hostValue := string(hostJSON)
 
-	serviceKey := fmt.Sprintf("/services_infos/%s", service)
-	serviceJson, _ := json.Marshal(serviceInfos)
-	serviceValue := string(serviceJson)
+	serviceKey := fmt.Sprintf("/services_infos/%s", service) //nolint: perfsprint
+	serviceJSON, _ := json.Marshal(serviceInfos)
+	serviceValue := string(serviceJSON)
 
 	go func() {
-		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
+		ticker := time.NewTicker((etcdwrapper.HeartbeatDuration - 1) * time.Second)
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
-		id, err := serviceRegistration(serviceKey, serviceValue)
+		idV2, idV3, err := serviceRegistration(ctx, serviceKey, serviceValue)
 		for err != nil {
-			id, err = serviceRegistration(serviceKey, serviceValue)
+			idV2, idV3, err = serviceRegistration(ctx, serviceKey, serviceValue)
 		}
 
-		err = hostRegistration(hostKey, hostValue)
+		err = hostRegistration(ctx, hostKey, hostValue)
 		for err != nil {
-			err = hostRegistration(hostKey, hostValue)
+			err = hostRegistration(ctx, hostKey, hostValue)
 		}
 
 		publicCredentialsChan <- Credentials{
@@ -87,19 +82,19 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 
 		if host.Public {
-			go watch(ctx, serviceKey, id, privateCredentialsChan)
+			go watch(ctx, serviceKey, idV2, idV3, privateCredentialsChan)
 		}
 
 		for {
 			select {
 			case <-ctx.Done():
-				_, err := KAPI().Delete(context.Background(), hostKey, &etcdv2.DeleteOptions{Recursive: false})
+				err := etcdwrapper.Delete(ctx, hostKey)
 				if err != nil {
 					logger.Println("fail to remove key", hostKey)
 				}
 				ticker.Stop()
 				return
-			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
+			case credentials := <-privateCredentialsChan: // If the credentials have been changed
 				// We update our cache
 				host.User = credentials.User
 				host.Password = credentials.Password
@@ -107,22 +102,23 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				serviceInfos.Password = credentials.Password
 
 				// Re-marshal the host
-				hostJson, _ = json.Marshal(&host)
-				hostValue = string(hostJson)
+				hostJSON, _ = json.Marshal(&host)
+				hostValue = string(hostJSON)
 
-				// synchro the host informations
-				hostRegistration(hostKey, hostValue)
+				// synchro the host information
+				_ = hostRegistration(ctx, hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
-				err := hostRegistration(hostKey, hostValue)
+				err := hostRegistration(ctx, hostKey, hostValue)
 				// If for any random reason, there is an error,
 				// we retry every second until it's ok.
 				for err != nil {
-					logger.Printf("lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
+					endpointsV2, endpointsV3 := etcdwrapper.Endpoints()
+					logger.Printf("lost registration of '%v': %v (v2: %v) (v3: %v)", service, err, endpointsV2, endpointsV3)
 					time.Sleep(1 * time.Second)
 
-					err = hostRegistration(hostKey, hostValue)
+					err = hostRegistration(ctx, hostKey, hostValue)
 					if err == nil {
 						logger.Printf("recover registration of '%v'", service)
 					}
@@ -131,58 +127,33 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 	}()
 
-	return NewRegistration(ctx, hostUuid, publicCredentialsChan)
+	return NewRegistration(ctx, hostUUID, publicCredentialsChan)
 }
 
-func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan chan Credentials) {
-	// id is the index of the last modification made to the key. The watcher will
-	// start watching for modifications done after this index. This will prevent
-	// packet or modification lost.
-
+func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, credentialsChan chan Credentials) {
 	for {
-		watcher := KAPI().Watcher(serviceKey, &etcdv2.WatcherOptions{
-			AfterIndex: id,
-		})
-		resp, err := watcher.Next(ctx)
-		if err == context.Canceled {
-			return
-		}
-
-		if err != nil {
-			// We've lost the connexion to etcd. Sleep 1s and retry
-			logger.Printf("lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
-			id = 0
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		var serviceInfos Service
-		err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
-		if err != nil {
-			logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
-			time.Sleep(1 * time.Second)
-		}
-		// We've got the modification, send it to the register agent
-		id = resp.Node.ModifiedIndex
+		watchChan := etcdwrapper.Watch(ctx, logger, serviceKey, idV2, idV3)
+		watchRes := <-watchChan
 		credentialsChan <- Credentials{
-			User:     serviceInfos.User,
-			Password: serviceInfos.Password,
+			User:     watchRes.User,
+			Password: watchRes.Password,
 		}
 	}
 }
 
-func hostRegistration(hostKey, hostJson string) error {
-	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
+	_, _, err := etcdwrapper.Set(ctx, hostKey, hostJSON, true)
 	if err != nil {
 		return errgo.Notef(err, "Unable to register host")
 	}
 	return nil
 }
 
-func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {
-	key, err := KAPI().Set(context.Background(), serviceKey, serviceJson, nil)
+func serviceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, int64, error) {
+	idxV2, idxV3, err := etcdwrapper.Set(ctx, serviceKey, serviceJSON, false)
 	if err != nil {
-		return 0, errgo.Notef(err, "Unable to register service")
+		return 0, 0, errgo.Notef(err, "Unable to register service")
 	}
 
-	return key.Node.ModifiedIndex, nil
+	return idxV2, idxV3, nil
 }

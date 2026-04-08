@@ -16,7 +16,7 @@ type RegistrationWrapper interface {
 
 // Registration is the RegistrationWrapper implementation used by the Register method
 type Registration struct {
-	credChan       chan (Credentials)
+	credChan       chan Credentials
 	readyChan      chan bool
 	ready          bool
 	uuid           string
@@ -65,7 +65,7 @@ func (w *Registration) Credentials() (Credentials, error) {
 	cred := w.curCredentials
 	w.mutex.Unlock()
 	if cred == nil {
-		return Credentials{}, errors.New("Not ready")
+		return Credentials{}, errors.New("not ready")
 	}
 	return *cred, nil
 }
