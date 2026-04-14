@@ -5,7 +5,6 @@ go 1.25.0
 require (
 	github.com/Scalingo/go-utils/errors/v3 v3.2.0
 	github.com/gofrs/uuid/v5 v5.4.0
-	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.11.1
 	go.etcd.io/etcd/client/pkg/v3 v3.6.10
 	// The latest versions of etcd have been migrated to go modules.
@@ -16,6 +15,7 @@ require (
 	// The package "go.etcd.io/etcd/client/v3" is a complete refactoring
 	// of the client and uses grpc instead of http, that we currently use.
 	go.etcd.io/etcd/client/v2 v2.305.29
+	go.uber.org/mock v0.6.0
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.6.10 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
