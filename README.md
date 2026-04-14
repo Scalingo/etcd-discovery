@@ -130,11 +130,12 @@ if err := <-errs; err != nil {
 Generate the mocks with:
 
 ```shell
-for interface in $(grep --extended-regexp --no-message --no-filename "type .* interface" ./service/* | cut -d " " -f 2)
-do
-  mockgen -destination service/servicemock/gomock_$(echo $interface | tr '[:upper:]' '[:lower:]').go -package servicemock github.com/Scalingo/etcd-discovery/v7/service $interface
-done
+gomock_generator
 ```
+
+> [!NOTE]
+> `gomock_generator` binary should be installed: https://github.com/Scalingo/go-utils/tree/master/gomock_generator
+
 
 # Release a New Version
 
