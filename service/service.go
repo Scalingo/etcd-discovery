@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"math/rand"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
-	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 // Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
@@ -37,12 +38,12 @@ func (s *Service) All() (Hosts, error) {
 		if etcdv2.IsKeyNotFound(err) {
 			return Hosts{}, nil
 		}
-		return nil, errgo.Notef(err, "Unable to fetch services")
+		return nil, errors.Wrap(context.Background(), err, "Unable to fetch services")
 	}
 
 	hosts, err := buildHostsFromNodes(res.Node.Nodes)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(context.Background(), err, "build hosts from nodes")
 	}
 
 	return hosts, nil
@@ -52,11 +53,11 @@ func (s *Service) All() (Hosts, error) {
 func (s *Service) First() (*Host, error) {
 	hosts, err := s.All()
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(context.Background(), err, "get service hosts")
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, stderrors.New("No host found for this service")
 	}
 
 	return hosts[0], nil
@@ -67,11 +68,11 @@ func (s *Service) One() (*Host, error) {
 	hosts, err := s.All()
 
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(context.Background(), err, "get service hosts")
 	}
 
 	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+		return nil, stderrors.New("No host found for this service")
 	}
 
 	return hosts[rand.Int()%len(hosts)], nil
@@ -82,12 +83,12 @@ func (s *Service) URL(scheme, path string) (string, error) {
 	if !s.Public { // If the service is not public, fallback to a random node
 		host, err := s.One()
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(context.Background(), err, "select service host")
 		}
 
 		url, err := host.URL(scheme, path)
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(context.Background(), err, "build host URL")
 		}
 		return url, nil
 	}
@@ -98,7 +99,7 @@ func (s *Service) URL(scheme, path string) (string, error) {
 	var port string
 	var ok bool
 	if port, ok = s.Ports[scheme]; !ok {
-		return "", errors.New("unknown scheme")
+		return "", stderrors.New("unknown scheme")
 	}
 
 	if s.User != "" {

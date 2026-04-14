@@ -8,7 +8,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	etcdv2 "go.etcd.io/etcd/client/v2"
-	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 const (
@@ -173,7 +174,7 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 func hostRegistration(hostKey, hostJson string) error {
 	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 	if err != nil {
-		return errgo.Notef(err, "Unable to register host")
+		return errors.Wrap(context.Background(), err, "register host")
 	}
 	return nil
 }
@@ -181,7 +182,7 @@ func hostRegistration(hostKey, hostJson string) error {
 func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {
 	key, err := KAPI().Set(context.Background(), serviceKey, serviceJson, nil)
 	if err != nil {
-		return 0, errgo.Notef(err, "Unable to register service")
+		return 0, errors.Wrap(context.Background(), err, "register service")
 	}
 
 	return key.Node.ModifiedIndex, nil

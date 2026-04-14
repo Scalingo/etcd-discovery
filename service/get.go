@@ -4,7 +4,8 @@ import (
 	"context"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
-	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 // ServiceResponse is the interface used to provide a response to the service.Get() Method.
@@ -49,7 +50,7 @@ func Get(service string) ServiceResponse {
 			}
 		}
 		return &GetServiceResponse{
-			err:     errgo.Mask(err),
+			err:     errors.Wrap(context.Background(), err, "get service infos"),
 			service: nil,
 		}
 	}
@@ -57,7 +58,7 @@ func Get(service string) ServiceResponse {
 	s, err := buildServiceFromNode(res.Node)
 	if err != nil {
 		return &GetServiceResponse{
-			err:     errgo.Mask(err),
+			err:     errors.Wrap(context.Background(), err, "build service from node"),
 			service: nil,
 		}
 	}
@@ -82,7 +83,7 @@ func (q *GetServiceResponse) Err() error {
 // Service will return the service returned by the Get method. If the service was not found, no error will be return but the service will only contains a Name field.
 func (q *GetServiceResponse) Service() (*Service, error) {
 	if q.err != nil {
-		return nil, errgo.Mask(q.err)
+		return nil, errors.Wrap(context.Background(), q.err, "get service response")
 	}
 	return q.service, nil
 }
@@ -90,12 +91,12 @@ func (q *GetServiceResponse) Service() (*Service, error) {
 // All will return a slice of all the hosts registred to the service
 func (q *GetServiceResponse) All() (Hosts, error) {
 	if q.err != nil {
-		return nil, q.err
+		return nil, errors.Wrap(context.Background(), q.err, "get service response")
 	}
 
 	hosts, err := q.service.All()
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(context.Background(), err, "get all service hosts")
 	}
 	return hosts, nil
 }
@@ -105,7 +106,7 @@ func (q *GetServiceResponse) All() (Hosts, error) {
 func (q *GetServiceResponse) One() HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(q.err),
+			err:  errors.Wrap(context.Background(), q.err, "get one service host"),
 			host: nil,
 		}
 	}
@@ -113,7 +114,7 @@ func (q *GetServiceResponse) One() HostResponse {
 	host, err := q.service.One()
 	if err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(err),
+			err:  errors.Wrap(context.Background(), err, "get one service host"),
 			host: nil,
 		}
 	}
@@ -128,14 +129,14 @@ func (q *GetServiceResponse) One() HostResponse {
 func (q *GetServiceResponse) First() HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(q.err),
+			err:  errors.Wrap(context.Background(), q.err, "get first service host"),
 			host: nil,
 		}
 	}
 	host, err := q.service.First()
 	if err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(err),
+			err:  errors.Wrap(context.Background(), err, "get first service host"),
 			host: nil,
 		}
 	}
@@ -148,12 +149,12 @@ func (q *GetServiceResponse) First() HostResponse {
 // URL build url for the specified service. If the service is not public, a random host will be chosen and an url will be generated.
 func (q *GetServiceResponse) URL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", errors.Wrap(context.Background(), q.err, "build service URL")
 	}
 
 	url, err := q.service.URL(scheme, path)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrap(context.Background(), err, "build service URL")
 	}
 	return url, nil
 }

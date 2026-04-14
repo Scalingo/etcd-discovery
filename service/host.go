@@ -1,11 +1,12 @@
 package service
 
 import (
-	"errors"
+	"context"
+	stderrors "errors"
 	"fmt"
 	"strings"
 
-	"gopkg.in/errgo.v1"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 // Ports is a representation of the ports exposed by a host or a service.
@@ -70,12 +71,12 @@ func (h *Host) URL(scheme, path string) (string, error) {
 
 	if scheme != "" {
 		if port, ok = h.Ports[scheme]; !ok {
-			return "", errors.New("unknown scheme")
+			return "", stderrors.New("unknown scheme")
 		}
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.Ports)
 		if err != nil {
-			return "", errgo.Notef(err, "find scheme and port")
+			return "", errors.Wrap(context.Background(), err, "find scheme and port")
 		}
 	}
 
@@ -97,7 +98,7 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	if h.PrivateHostname == "" {
 		url, err := h.URL(scheme, path)
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(context.Background(), err, "build host URL")
 		} else {
 			return url, nil
 		}
@@ -112,12 +113,12 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 
 	if scheme != "" {
 		if port, ok = h.PrivatePorts[scheme]; !ok {
-			return "", errors.New("unknown scheme")
+			return "", stderrors.New("unknown scheme")
 		}
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.PrivatePorts)
 		if err != nil {
-			return "", errgo.Notef(err, "find scheme and port")
+			return "", errors.Wrap(context.Background(), err, "find scheme and port")
 		}
 	}
 
@@ -139,7 +140,7 @@ func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
 			return scheme, port, nil
 		}
 	}
-	return "", "", errors.New("scheme not found")
+	return "", "", stderrors.New("scheme not found")
 }
 
 // HostResponse is the interface used to provide a single host response.
@@ -172,7 +173,7 @@ func (q *GetHostResponse) Err() error {
 // Host will return the host represented by this error.
 func (q *GetHostResponse) Host() (*Host, error) {
 	if q.err != nil {
-		return nil, errgo.Mask(q.err)
+		return nil, errors.Wrap(context.Background(), q.err, "get host response")
 	}
 
 	return q.host, nil
@@ -181,11 +182,11 @@ func (q *GetHostResponse) Host() (*Host, error) {
 // URL will return the public URL of this host
 func (q *GetHostResponse) URL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", errors.Wrap(context.Background(), q.err, "build host URL")
 	}
 	url, err := q.host.URL(scheme, path)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrap(context.Background(), err, "build host URL")
 	}
 	return url, nil
 }
@@ -193,11 +194,11 @@ func (q *GetHostResponse) URL(scheme, path string) (string, error) {
 // PrivateURL will return the private URL of this host
 func (q *GetHostResponse) PrivateURL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", errors.Wrap(context.Background(), q.err, "build host private URL")
 	}
 	url, err := q.host.PrivateURL(scheme, path)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", errors.Wrap(context.Background(), err, "build host private URL")
 	}
 	return url, nil
 }
