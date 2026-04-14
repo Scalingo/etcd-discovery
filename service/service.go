@@ -29,8 +29,8 @@ type Credentials struct {
 }
 
 // All return all hosts associated to a service
-func (s *Service) All() (Hosts, error) {
-	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcdv2.GetOptions{
+func (s *Service) All(ctx context.Context) (Hosts, error) {
+	res, err := KAPI().Get(ctx, "/services/"+s.Name, &etcdv2.GetOptions{
 		Recursive: true,
 	})
 
@@ -38,22 +38,22 @@ func (s *Service) All() (Hosts, error) {
 		if etcdv2.IsKeyNotFound(err) {
 			return Hosts{}, nil
 		}
-		return nil, errors.Wrap(context.Background(), err, "Unable to fetch services")
+		return nil, errors.Wrap(ctx, err, "Unable to fetch services")
 	}
 
-	hosts, err := buildHostsFromNodes(res.Node.Nodes)
+	hosts, err := buildHostsFromNodes(ctx, res.Node.Nodes)
 	if err != nil {
-		return nil, errors.Wrap(context.Background(), err, "build hosts from nodes")
+		return nil, errors.Wrap(ctx, err, "build hosts from nodes")
 	}
 
 	return hosts, nil
 }
 
 // First return the first host of this service
-func (s *Service) First() (*Host, error) {
-	hosts, err := s.All()
+func (s *Service) First(ctx context.Context) (*Host, error) {
+	hosts, err := s.All(ctx)
 	if err != nil {
-		return nil, errors.Wrap(context.Background(), err, "get service hosts")
+		return nil, errors.Wrap(ctx, err, "get service hosts")
 	}
 
 	if len(hosts) == 0 {
@@ -64,11 +64,11 @@ func (s *Service) First() (*Host, error) {
 }
 
 // One return a random host from all the available hosts of this service.
-func (s *Service) One() (*Host, error) {
-	hosts, err := s.All()
+func (s *Service) One(ctx context.Context) (*Host, error) {
+	hosts, err := s.All(ctx)
 
 	if err != nil {
-		return nil, errors.Wrap(context.Background(), err, "get service hosts")
+		return nil, errors.Wrap(ctx, err, "get service hosts")
 	}
 
 	if len(hosts) == 0 {
@@ -79,16 +79,16 @@ func (s *Service) One() (*Host, error) {
 }
 
 // URL return the public url of this service. If this service do not have an public url, this will return an url to a random host.
-func (s *Service) URL(scheme, path string) (string, error) {
+func (s *Service) URL(ctx context.Context, scheme, path string) (string, error) {
 	if !s.Public { // If the service is not public, fallback to a random node
-		host, err := s.One()
+		host, err := s.One(ctx)
 		if err != nil {
-			return "", errors.Wrap(context.Background(), err, "select service host")
+			return "", errors.Wrap(ctx, err, "select service host")
 		}
 
-		url, err := host.URL(scheme, path)
+		url, err := host.URL(ctx, scheme, path)
 		if err != nil {
-			return "", errors.Wrap(context.Background(), err, "build host URL")
+			return "", errors.Wrap(ctx, err, "build host URL")
 		}
 		return url, nil
 	}

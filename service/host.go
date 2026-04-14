@@ -61,7 +61,7 @@ type Host struct {
 }
 
 // URL will return a valid url to contact this service on the specific protocol provided by the scheme parameter
-func (h *Host) URL(scheme, path string) (string, error) {
+func (h *Host) URL(ctx context.Context, scheme, path string) (string, error) {
 	var (
 		url  string
 		port string
@@ -76,7 +76,7 @@ func (h *Host) URL(scheme, path string) (string, error) {
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.Ports)
 		if err != nil {
-			return "", errors.Wrap(context.Background(), err, "find scheme and port")
+			return "", errors.Wrap(ctx, err, "find scheme and port")
 		}
 	}
 
@@ -94,11 +94,11 @@ func (h *Host) URL(scheme, path string) (string, error) {
 
 // PrivateURL will provide a valid url to contact this service on the Private network
 // this method will fallback to the URL method if the host does not provide any PrivateURL
-func (h *Host) PrivateURL(scheme, path string) (string, error) {
+func (h *Host) PrivateURL(ctx context.Context, scheme, path string) (string, error) {
 	if h.PrivateHostname == "" {
-		url, err := h.URL(scheme, path)
+		url, err := h.URL(ctx, scheme, path)
 		if err != nil {
-			return "", errors.Wrap(context.Background(), err, "build host URL")
+			return "", errors.Wrap(ctx, err, "build host URL")
 		} else {
 			return url, nil
 		}
@@ -118,7 +118,7 @@ func (h *Host) PrivateURL(scheme, path string) (string, error) {
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.PrivatePorts)
 		if err != nil {
-			return "", errors.Wrap(context.Background(), err, "find scheme and port")
+			return "", errors.Wrap(ctx, err, "find scheme and port")
 		}
 	}
 
@@ -146,16 +146,16 @@ func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
 // HostResponse is the interface used to provide a single host response.
 // This interface provide a standard API used fot method chaining like:
 //
-//	Get("my-service").First().Url()
+//	Get(ctx, "my-service").First(ctx).URL(ctx, "http", "/")
 //
 // To provide such API errores need to be stored and sent at the last moment.
 // To do so each "final" methods (like URL or Host) will check if the Response is errored before
 // continuing to their own logic.
 type HostResponse interface {
 	Err() error
-	Host() (*Host, error)
-	URL(scheme, path string) (string, error)
-	PrivateURL(scheme, path string) (string, error)
+	Host(ctx context.Context) (*Host, error)
+	URL(ctx context.Context, scheme, path string) (string, error)
+	PrivateURL(ctx context.Context, scheme, path string) (string, error)
 }
 
 // GetHostResponse is the HostResponse Implementation of the HostResponse interface used by the the Service methods.
@@ -171,34 +171,34 @@ func (q *GetHostResponse) Err() error {
 }
 
 // Host will return the host represented by this error.
-func (q *GetHostResponse) Host() (*Host, error) {
+func (q *GetHostResponse) Host(ctx context.Context) (*Host, error) {
 	if q.err != nil {
-		return nil, errors.Wrap(context.Background(), q.err, "get host response")
+		return nil, errors.Wrap(ctx, q.err, "get host response")
 	}
 
 	return q.host, nil
 }
 
 // URL will return the public URL of this host
-func (q *GetHostResponse) URL(scheme, path string) (string, error) {
+func (q *GetHostResponse) URL(ctx context.Context, scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errors.Wrap(context.Background(), q.err, "build host URL")
+		return "", errors.Wrap(ctx, q.err, "build host URL")
 	}
-	url, err := q.host.URL(scheme, path)
+	url, err := q.host.URL(ctx, scheme, path)
 	if err != nil {
-		return "", errors.Wrap(context.Background(), err, "build host URL")
+		return "", errors.Wrap(ctx, err, "build host URL")
 	}
 	return url, nil
 }
 
 // PrivateURL will return the private URL of this host
-func (q *GetHostResponse) PrivateURL(scheme, path string) (string, error) {
+func (q *GetHostResponse) PrivateURL(ctx context.Context, scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errors.Wrap(context.Background(), q.err, "build host private URL")
+		return "", errors.Wrap(ctx, q.err, "build host private URL")
 	}
-	url, err := q.host.PrivateURL(scheme, path)
+	url, err := q.host.PrivateURL(ctx, scheme, path)
 	if err != nil {
-		return "", errors.Wrap(context.Background(), err, "build host private URL")
+		return "", errors.Wrap(ctx, err, "build host private URL")
 	}
 	return url, nil
 }

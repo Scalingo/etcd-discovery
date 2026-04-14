@@ -11,7 +11,7 @@ import (
 
 func TestGetNoHost(t *testing.T) {
 	t.Run("Without any service, Get should return an empty slice", func(t *testing.T) {
-		hosts, err := Get("test_no_service").All()
+		hosts, err := Get(t.Context(), "test_no_service").All(t.Context())
 		require.NoError(t, err)
 		assert.Empty(t, hosts)
 	})
@@ -33,7 +33,7 @@ func TestGet(t *testing.T) {
 		w1.WaitRegistration()
 		w2.WaitRegistration()
 
-		hosts, err := Get("test_service_get").All()
+		hosts, err := Get(t.Context(), "test_service_get").All(t.Context())
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)
 
@@ -65,33 +65,33 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		t.Run("Service should return an error", func(t *testing.T) {
-			service, err := response.Service()
-			require.EqualError(t, err, testErrorMsg)
+			service, err := response.Service(t.Context())
+			require.EqualError(t, err, "get service response: "+testErrorMsg)
 			assert.Nil(t, service)
 		})
 
 		t.Run("All should return an error", func(t *testing.T) {
-			h, err := response.All()
-			require.EqualError(t, err, testErrorMsg)
+			h, err := response.All(t.Context())
+			require.EqualError(t, err, "get service response: "+testErrorMsg)
 			assert.Empty(t, h)
 		})
 
 		t.Run("Url should return an error", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
-			require.EqualError(t, err, testErrorMsg)
+			url, err := response.URL(t.Context(), "http", "/path")
+			require.EqualError(t, err, "build service URL: "+testErrorMsg)
 			assert.Empty(t, url)
 		})
 
 		t.Run("One should return an errored host response", func(t *testing.T) {
-			response := response.One()
+			response := response.One(t.Context())
 			require.NotNil(t, response)
-			require.EqualError(t, response.Err(), testErrorMsg)
+			require.EqualError(t, response.Err(), "get one service host: "+testErrorMsg)
 		})
 
 		t.Run("First should return an errored host response", func(t *testing.T) {
-			response := response.First()
+			response := response.First(t.Context())
 			require.NotNil(t, response)
-			require.EqualError(t, response.Err(), testErrorMsg)
+			require.EqualError(t, response.Err(), "get first service host: "+testErrorMsg)
 		})
 	})
 
@@ -107,31 +107,31 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		t.Run("Service should respond a valid service", func(t *testing.T) {
-			service, err := response.Service()
+			service, err := response.Service(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, expectedService, service)
 		})
 
 		t.Run("All should return an empty array", func(t *testing.T) {
-			hosts, err := response.All()
+			hosts, err := response.All(t.Context())
 			require.NoError(t, err)
 			assert.Empty(t, hosts)
 		})
 
 		t.Run("Url should return a valid url", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
+			url, err := response.URL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@public.dev:80/path", url)
 		})
 
 		t.Run("One should pass the One error", func(t *testing.T) {
-			r := response.One()
-			require.EqualError(t, r.Err(), "No host found for this service")
+			r := response.One(t.Context())
+			require.EqualError(t, r.Err(), "get one service host: No host found for this service")
 		})
 
 		t.Run("First should pass the First error", func(t *testing.T) {
-			r := response.First()
-			require.EqualError(t, r.Err(), "No host found for this service")
+			r := response.First(t.Context())
+			require.EqualError(t, r.Err(), "get first service host: No host found for this service")
 		})
 	})
 }

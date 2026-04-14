@@ -13,7 +13,7 @@ func Subscribe(service string) etcdv2.Watcher {
 }
 
 // SubscribeDown return a channel that will notice you everytime a host loose his etcd registration
-func SubscribeDown(service string) (<-chan string, <-chan *etcdv2.Error) {
+func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *etcdv2.Error) {
 	expirations := make(chan string)
 	errs := make(chan *etcdv2.Error)
 	watcher := Subscribe(service)
@@ -24,7 +24,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcdv2.Error) {
 		)
 
 		for {
-			res, err = watcher.Next(context.Background())
+			res, err = watcher.Next(ctx)
 			if err != nil {
 				break
 			}
@@ -33,7 +33,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcdv2.Error) {
 				expirations <- path.Base(res.Node.Key)
 			}
 		}
-		if err != nil {
+		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 			errs <- err.(*etcdv2.Error)
 		}
 		close(expirations)
@@ -43,7 +43,7 @@ func SubscribeDown(service string) (<-chan string, <-chan *etcdv2.Error) {
 }
 
 // SubscribeNew return a channel that will notice you everytime a new host is registred.
-func SubscribeNew(service string) (<-chan *Host, <-chan *etcdv2.Error) {
+func SubscribeNew(ctx context.Context, service string) (<-chan *Host, <-chan *etcdv2.Error) {
 	hosts := make(chan *Host)
 	errs := make(chan *etcdv2.Error)
 	watcher := Subscribe(service)
@@ -54,19 +54,19 @@ func SubscribeNew(service string) (<-chan *Host, <-chan *etcdv2.Error) {
 		)
 
 		for {
-			res, err = watcher.Next(context.Background())
+			res, err = watcher.Next(ctx)
 			if err != nil {
 				break
 			}
 
 			if res.Action == "create" || (res.PrevNode == nil && res.Action == "set") {
-				host, err := buildHostFromNode(res.Node)
+				host, err := buildHostFromNode(ctx, res.Node)
 				if err == nil {
 					hosts <- host
 				}
 			}
 		}
-		if err != nil {
+		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 			errs <- err.(*etcdv2.Error)
 		}
 		close(hosts)

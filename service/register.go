@@ -69,17 +69,24 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
+		defer ticker.Stop()
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
-		id, err := serviceRegistration(serviceKey, serviceValue)
+		id, err := serviceRegistration(ctx, serviceKey, serviceValue)
 		for err != nil {
-			id, err = serviceRegistration(serviceKey, serviceValue)
+			if ctx.Err() != nil {
+				return
+			}
+			id, err = serviceRegistration(ctx, serviceKey, serviceValue)
 		}
 
-		err = hostRegistration(hostKey, hostValue)
+		err = hostRegistration(ctx, hostKey, hostValue)
 		for err != nil {
-			err = hostRegistration(hostKey, hostValue)
+			if ctx.Err() != nil {
+				return
+			}
+			err = hostRegistration(ctx, hostKey, hostValue)
 		}
 
 		publicCredentialsChan <- Credentials{
@@ -94,11 +101,10 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		for {
 			select {
 			case <-ctx.Done():
-				_, err := KAPI().Delete(context.Background(), hostKey, &etcdv2.DeleteOptions{Recursive: false})
+				_, err := KAPI().Delete(context.WithoutCancel(ctx), hostKey, &etcdv2.DeleteOptions{Recursive: false})
 				if err != nil {
 					logger.Println("fail to remove key", hostKey)
 				}
-				ticker.Stop()
 				return
 			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
 				// We update our cache
@@ -112,18 +118,21 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				hostValue = string(hostJson)
 
 				// synchro the host informations
-				hostRegistration(hostKey, hostValue)
+				hostRegistration(ctx, hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
 			case <-ticker.C:
-				err := hostRegistration(hostKey, hostValue)
+				err := hostRegistration(ctx, hostKey, hostValue)
 				// If for any random reason, there is an error,
 				// we retry every second until it's ok.
 				for err != nil {
+					if ctx.Err() != nil {
+						return
+					}
 					logger.Printf("lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
 					time.Sleep(1 * time.Second)
 
-					err = hostRegistration(hostKey, hostValue)
+					err = hostRegistration(ctx, hostKey, hostValue)
 					if err == nil {
 						logger.Printf("recover registration of '%v'", service)
 					}
@@ -171,18 +180,18 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 	}
 }
 
-func hostRegistration(hostKey, hostJson string) error {
-	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+func hostRegistration(ctx context.Context, hostKey, hostJson string) error {
+	_, err := KAPI().Set(ctx, hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 	if err != nil {
-		return errors.Wrap(context.Background(), err, "register host")
+		return errors.Wrap(ctx, err, "register host")
 	}
 	return nil
 }
 
-func serviceRegistration(serviceKey, serviceJson string) (uint64, error) {
-	key, err := KAPI().Set(context.Background(), serviceKey, serviceJson, nil)
+func serviceRegistration(ctx context.Context, serviceKey, serviceJson string) (uint64, error) {
+	key, err := KAPI().Set(ctx, serviceKey, serviceJson, nil)
 	if err != nil {
-		return 0, errors.Wrap(context.Background(), err, "register service")
+		return 0, errors.Wrap(ctx, err, "register service")
 	}
 
 	return key.Node.ModifiedIndex, nil

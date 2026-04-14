@@ -95,7 +95,7 @@ func TestRegister(t *testing.T) {
 			host.PrivatePorts = Ports{}
 			w := Register(t.Context(), "hello_world2", host)
 			w.WaitRegistration()
-			h, err := Get("hello_world2").First().Host()
+			h, err := Get(t.Context(), "hello_world2").First(t.Context()).Host(t.Context())
 			require.NoError(t, err)
 
 			assert.Len(t, h.PrivatePorts, 1)

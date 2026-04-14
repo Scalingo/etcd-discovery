@@ -9,10 +9,10 @@ import (
 
 func TestServiceAll(t *testing.T) {
 	t.Run("With no services", func(t *testing.T) {
-		s, err := Get("service-test-get-1").Service()
+		s, err := Get(t.Context(), "service-test-get-1").Service(t.Context())
 		require.NoError(t, err)
 
-		hosts, err := s.All()
+		hosts, err := s.All(t.Context())
 		require.NoError(t, err)
 		assert.Empty(t, hosts)
 	})
@@ -26,8 +26,8 @@ func TestServiceAll(t *testing.T) {
 		w1.WaitRegistration()
 		w2.WaitRegistration()
 
-		s, err := Get("test-get-222").Service()
-		hosts, err := s.All()
+		s, err := Get(t.Context(), "test-get-222").Service(t.Context())
+		hosts, err := s.All(t.Context())
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)
 		if hosts[0].PrivateHostname == "test1-private.dev" {
@@ -41,9 +41,9 @@ func TestServiceAll(t *testing.T) {
 
 func TestServiceFirst(t *testing.T) {
 	t.Run("With no services", func(t *testing.T) {
-		s, err := Get("service-test-1").Service()
+		s, err := Get(t.Context(), "service-test-1").Service(t.Context())
 		require.NoError(t, err)
-		host, err := s.First()
+		host, err := s.First(t.Context())
 		require.EqualError(t, err, "No host found for this service")
 		assert.Nil(t, host)
 	})
@@ -53,10 +53,10 @@ func TestServiceFirst(t *testing.T) {
 		w := Register(t.Context(), "test-truc", host1)
 		w.WaitRegistration()
 
-		s, err := Get("test-truc").Service()
+		s, err := Get(t.Context(), "test-truc").Service(t.Context())
 		require.NoError(t, err)
 
-		host, err := s.First()
+		host, err := s.First(t.Context())
 		require.NoError(t, err)
 		assert.NotNil(t, host)
 		assert.Equal(t, host1.PrivateHostname, host.PrivateHostname)
@@ -65,10 +65,10 @@ func TestServiceFirst(t *testing.T) {
 
 func TestServiceOne(t *testing.T) {
 	t.Run("With no services", func(t *testing.T) {
-		s, err := Get("service-test-1").Service()
+		s, err := Get(t.Context(), "service-test-1").Service(t.Context())
 		require.NoError(t, err)
 
-		host, err := s.One()
+		host, err := s.One(t.Context())
 		require.EqualError(t, err, "No host found for this service")
 		assert.Nil(t, host)
 	})
@@ -78,10 +78,10 @@ func TestServiceOne(t *testing.T) {
 		w := Register(t.Context(), "test-truc", host1)
 		w.WaitRegistration()
 
-		s, err := Get("test-truc").Service()
+		s, err := Get(t.Context(), "test-truc").Service(t.Context())
 		require.NoError(t, err)
 
-		host, err := s.One()
+		host, err := s.One(t.Context())
 		require.NoError(t, err)
 		assert.NotNil(t, host)
 		assert.Equal(t, host1.PrivateHostname, host.PrivateHostname)
@@ -97,10 +97,10 @@ func TestServiceUrl(t *testing.T) {
 			w := Register(t.Context(), "service-url-1", host)
 			w.WaitRegistration()
 
-			s, err := Get("service-url-1").Service()
+			s, err := Get(t.Context(), "service-url-1").Service(t.Context())
 			require.NoError(t, err)
 
-			url, err := s.URL("http", "/path")
+			url, err := s.URL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://public.dev:10000/path", url)
 		})
@@ -110,10 +110,10 @@ func TestServiceUrl(t *testing.T) {
 			w := Register(t.Context(), "service-url-3", host)
 			w.WaitRegistration()
 
-			s, err := Get("service-url-3").Service()
+			s, err := Get(t.Context(), "service-url-3").Service(t.Context())
 			require.NoError(t, err)
 
-			url, err := s.URL("http", "/path")
+			url, err := s.URL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 		})
@@ -123,10 +123,10 @@ func TestServiceUrl(t *testing.T) {
 			w := Register(t.Context(), "service-url-4", host)
 			w.WaitRegistration()
 
-			s, err := Get("service-url-4").Service()
+			s, err := Get(t.Context(), "service-url-4").Service(t.Context())
 			require.NoError(t, err)
 
-			url, err := s.URL("htjp", "/path")
+			url, err := s.URL(t.Context(), "htjp", "/path")
 			require.EqualError(t, err, "unknown scheme")
 			assert.Empty(t, url)
 		})

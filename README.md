@@ -96,18 +96,32 @@ notice it and communicating with it, it is necessary to watch these
 notifications.
 
 ```go
-newHosts := service.SubscribeNew("name_of_service")
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+newHosts, errs := service.SubscribeNew(ctx, "name_of_service")
 for host := range newHosts {
   fmt.Println(host.Name, "has registered")
+}
+
+if err := <-errs; err != nil {
+  fmt.Println("watch failed:", err)
 }
 ```
 
 ### Watch Down Services
 
 ```go
-deadHosts := service.SubscribeDown("name_of_service")
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+deadHosts, errs := service.SubscribeDown(ctx, "name_of_service")
 for hostname := range deadHosts {
   fmt.Println(hostname, "is dead, RIP")
+}
+
+if err := <-errs; err != nil {
+  fmt.Println("watch failed:", err)
 }
 ```
 
