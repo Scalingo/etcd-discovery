@@ -2,6 +2,13 @@
 
 ## To Be Released
 
+* refactor(lib): migrate from `gopkg.in/errgo.v1` to `github.com/Scalingo/go-utils/errors/v3`
+* fix(lib): regenerate mocks and add missing `mocks.json` and `mocks_sig.json`
+* docs(readme): document how to generate mocks
+
+Breaking Changes:
+* feat(lib): implement `context.Context` everywhere it was missing in the library
+
 ## v7.1.5
 
 * build(go): use go 1.24
