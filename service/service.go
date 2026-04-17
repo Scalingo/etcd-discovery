@@ -107,9 +107,11 @@ func (s *Service) One(queryOpts QueryOptions) (*Host, error) {
 //
 // If this service do not have a public url, this will return a url to a random host.
 func (s *Service) URL(scheme, path string, queryOpts QueryOptions) (string, error) {
-	// If the service is not public, fallback to a random node.
-	// If a shard is requested, use a host URL because the service-level public
-	// metadata is shared by all shards under the same service key.
+	// If the service is not public, fallback to a random host.
+	// If a shard is requested, always resolve the URL from a host in that shard.
+	//
+	// The public metadata stored under /services_infos/<name> is shared across
+	// all shards, so it cannot identify the public host for a specific shard.
 	if !s.Public || queryOpts.Shard != "" {
 		host, err := s.One(queryOpts)
 		if err != nil {
