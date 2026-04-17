@@ -2,6 +2,7 @@
 
 ## To Be Released
 
+* fix: Add missing `mocks.json` file and regenerate mocks
 * chore: remove vendor directory on the repository
 
 ## v7.1.5

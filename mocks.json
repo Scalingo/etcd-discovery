@@ -1,0 +1,17 @@
+{
+  "base_package": "github.com/Scalingo/etcd-discovery/v7",
+  "mocks": [
+    {
+      "interface": "HostResponse",
+      "src_package": "service"
+    },
+    {
+      "interface": "RegistrationWrapper",
+      "src_package": "service"
+    },
+    {
+      "interface": "ServiceResponse",
+      "src_package": "service"
+    }
+  ]
+}
