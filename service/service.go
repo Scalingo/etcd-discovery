@@ -41,8 +41,8 @@ type QueryOptions struct {
 }
 
 // All returns all hosts associated with a service
-func (s *Service) All(queryOpts QueryOptions) (Hosts, error) {
-	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcdv2.GetOptions{
+func (s *Service) All(ctx context.Context, queryOpts QueryOptions) (Hosts, error) {
+	res, err := KAPI().Get(ctx, "/services/"+s.Name, &etcdv2.GetOptions{
 		Recursive: true,
 	})
 
@@ -53,7 +53,7 @@ func (s *Service) All(queryOpts QueryOptions) (Hosts, error) {
 		return nil, errgo.Notef(err, "Unable to fetch services")
 	}
 
-	hosts, err := buildHostsFromNodes(res.Node.Nodes)
+	hosts, err := buildHostsFromNodes(ctx, res.Node.Nodes)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
@@ -83,8 +83,8 @@ func (s *Service) All(queryOpts QueryOptions) (Hosts, error) {
 }
 
 // First returns the first host of this service
-func (s *Service) First(queryOpts QueryOptions) (*Host, error) {
-	hosts, err := s.All(queryOpts)
+func (s *Service) First(ctx context.Context, queryOpts QueryOptions) (*Host, error) {
+	hosts, err := s.All(ctx, queryOpts)
 	if err != nil {
 		return nil, errgo.Notef(err, "fetch hosts")
 	}
@@ -93,9 +93,8 @@ func (s *Service) First(queryOpts QueryOptions) (*Host, error) {
 }
 
 // One returns a random host from all the available hosts of this service.
-func (s *Service) One(queryOpts QueryOptions) (*Host, error) {
-	hosts, err := s.All(queryOpts)
-
+func (s *Service) One(ctx context.Context, queryOpts QueryOptions) (*Host, error) {
+	hosts, err := s.All(ctx, queryOpts)
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
@@ -106,19 +105,19 @@ func (s *Service) One(queryOpts QueryOptions) (*Host, error) {
 // URL returns the public url of this service.
 //
 // If this service do not have a public url, this will return a url to a random host.
-func (s *Service) URL(scheme, path string, queryOpts QueryOptions) (string, error) {
+func (s *Service) URL(ctx context.Context, scheme, path string, queryOpts QueryOptions) (string, error) {
 	// If the service is not public, fallback to a random host.
 	// If a shard is requested, always resolve the URL from a host in that shard.
 	//
 	// The public metadata stored under /services_infos/<name> is shared across
 	// all shards, so it cannot identify the public host for a specific shard.
 	if !s.Public || queryOpts.Shard != "" {
-		host, err := s.One(queryOpts)
+		host, err := s.One(ctx, queryOpts)
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
 
-		url, err := host.URL(scheme, path)
+		url, err := host.URL(ctx, scheme, path)
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
@@ -134,13 +133,9 @@ func (s *Service) URL(scheme, path string, queryOpts QueryOptions) (string, erro
 	}
 
 	if s.User != "" {
-		url = fmt.Sprintf("%s://%s:%s@%s:%s%s",
-			scheme, s.User, s.Password, s.Hostname, port, path,
-		)
+		url = fmt.Sprintf("%s://%s:%s@%s:%s%s", scheme, s.User, s.Password, s.Hostname, port, path)
 	} else {
-		url = fmt.Sprintf("%s://%s:%s%s",
-			scheme, s.Hostname, port, path,
-		)
+		url = fmt.Sprintf("%s://%s:%s%s", scheme, s.Hostname, port, path)
 	}
 	return url, nil
 }

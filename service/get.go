@@ -11,8 +11,8 @@ import (
 //
 // This interface provides a standard API used for method chaining like:
 //
-//	url, err := Get("my-service").First().URL("http", "/")
-//	url, err := GetForShard("my-service", "shard-0").First().URL("http", "/")
+//	url, err := Get(ctx, "my-service").First(ctx).URL(ctx, "http", "/")
+//	url, err := GetForShard(ctx, "my-service", "shard-0").First(ctx).URL(ctx, "http", "/")
 //
 // To provide such API, go errors need to be stored and sent at the last moment.
 // To do so, each "final" method (like URL or All) will check if the Response is errored,
@@ -21,22 +21,22 @@ type ServiceResponse interface {
 	// Err is the method used to check if the Response is errored.
 	Err() error
 	// Service returns the Service struct representing the requested service
-	Service() (*Service, error)
+	Service(ctx context.Context) (*Service, error)
 	// One return a host of the service chosen randomly
-	One() HostResponse
+	One(ctx context.Context) HostResponse
 	// First return the first host of the service
-	First() HostResponse
+	First(ctx context.Context) HostResponse
 	// All returns all the hosts registered for this service
-	All() (Hosts, error)
+	All(ctx context.Context) (Hosts, error)
 	// URL returns a valid url for this service
-	URL(scheme, path string) (string, error)
+	URL(ctx context.Context, scheme, path string) (string, error)
 }
 
 // Get a service by its name. This method does not directly return the Service, but a ServiceResponse.
 //
 // This permits method chaining like:
 //
-//	url, err := Get("my-service").First().URL("http", "/")
+//	url, err := Get(ctx, "my-service").First(ctx).URL(ctx, "http", "/")
 //
 // If there was an error during the acquisition of the service, this error will be stored in the
 // ServiceResponse. Final methods will check for this error before doing actual logic.
@@ -44,8 +44,8 @@ type ServiceResponse interface {
 // If the service is not found, we won't render an error but will return a service with minimal
 // information. This is done to provide maximal backward compatibility since older versions do
 // not register themselves to the "/services_infos" directory.
-func Get(service string) ServiceResponse {
-	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
+func Get(ctx context.Context, service string) ServiceResponse {
+	res, err := KAPI().Get(ctx, "/services_infos/"+service, nil)
 
 	if err != nil {
 		if etcdv2.IsKeyNotFound(err) {
@@ -62,7 +62,7 @@ func Get(service string) ServiceResponse {
 		}
 	}
 
-	s, err := buildServiceFromNode(res.Node)
+	s, err := buildServiceFromNode(ctx, res.Node)
 	if err != nil {
 		return &GetServiceResponse{
 			err:     err,
@@ -77,8 +77,8 @@ func Get(service string) ServiceResponse {
 }
 
 // GetForShard is similar to Get, but all host-based operations are filtered on the provided shard.
-func GetForShard(serviceName, shard string) ServiceResponse {
-	res := Get(serviceName)
+func GetForShard(ctx context.Context, serviceName, shard string) ServiceResponse {
+	res := Get(ctx, serviceName)
 	getRes, ok := res.(*GetServiceResponse)
 	if !ok {
 		return res
@@ -106,7 +106,7 @@ func (q *GetServiceResponse) Err() error {
 //
 // If the service was not found, no error will be returned,
 // but the service will only contain a Name field.
-func (q *GetServiceResponse) Service() (*Service, error) {
+func (q *GetServiceResponse) Service(ctx context.Context) (*Service, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
@@ -114,13 +114,13 @@ func (q *GetServiceResponse) Service() (*Service, error) {
 }
 
 // All will return a slice of all the hosts registered to the service
-func (q *GetServiceResponse) All() (Hosts, error) {
+func (q *GetServiceResponse) All(ctx context.Context) (Hosts, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
 
 	opts := QueryOptions{Shard: q.shard}
-	hosts, err := q.service.All(opts)
+	hosts, err := q.service.All(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (q *GetServiceResponse) All() (Hosts, error) {
 // One will return a host chosen randomly in all the hosts of the service.
 //
 // If the ServiceResponse is errored, the errors will be passed to the HostResponse.
-func (q *GetServiceResponse) One() HostResponse {
+func (q *GetServiceResponse) One(ctx context.Context) HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
 			err:  q.err,
@@ -140,7 +140,7 @@ func (q *GetServiceResponse) One() HostResponse {
 	}
 
 	opts := QueryOptions{Shard: q.shard}
-	host, err := q.service.One(opts)
+	host, err := q.service.One(ctx, opts)
 	if err != nil {
 		return &GetHostResponse{
 			err:  err,
@@ -156,7 +156,7 @@ func (q *GetServiceResponse) One() HostResponse {
 // First will return the first host registered to the service.
 //
 // If the ServiceResponse is errored, the errors will be passed to the HostResponse.
-func (q *GetServiceResponse) First() HostResponse {
+func (q *GetServiceResponse) First(ctx context.Context) HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
 			err:  q.err,
@@ -165,7 +165,7 @@ func (q *GetServiceResponse) First() HostResponse {
 	}
 
 	opts := QueryOptions{Shard: q.shard}
-	host, err := q.service.First(opts)
+	host, err := q.service.First(ctx, opts)
 	if err != nil {
 		return &GetHostResponse{
 			err:  err,
@@ -180,13 +180,13 @@ func (q *GetServiceResponse) First() HostResponse {
 
 // URL build url for the specified service. If the service is not public,
 // a random host will be chosen and a url will be generated.
-func (q *GetServiceResponse) URL(scheme, path string) (string, error) {
+func (q *GetServiceResponse) URL(ctx context.Context, scheme, path string) (string, error) {
 	if q.err != nil {
 		return "", q.err
 	}
 
 	opts := QueryOptions{Shard: q.shard}
-	url, err := q.service.URL(scheme, path, opts)
+	url, err := q.service.URL(ctx, scheme, path, opts)
 	if err != nil {
 		return "", err
 	}

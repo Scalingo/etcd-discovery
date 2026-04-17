@@ -7,6 +7,7 @@
 * feat(service): Add optional shard field when registering hosts
 * feat(service): Add `GetForShard` to query hosts for a specific shard
 * feat(service): Add `QueryOptions` to `Service.All/First/One/URL` for shard filtering
+* feat: Implement context everywhere where missing in the library
 
 Breaking Changes:
 * `Service.All/First/One/URL` signatures now require `QueryOptions`

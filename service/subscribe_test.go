@@ -58,14 +58,16 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestSubscribeDown(t *testing.T) {
-	ctx, cancel := context.WithCancel(t.Context())
+	registrationCtx, cancelRegistration := context.WithCancel(t.Context())
+	subscriptionCtx, cancelSubscription := context.WithCancel(t.Context())
+	defer cancelSubscription()
 
 	t.Run("When the service 'test' is watched and a host expired", func(t *testing.T) {
-		w := Register(ctx, "test_expiration", genHost("test-expiration"))
-		hosts, _ := SubscribeDown("test_expiration")
-		w.WaitRegistration()
+		w := Register(registrationCtx, "test_expiration", genHost("test-expiration"))
+		hosts, _ := SubscribeDown(subscriptionCtx, "test_expiration")
+		require.NoError(t, w.WaitRegistration(t.Context()))
 
-		cancel()
+		cancelRegistration()
 		t.Run("The name of the disappeared host should be returned", func(t *testing.T) {
 			select {
 			case host, ok := <-hosts:
@@ -81,7 +83,7 @@ func TestSubscribeNew(t *testing.T) {
 	defer cancel()
 
 	t.Run("When the service 'test' is watched and a host registered", func(t *testing.T) {
-		hosts, _ := SubscribeNew("test_new")
+		hosts, _ := SubscribeNew(t.Context(), "test_new")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost("test-new")
 		Register(ctx, "test_new", newHost)

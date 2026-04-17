@@ -11,13 +11,13 @@ import (
 
 func TestGetNoHost(t *testing.T) {
 	t.Run("Without any service, Get should return ErrNoServiceFound and a nil slice", func(t *testing.T) {
-		hosts, err := Get("test_no_service").All()
+		hosts, err := Get(t.Context(), "test_no_service").All(t.Context())
 		require.EqualError(t, err, ErrNoServiceFound.Error())
 		assert.Nil(t, hosts)
 	})
 
 	t.Run("Without any service, Get().One().Host() should return ErrNoServiceFound", func(t *testing.T) {
-		host, err := Get("test_no_service").One().Host()
+		host, err := Get(t.Context(), "test_no_service").One(t.Context()).Host(t.Context())
 		require.EqualError(t, err, ErrNoServiceFound.Error())
 		assert.Nil(t, host)
 	})
@@ -36,10 +36,10 @@ func TestGet(t *testing.T) {
 		host2.Name = "test_service_get"
 		w1 := Register(ctx1, "test_service_get", host1)
 		w2 := Register(ctx2, "test_service_get", host2)
-		w1.WaitRegistration()
-		w2.WaitRegistration()
+		require.NoError(t, w1.WaitRegistration(t.Context()))
+		require.NoError(t, w2.WaitRegistration(t.Context()))
 
-		hosts, err := Get("test_service_get").All()
+		hosts, err := Get(t.Context(), "test_service_get").All(t.Context())
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)
 
@@ -71,31 +71,31 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		t.Run("Service should return an error", func(t *testing.T) {
-			service, err := response.Service()
+			service, err := response.Service(t.Context())
 			require.EqualError(t, err, testErrorMsg)
 			assert.Nil(t, service)
 		})
 
 		t.Run("All should return an error", func(t *testing.T) {
-			h, err := response.All()
+			h, err := response.All(t.Context())
 			require.EqualError(t, err, testErrorMsg)
 			assert.Empty(t, h)
 		})
 
-		t.Run("Url should return an error", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
+		t.Run("URL should return an error", func(t *testing.T) {
+			url, err := response.URL(t.Context(), "http", "/path")
 			require.EqualError(t, err, testErrorMsg)
 			assert.Empty(t, url)
 		})
 
 		t.Run("One should return an errored host response", func(t *testing.T) {
-			response := response.One()
+			response := response.One(t.Context())
 			require.NotNil(t, response)
 			require.EqualError(t, response.Err(), testErrorMsg)
 		})
 
 		t.Run("First should return an errored host response", func(t *testing.T) {
-			response := response.First()
+			response := response.First(t.Context())
 			require.NotNil(t, response)
 			require.EqualError(t, response.Err(), testErrorMsg)
 		})
@@ -113,21 +113,31 @@ func TestGetServiceResponse(t *testing.T) {
 		})
 
 		t.Run("Service should respond a valid service", func(t *testing.T) {
-			service, err := response.Service()
+			service, err := response.Service(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, expectedService, service)
 		})
 
 		t.Run("All should return ErrNoServiceFound when the backing service has no hosts key", func(t *testing.T) {
-			hosts, err := response.All()
+			hosts, err := response.All(t.Context())
 			require.EqualError(t, err, ErrNoServiceFound.Error())
 			assert.Nil(t, hosts)
 		})
 
-		t.Run("Url should return a valid url", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
+		t.Run("URL should return a valid url", func(t *testing.T) {
+			url, err := response.URL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@public.dev:80/path", url)
+		})
+
+		t.Run("One should pass the One error", func(t *testing.T) {
+			r := response.One(t.Context())
+			require.EqualError(t, r.Err(), ErrNoServiceFound.Error())
+		})
+
+		t.Run("First should pass the First error", func(t *testing.T) {
+			r := response.First(t.Context())
+			require.EqualError(t, r.Err(), "fetch hosts: "+ErrNoServiceFound.Error())
 		})
 	})
 }
@@ -151,20 +161,20 @@ func TestGetForShard(t *testing.T) {
 
 		w1 := Register(ctx1, "test_service_get_for_shard", hostShard0)
 		w2 := Register(ctx2, "test_service_get_for_shard", hostShard1)
-		w1.WaitRegistration()
-		w2.WaitRegistration()
+		require.NoError(t, w1.WaitRegistration(t.Context()))
+		require.NoError(t, w2.WaitRegistration(t.Context()))
 
-		hosts, err := GetForShard("test_service_get_for_shard", testShardID).All()
+		hosts, err := GetForShard(t.Context(), "test_service_get_for_shard", testShardID).All(t.Context())
 		require.NoError(t, err)
 		require.Len(t, hosts, 1)
 		assert.Equal(t, testShardID, hosts[0].Shard)
 
-		host, err := GetForShard("test_service_get_for_shard", testShard1ID).First().Host()
+		host, err := GetForShard(t.Context(), "test_service_get_for_shard", testShard1ID).First(t.Context()).Host(t.Context())
 		require.NoError(t, err)
 		assert.Equal(t, testShard1ID, host.Shard)
 		assert.Equal(t, "host-shard-1.dev", host.Hostname)
 
-		url, err := GetForShard("test_service_get_for_shard", testShard1ID).URL("http", "/path")
+		url, err := GetForShard(t.Context(), "test_service_get_for_shard", testShard1ID).URL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@host-shard-1.dev:10000/path", url)
 	})
@@ -173,21 +183,21 @@ func TestGetForShard(t *testing.T) {
 		host := genHost("host-no-match")
 		host.Shard = testShardID
 		w := Register(t.Context(), "test_service_get_for_shard_no_match", host)
-		w.WaitRegistration()
+		require.NoError(t, w.WaitRegistration(t.Context()))
 
-		hosts, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).All()
+		hosts, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).All(t.Context())
 		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
 		assert.Nil(t, hosts)
 
-		emptyHost, err := GetForShard("test_service_get_for_shard_no_match", "shard-1").First().Host()
+		emptyHost, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).First(t.Context()).Host(t.Context())
 		require.EqualError(t, err, "fetch hosts: "+ErrNoHostFoundOnShard.Error())
 		assert.Nil(t, emptyHost)
 
-		oneHost, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).One().Host()
+		oneHost, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).One(t.Context()).Host(t.Context())
 		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
 		assert.Nil(t, oneHost)
 
-		url, err := GetForShard("test_service_get_for_shard_no_match", testShard1ID).URL("http", "/path")
+		url, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).URL(t.Context(), "http", "/path")
 		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
 		assert.Empty(t, url)
 	})

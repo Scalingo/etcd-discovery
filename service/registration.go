@@ -8,42 +8,55 @@ import (
 
 // RegistrationWrapper wreap the uuid and the credential channel to provide a more user friendly API for the Register Method
 type RegistrationWrapper interface {
-	Ready() bool                       // Ready return strue if the service registred yet? This method should no be blocking
-	WaitRegistration()                 // WaitRegistration wait for the first registration
-	Credentials() (Credentials, error) // Credentials return the current credentials or an error if the service is not registred yet
-	UUID() string                      // UUID return the host UUID
+	Ready() bool                                // Ready return strue if the service registred yet? This method should no be blocking
+	WaitRegistration(ctx context.Context) error // WaitRegistration wait for the first registration
+	Credentials() (Credentials, error)          // Credentials return the current credentials or an error if the service is not registred yet
+	UUID() string                               // UUID return the host UUID
 }
 
 // Registration is the RegistrationWrapper implementation used by the Register method
 type Registration struct {
-	credChan       chan (Credentials)
-	readyChan      chan bool
-	ready          bool
-	uuid           string
-	mutex          sync.Mutex
-	curCredentials *Credentials
+	credChan        chan Credentials
+	readyChan       chan struct{}
+	ready           bool
+	waitErr         error
+	uuid            string
+	mutex           sync.Mutex
+	signalReadyOnce sync.Once
+	curCredentials  *Credentials
 }
 
 // NewRegistration initialize the Registration struct
 func NewRegistration(ctx context.Context, uuid string, cred chan Credentials) *Registration {
 	r := &Registration{
-		credChan:       cred,
-		readyChan:      make(chan bool, 1),
-		ready:          false,
-		uuid:           uuid,
-		mutex:          sync.Mutex{},
-		curCredentials: nil,
+		credChan:        cred,
+		readyChan:       make(chan struct{}),
+		ready:           false,
+		waitErr:         nil,
+		uuid:            uuid,
+		mutex:           sync.Mutex{},
+		signalReadyOnce: sync.Once{},
+		curCredentials:  nil,
 	}
 	go r.worker(ctx)
 	return r
 }
 
 // WaitRegistration wait for the first registration to happen, meaning that the service is succesfulled registred to the etcd service
-func (w *Registration) WaitRegistration() {
+func (w *Registration) WaitRegistration(ctx context.Context) error {
 	if w.Ready() {
-		return
+		return nil
 	}
-	<-w.readyChan
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-w.readyChan:
+		w.mutex.Lock()
+		err := w.waitErr
+		w.mutex.Unlock()
+		return err
+	}
 }
 
 // Ready is a non blocking method that return true if the service is registred to the etcd service false otherwise
@@ -74,15 +87,25 @@ func (w *Registration) worker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			w.signalReady(ctx.Err())
 			return
 		case newCred := <-w.credChan:
 			w.mutex.Lock()
 			w.curCredentials = &newCred
 			if !w.ready {
-				w.readyChan <- true
+				w.ready = true
 			}
-			w.ready = true
 			w.mutex.Unlock()
+			w.signalReady(nil)
 		}
 	}
+}
+
+func (w *Registration) signalReady(err error) {
+	w.signalReadyOnce.Do(func() {
+		w.mutex.Lock()
+		w.waitErr = err
+		w.mutex.Unlock()
+		close(w.readyChan)
+	})
 }

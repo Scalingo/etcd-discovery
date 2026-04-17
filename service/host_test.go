@@ -14,21 +14,21 @@ func TestHostUrl(t *testing.T) {
 		host.User = ""
 		host.Password = ""
 
-		url, err := host.URL("http", "/path")
+		url, err := host.URL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://public.dev:10000/path", url)
 	})
 
 	t.Run("With a host with a password", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.URL("http", "/path")
+		url, err := host.URL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
 
 	t.Run("When the port doesn't exists", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.URL("htjp", "/path")
+		url, err := host.URL(t.Context(), "htjp", "/path")
 		require.Error(t, err)
 		assert.Equal(t, "unknown scheme", err.Error())
 		assert.Equal(t, 0, len(url))
@@ -36,7 +36,7 @@ func TestHostUrl(t *testing.T) {
 
 	t.Run("When the scheme is not provided", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.URL("", "/path")
+		url, err := host.URL(t.Context(), "", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
@@ -48,21 +48,21 @@ func TestHostPrivateUrl(t *testing.T) {
 		host.User = ""
 		host.Password = ""
 
-		url, err := host.PrivateURL("http", "/path")
+		url, err := host.PrivateURL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://test-private.dev:20000/path", url)
 	})
 
 	t.Run("With a host with a password", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.PrivateURL("http", "/path")
+		url, err := host.PrivateURL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@test-private.dev:20000/path", url)
 	})
 
 	t.Run("When the port doesn't exists", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.PrivateURL("htjp", "/path")
+		url, err := host.PrivateURL(t.Context(), "htjp", "/path")
 		require.Error(t, err)
 		assert.Equal(t, "unknown scheme", err.Error())
 		assert.Equal(t, 0, len(url))
@@ -70,7 +70,7 @@ func TestHostPrivateUrl(t *testing.T) {
 
 	t.Run("When the scheme is not provided", func(t *testing.T) {
 		host := genHost("test")
-		url, err := host.PrivateURL("", "/path")
+		url, err := host.PrivateURL(t.Context(), "", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@test-private.dev:20000/path", url)
 	})
@@ -78,7 +78,7 @@ func TestHostPrivateUrl(t *testing.T) {
 	t.Run("When the host does not support private urls, it should fall back to URL", func(t *testing.T) {
 		host := genHost("test")
 		host.PrivateHostname = ""
-		url, err := host.PrivateURL("http", "/path")
+		url, err := host.PrivateURL(t.Context(), "http", "/path")
 		require.NoError(t, err)
 		assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 	})
@@ -112,23 +112,23 @@ func TestGetHostResponse(t *testing.T) {
 		})
 
 		t.Run("The Host method should return an error", func(t *testing.T) {
-			host, err := response.Host()
+			host, err := response.Host(t.Context())
 			require.Error(t, err)
-			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Equal(t, "TestError", err.Error())
 			assert.Nil(t, host)
 		})
 
 		t.Run("The URL method should return an error", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
+			url, err := response.URL(t.Context(), "http", "/path")
 			require.Error(t, err)
-			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Equal(t, "TestError", err.Error())
 			assert.Equal(t, "", url)
 		})
 
 		t.Run("The PrivateURL should return an error", func(t *testing.T) {
-			url, err := response.PrivateURL("http", "/path")
+			url, err := response.PrivateURL(t.Context(), "http", "/path")
 			require.Error(t, err)
-			assert.Equal(t, "TestError", response.Err().Error())
+			assert.Equal(t, "TestError", err.Error())
 			assert.Equal(t, "", url)
 		})
 	})
@@ -145,19 +145,19 @@ func TestGetHostResponse(t *testing.T) {
 		})
 
 		t.Run("The Host method should return a valid host", func(t *testing.T) {
-			h, err := response.Host()
+			h, err := response.Host(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, &host, h)
 		})
 
 		t.Run("The URL method should return a valid url", func(t *testing.T) {
-			url, err := response.URL("http", "/path")
+			url, err := response.URL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@public.dev:10000/path", url)
 		})
 
 		t.Run("The Private URL should return a valid url", func(t *testing.T) {
-			url, err := response.PrivateURL("http", "/path")
+			url, err := response.PrivateURL(t.Context(), "http", "/path")
 			require.NoError(t, err)
 			assert.Equal(t, "http://user:password@test-service-private.dev:20000/path", url)
 		})
