@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/gofrs/uuid/v5 v5.4.0
-	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.11.1
 	go.etcd.io/etcd/client/pkg/v3 v3.6.10
 	// The latest versions of etcd have been migrated to go modules.
@@ -16,6 +15,7 @@ require (
 	// of the client and uses grpc instead of http, that we currently use.
 	go.etcd.io/etcd/client/v2 v2.305.29
 	gopkg.in/errgo.v1 v1.0.1
+	go.uber.org/mock v0.6.0
 )
 
 require (

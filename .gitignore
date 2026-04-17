@@ -1,5 +1,5 @@
 /_dev/go-cache
-
+vendor/
 # IDE
 .idea/
 

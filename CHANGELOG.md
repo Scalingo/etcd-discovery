@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* fix: Add missing `mocks.json` file and regenerate mocks
+* chore: remove vendor directory on the repository
 * feat(service): Add optional shard field when registering hosts
 * feat(service): Add `GetForShard` to query hosts for a specific shard
 * feat(service): Add `QueryOptions` to `Service.All/First/One/URL` for shard filtering
