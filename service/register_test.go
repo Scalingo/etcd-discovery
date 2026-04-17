@@ -125,10 +125,10 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, w.WaitRegistration(t.Context()))
 			hostKey := "/services/test4_register/" + w.UUID()
 			cancel()
-			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
-			require.Error(t, err)
-			assert.True(t, etcdv2.IsKeyNotFound(err))
+			assert.Eventually(t, func() bool {
+				_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
+				return etcdv2.IsKeyNotFound(err)
+			}, (HEARTBEAT_DURATION+2)*time.Second, 100*time.Millisecond)
 		})
 
 		t.Run("When the private_hostname is not set, it must take the node hostname", func(t *testing.T) {

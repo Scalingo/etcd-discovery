@@ -42,7 +42,8 @@ func NewRegistration(ctx context.Context, uuid string, cred chan Credentials) *R
 	return r
 }
 
-// WaitRegistration wait for the first registration to happen, meaning that the service is succesfulled registred to the etcd service
+// WaitRegistration wait for the first registration to happen, meaning that the service is successfully registered on the etcd server.
+// It also returns if the caller context is canceled before the first credentials arrive.
 func (w *Registration) WaitRegistration(ctx context.Context) error {
 	if w.Ready() {
 		return nil
@@ -50,6 +51,8 @@ func (w *Registration) WaitRegistration(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
+		// This context only controls the current wait call. The background worker
+		// keeps listening for the registration until its own parent context ends.
 		return ctx.Err()
 	case <-w.readyChan:
 		w.mutex.Lock()
@@ -87,12 +90,14 @@ func (w *Registration) worker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			// Unblock WaitRegistration callers even if the registration never reached etcd.
 			w.signalReady(ctx.Err())
 			return
 		case newCred := <-w.credChan:
 			w.mutex.Lock()
 			w.curCredentials = &newCred
 			if !w.ready {
+				// The first credentials mark the registration as usable. Later updates only refresh the cache.
 				w.ready = true
 			}
 			w.mutex.Unlock()
@@ -103,6 +108,9 @@ func (w *Registration) worker(ctx context.Context) {
 
 func (w *Registration) signalReady(err error) {
 	w.signalReadyOnce.Do(func() {
+		// Registration can become "ready" either because the first credentials arrived
+		// or because the parent context ended first. Close the wait channel only once
+		// so concurrent callers observe a single outcome.
 		w.mutex.Lock()
 		w.waitErr = err
 		w.mutex.Unlock()

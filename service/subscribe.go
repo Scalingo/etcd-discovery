@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"path"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
@@ -12,7 +13,8 @@ func Subscribe(service string) etcdv2.Watcher {
 	return KAPI().Watcher("/services/"+service, &etcdv2.WatcherOptions{Recursive: true})
 }
 
-// SubscribeDown return a channel that will notice you everytime a host loose his etcd registration
+// SubscribeDown return a channel that will notice you everytime a host loose his etcd registration.
+// The subscription lifetime is tied to ctx so callers can stop the blocking etcd watch cleanly.
 func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *etcdv2.Error) {
 	expirations := make(chan string)
 	errs := make(chan *etcdv2.Error)
@@ -24,6 +26,7 @@ func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *
 		)
 
 		for {
+			// Watch with the caller context so this goroutine exits as soon as the subscription is canceled.
 			res, err = watcher.Next(ctx)
 			if err != nil {
 				break
@@ -33,9 +36,12 @@ func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *
 				expirations <- path.Base(res.Node.Key)
 			}
 		}
-		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
-			errs <- err.(*etcdv2.Error)
+
+		etcdErr := subscriptionError(err)
+		if etcdErr != nil {
+			errs <- etcdErr
 		}
+
 		close(expirations)
 		close(errs)
 	}()
@@ -43,6 +49,7 @@ func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *
 }
 
 // SubscribeNew return a channel that will notice you everytime a new host is registred.
+// The subscription lifetime is tied to ctx so callers can stop the blocking etcd watch cleanly.
 func SubscribeNew(ctx context.Context, service string) (<-chan *Host, <-chan *etcdv2.Error) {
 	hosts := make(chan *Host)
 	errs := make(chan *etcdv2.Error)
@@ -54,23 +61,52 @@ func SubscribeNew(ctx context.Context, service string) (<-chan *Host, <-chan *et
 		)
 
 		for {
+			// Watch with the caller context so this goroutine exits as soon as the subscription is canceled.
 			res, err = watcher.Next(ctx)
 			if err != nil {
 				break
 			}
 
 			if res.Action == "create" || (res.PrevNode == nil && res.Action == "set") {
+				// etcd can report the first write for a key as "set" instead of
+				// "create". A missing previous node still means a brand-new host.
 				host, err := buildHostFromNode(ctx, res.Node)
 				if err == nil {
 					hosts <- host
 				}
 			}
 		}
-		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
-			errs <- err.(*etcdv2.Error)
+
+		etcdErr := subscriptionError(err)
+		if etcdErr != nil {
+			errs <- etcdErr
 		}
+
 		close(hosts)
 		close(errs)
 	}()
 	return hosts, errs
+}
+
+// subscriptionError ignores context cancellation, forwards only etcd errors to
+// the errs channel, and supports wrapped errors without panicking on unrelated
+// error types.
+func subscriptionError(err error) *etcdv2.Error {
+	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return nil
+	}
+
+	var etcdErr *etcdv2.Error
+	if errors.As(err, &etcdErr) {
+		return etcdErr
+	}
+
+	var etcdErrValue etcdv2.Error
+	if errors.As(err, &etcdErrValue) {
+		// Some call paths return etcd.Error by value; copy it to preserve the
+		// Subscribe* channel type without requiring callers to special-case it.
+		return &etcdErrValue
+	}
+
+	return nil
 }
