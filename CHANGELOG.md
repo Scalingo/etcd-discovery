@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* chore: remove vendor directory on the repository
+
 ## v7.1.5
 
 * build(go): use go 1.24
