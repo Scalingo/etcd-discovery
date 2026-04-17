@@ -5,35 +5,37 @@
 package servicemock
 
 import (
-	service "github.com/Scalingo/etcd-discovery/v7/service"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	service "github.com/Scalingo/etcd-discovery/v7/service"
+	gomock "go.uber.org/mock/gomock"
 )
 
-// MockRegistrationWrapper is a mock of RegistrationWrapper interface
+// MockRegistrationWrapper is a mock of RegistrationWrapper interface.
 type MockRegistrationWrapper struct {
 	ctrl     *gomock.Controller
 	recorder *MockRegistrationWrapperMockRecorder
+	isgomock struct{}
 }
 
-// MockRegistrationWrapperMockRecorder is the mock recorder for MockRegistrationWrapper
+// MockRegistrationWrapperMockRecorder is the mock recorder for MockRegistrationWrapper.
 type MockRegistrationWrapperMockRecorder struct {
 	mock *MockRegistrationWrapper
 }
 
-// NewMockRegistrationWrapper creates a new mock instance
+// NewMockRegistrationWrapper creates a new mock instance.
 func NewMockRegistrationWrapper(ctrl *gomock.Controller) *MockRegistrationWrapper {
 	mock := &MockRegistrationWrapper{ctrl: ctrl}
 	mock.recorder = &MockRegistrationWrapperMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRegistrationWrapper) EXPECT() *MockRegistrationWrapperMockRecorder {
 	return m.recorder
 }
 
-// Credentials mocks base method
+// Credentials mocks base method.
 func (m *MockRegistrationWrapper) Credentials() (service.Credentials, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Credentials")
@@ -42,13 +44,13 @@ func (m *MockRegistrationWrapper) Credentials() (service.Credentials, error) {
 	return ret0, ret1
 }
 
-// Credentials indicates an expected call of Credentials
+// Credentials indicates an expected call of Credentials.
 func (mr *MockRegistrationWrapperMockRecorder) Credentials() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Credentials", reflect.TypeOf((*MockRegistrationWrapper)(nil).Credentials))
 }
 
-// Ready mocks base method
+// Ready mocks base method.
 func (m *MockRegistrationWrapper) Ready() bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ready")
@@ -56,13 +58,13 @@ func (m *MockRegistrationWrapper) Ready() bool {
 	return ret0
 }
 
-// Ready indicates an expected call of Ready
+// Ready indicates an expected call of Ready.
 func (mr *MockRegistrationWrapperMockRecorder) Ready() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ready", reflect.TypeOf((*MockRegistrationWrapper)(nil).Ready))
 }
 
-// UUID mocks base method
+// UUID mocks base method.
 func (m *MockRegistrationWrapper) UUID() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UUID")
@@ -70,19 +72,19 @@ func (m *MockRegistrationWrapper) UUID() string {
 	return ret0
 }
 
-// UUID indicates an expected call of UUID
+// UUID indicates an expected call of UUID.
 func (mr *MockRegistrationWrapperMockRecorder) UUID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UUID", reflect.TypeOf((*MockRegistrationWrapper)(nil).UUID))
 }
 
-// WaitRegistration mocks base method
+// WaitRegistration mocks base method.
 func (m *MockRegistrationWrapper) WaitRegistration() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "WaitRegistration")
 }
 
-// WaitRegistration indicates an expected call of WaitRegistration
+// WaitRegistration indicates an expected call of WaitRegistration.
 func (mr *MockRegistrationWrapperMockRecorder) WaitRegistration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitRegistration", reflect.TypeOf((*MockRegistrationWrapper)(nil).WaitRegistration))
