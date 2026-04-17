@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* build(deps): various updates
+* build(go): use go 1.25
 * fix: Add missing `mocks.json` file and regenerate mocks
 * chore: remove vendor directory on the repository
 * feat(service): Add optional shard field when registering hosts
