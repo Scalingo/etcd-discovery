@@ -1,5 +1,10 @@
 package service
 
+const (
+	testShard1ID = "shard-1"
+	testShard2ID = "shard-2"
+)
+
 func genHost(name string) Host {
 	return Host{
 		Name:     "test-service",

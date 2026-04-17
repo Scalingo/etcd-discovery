@@ -4,6 +4,13 @@
 
 * fix: Add missing `mocks.json` file and regenerate mocks
 * chore: remove vendor directory on the repository
+* feat(service): Add optional shard field when registering hosts
+* feat(service): Add `GetForShard` to query hosts for a specific shard
+* feat(service): Add `QueryOptions` to `Service.All/First/One/URL` for shard filtering
+
+Breaking Changes:
+* `Service.All/First/One/URL` signatures now require `QueryOptions`
+* `Service.All/First/One/URL` now return an error and `nil` hosts when no host was found in etcd, instead of returning an empty host
 
 ## v7.1.5
 

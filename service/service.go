@@ -10,7 +10,15 @@ import (
 	"gopkg.in/errgo.v1"
 )
 
-// Service store all the informatiosn about a service. This is also used to marshal services present in the /services_infos/ directory.
+var (
+	ErrNoServiceFound     = errors.New("service not found")
+	ErrNoHostFound        = errors.New("no host found for this service")
+	ErrNoHostFoundOnShard = errors.New("no host found for this service on this shard")
+	ErrUnknownScheme      = errors.New("unknown scheme")
+)
+
+// Service stores all the information about a service.
+// This is also used to marshal services present in the /services_infos/ directory.
 type Service struct {
 	Name     string `json:"name"`               // Name of the service
 	Critical bool   `json:"critical"`           // Is the service critical to the infrastructure health?
@@ -27,15 +35,20 @@ type Credentials struct {
 	Password string
 }
 
-// All return all hosts associated to a service
-func (s *Service) All() (Hosts, error) {
+// QueryOptions allows optional filtering for service queries.
+type QueryOptions struct {
+	Shard string
+}
+
+// All returns all hosts associated with a service
+func (s *Service) All(queryOpts QueryOptions) (Hosts, error) {
 	res, err := KAPI().Get(context.Background(), "/services/"+s.Name, &etcdv2.GetOptions{
 		Recursive: true,
 	})
 
 	if err != nil {
 		if etcdv2.IsKeyNotFound(err) {
-			return Hosts{}, nil
+			return nil, ErrNoServiceFound
 		}
 		return nil, errgo.Notef(err, "Unable to fetch services")
 	}
@@ -45,42 +58,62 @@ func (s *Service) All() (Hosts, error) {
 		return nil, errgo.Mask(err)
 	}
 
-	return hosts, nil
-}
-
-// First return the first host of this service
-func (s *Service) First() (*Host, error) {
-	hosts, err := s.All()
-	if err != nil {
-		return nil, errgo.Mask(err)
+	if len(hosts) == 0 {
+		return nil, ErrNoHostFound
 	}
 
-	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
+	// If no shard is specified, return all hosts
+	if queryOpts.Shard == "" {
+		return hosts, nil
+	}
+
+	// If shard is specified, filter hosts by shard
+	filteredHosts := make(Hosts, 0, len(hosts))
+	for _, host := range hosts {
+		if host.Shard == queryOpts.Shard {
+			filteredHosts = append(filteredHosts, host)
+		}
+	}
+
+	if len(filteredHosts) == 0 {
+		return nil, ErrNoHostFoundOnShard
+	}
+
+	return filteredHosts, nil
+}
+
+// First returns the first host of this service
+func (s *Service) First(queryOpts QueryOptions) (*Host, error) {
+	hosts, err := s.All(queryOpts)
+	if err != nil {
+		return nil, errgo.Notef(err, "fetch hosts")
 	}
 
 	return hosts[0], nil
 }
 
-// One return a random host from all the available hosts of this service.
-func (s *Service) One() (*Host, error) {
-	hosts, err := s.All()
+// One returns a random host from all the available hosts of this service.
+func (s *Service) One(queryOpts QueryOptions) (*Host, error) {
+	hosts, err := s.All(queryOpts)
 
 	if err != nil {
 		return nil, errgo.Mask(err)
 	}
 
-	if len(hosts) == 0 {
-		return nil, errors.New("No host found for this service")
-	}
-
 	return hosts[rand.Int()%len(hosts)], nil
 }
 
-// URL return the public url of this service. If this service do not have an public url, this will return an url to a random host.
-func (s *Service) URL(scheme, path string) (string, error) {
-	if !s.Public { // If the service is not public, fallback to a random node
-		host, err := s.One()
+// URL returns the public url of this service.
+//
+// If this service do not have a public url, this will return a url to a random host.
+func (s *Service) URL(scheme, path string, queryOpts QueryOptions) (string, error) {
+	// If the service is not public, fallback to a random host.
+	// If a shard is requested, always resolve the URL from a host in that shard.
+	//
+	// The public metadata stored under /services_infos/<name> is shared across
+	// all shards, so it cannot identify the public host for a specific shard.
+	if !s.Public || queryOpts.Shard != "" {
+		host, err := s.One(queryOpts)
 		if err != nil {
 			return "", errgo.Mask(err)
 		}
@@ -92,13 +125,12 @@ func (s *Service) URL(scheme, path string) (string, error) {
 		return url, nil
 	}
 
-	// If the service IS public, take the service node.
-
+	// If the service is public, take the service node.
 	var url string
 	var port string
 	var ok bool
 	if port, ok = s.Ports[scheme]; !ok {
-		return "", errors.New("unknown scheme")
+		return "", ErrUnknownScheme
 	}
 
 	if s.User != "" {

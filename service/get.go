@@ -4,38 +4,46 @@ import (
 	"context"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
-	"gopkg.in/errgo.v1"
 )
 
-// ServiceResponse is the interface used to provide a response to the service.Get() Method.
-// This interface provide a standard API used for method chaining like:
+// ServiceResponse is the interface used to provide a response to the service.Get()
+// and service.GetForShard() Methods.
 //
-//	url, err := Get("my-service").First().URL()
+// This interface provides a standard API used for method chaining like:
+//
+//	url, err := Get("my-service").First().URL("http", "/")
+//	url, err := GetForShard("my-service", "shard-0").First().URL("http", "/")
 //
 // To provide such API, go errors need to be stored and sent at the last moment.
-// To do so, each "final" method (like Url or All), will check if the Response is errored, before
-// continuing to their own logic.
+// To do so, each "final" method (like URL or All) will check if the Response is errored,
+// before continuing to their own logic.
 type ServiceResponse interface {
 	// Err is the method used to check if the Response is errored.
 	Err() error
-	// Service return the Service struct representing the requested service
+	// Service returns the Service struct representing the requested service
 	Service() (*Service, error)
 	// One return a host of the service chosen randomly
 	One() HostResponse
-	// First return the first host of the serice
+	// First return the first host of the service
 	First() HostResponse
-	// All return all the hosts registred for this service
+	// All returns all the hosts registered for this service
 	All() (Hosts, error)
 	// URL returns a valid url for this service
 	URL(scheme, path string) (string, error)
 }
 
-// Get a service by its name. This method does not directly return the Service, but a ServiceResponse. This permit method chaining like:
+// Get a service by its name. This method does not directly return the Service, but a ServiceResponse.
 //
-//	url, err := Get("my-service").First().URL()
+// This permits method chaining like:
 //
-// If there was an error during the acquisition of the service, this error will be stored in the ServiceResponse. Final methods will check for this error before doing actual logic.
-// If the service is not found, we won't render an error, but will return a service with minimal informations. This is done to provide maximal backwerd compatibility since older versions does not register themself to the "/services_infos" directory.
+//	url, err := Get("my-service").First().URL("http", "/")
+//
+// If there was an error during the acquisition of the service, this error will be stored in the
+// ServiceResponse. Final methods will check for this error before doing actual logic.
+//
+// If the service is not found, we won't render an error but will return a service with minimal
+// information. This is done to provide maximal backward compatibility since older versions do
+// not register themselves to the "/services_infos" directory.
 func Get(service string) ServiceResponse {
 	res, err := KAPI().Get(context.Background(), "/services_infos/"+service, nil)
 
@@ -49,7 +57,7 @@ func Get(service string) ServiceResponse {
 			}
 		}
 		return &GetServiceResponse{
-			err:     errgo.Mask(err),
+			err:     err,
 			service: nil,
 		}
 	}
@@ -57,63 +65,85 @@ func Get(service string) ServiceResponse {
 	s, err := buildServiceFromNode(res.Node)
 	if err != nil {
 		return &GetServiceResponse{
-			err:     errgo.Mask(err),
+			err:     err,
 			service: nil,
 		}
 	}
 	return &GetServiceResponse{
 		err:     nil,
 		service: s,
+		shard:   "",
 	}
 }
 
-// GetServiceResponse is the implementation of the ServiceResponse interface used by the Get method
-// This only provide the error wrapping logic, all the actual logic for thsese mêthod are done by the Service struct.
+// GetForShard is similar to Get, but all host-based operations are filtered on the provided shard.
+func GetForShard(serviceName, shard string) ServiceResponse {
+	res := Get(serviceName)
+	getRes, ok := res.(*GetServiceResponse)
+	if !ok {
+		return res
+	}
+	getRes.shard = shard
+	return getRes
+}
+
+// GetServiceResponse is the implementation of the ServiceResponse interface used by the Get method.
+//
+// This only provides the error wrapping logic, the Service struct does all the actual logic for these methods.
 type GetServiceResponse struct {
 	service *Service
 	err     error
+	shard   string
 }
 
-// Err wil return an error if an error happened when you've called tre Get method, or nil if no error were detected.
+// Err will return an error if an error happened when you've called the Get method,
+// or nil if no error were detected.
 func (q *GetServiceResponse) Err() error {
 	return q.err
 }
 
-// Service will return the service returned by the Get method. If the service was not found, no error will be return but the service will only contains a Name field.
+// Service will return the service returned by the Get method.
+//
+// If the service was not found, no error will be returned,
+// but the service will only contain a Name field.
 func (q *GetServiceResponse) Service() (*Service, error) {
 	if q.err != nil {
-		return nil, errgo.Mask(q.err)
+		return nil, q.err
 	}
 	return q.service, nil
 }
 
-// All will return a slice of all the hosts registred to the service
+// All will return a slice of all the hosts registered to the service
 func (q *GetServiceResponse) All() (Hosts, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
 
-	hosts, err := q.service.All()
+	opts := QueryOptions{Shard: q.shard}
+	hosts, err := q.service.All(opts)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, err
 	}
+
 	return hosts, nil
 }
 
-// One will return a host chosen randomly in all the hosts of the service
-// If the ServiceResponse is errored, the errors will be passed to the HostResponse
+// One will return a host chosen randomly in all the hosts of the service.
+//
+// If the ServiceResponse is errored, the errors will be passed to the HostResponse.
 func (q *GetServiceResponse) One() HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(q.err),
+			err:  q.err,
 			host: nil,
 		}
 	}
 
-	host, err := q.service.One()
+	opts := QueryOptions{Shard: q.shard}
+	host, err := q.service.One(opts)
 	if err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(err),
+			err:  err,
 			host: nil,
 		}
 	}
@@ -123,19 +153,22 @@ func (q *GetServiceResponse) One() HostResponse {
 	}
 }
 
-// First will return the first host registred to the service
-// If the ServiceResponse is errored, the errors will be passed to the HostResponse
+// First will return the first host registered to the service.
+//
+// If the ServiceResponse is errored, the errors will be passed to the HostResponse.
 func (q *GetServiceResponse) First() HostResponse {
 	if q.err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(q.err),
+			err:  q.err,
 			host: nil,
 		}
 	}
-	host, err := q.service.First()
+
+	opts := QueryOptions{Shard: q.shard}
+	host, err := q.service.First(opts)
 	if err != nil {
 		return &GetHostResponse{
-			err:  errgo.Mask(err),
+			err:  err,
 			host: nil,
 		}
 	}
@@ -145,15 +178,17 @@ func (q *GetServiceResponse) First() HostResponse {
 	}
 }
 
-// URL build url for the specified service. If the service is not public, a random host will be chosen and an url will be generated.
+// URL build url for the specified service. If the service is not public,
+// a random host will be chosen and a url will be generated.
 func (q *GetServiceResponse) URL(scheme, path string) (string, error) {
 	if q.err != nil {
-		return "", errgo.Mask(q.err)
+		return "", q.err
 	}
 
-	url, err := q.service.URL(scheme, path)
+	opts := QueryOptions{Shard: q.shard}
+	url, err := q.service.URL(scheme, path, opts)
 	if err != nil {
-		return "", errgo.Mask(err)
+		return "", err
 	}
 	return url, nil
 }

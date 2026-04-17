@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	// HEARTBEAT_DURATION time in second between two registration. The host will
-	// be deleted if etcd didn't received any new registration in those 5 seocnds
+	// HEARTBEAT_DURATION time in second between two registrations. The host will
+	// be deleted if etcd didn't receive any new registration in those 5 seconds.
 	HEARTBEAT_DURATION = 5
 )
 
 // Register a host with a service name and a host description. The last chan is
 // a stop method. If something is written on this channel, any goroutines
-// launch by this method will stop.
+// launched by this method will stop.
 //
 // This service will launch two go routines. The first one will maintain the
-// registration every 5 seconds and the second one will check if the service
+// registration every 5 seconds, and the second one will check if the service
 // credentials don't change and notify otherwise
 func Register(ctx context.Context, service string, host Host) *Registration {
 	if !host.Public && len(host.PrivateHostname) == 0 {
@@ -99,7 +99,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				}
 				ticker.Stop()
 				return
-			case credentials := <-privateCredentialsChan: // If the credentials has benn changed
+			case credentials := <-privateCredentialsChan: // If the credentials have been changed,
 				// We update our cache
 				host.User = credentials.User
 				host.Password = credentials.Password
@@ -110,7 +110,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				hostJson, _ = json.Marshal(&host)
 				hostValue = string(hostJson)
 
-				// synchro the host informations
+				// Sync the host information
 				hostRegistration(hostKey, hostValue)
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
@@ -158,7 +158,10 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 		var serviceInfos Service
 		err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
 		if err != nil {
-			logger.Printf("error while getting service key '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+			logger.Printf(
+				"error while getting service key '%v': '%v' (%v)",
+				serviceKey, err, Client().Endpoints(),
+			)
 			time.Sleep(1 * time.Second)
 		}
 		// We've got the modification, send it to the register agent
@@ -171,7 +174,9 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 }
 
 func hostRegistration(hostKey, hostJson string) error {
-	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+	_, err := KAPI().Set(context.Background(), hostKey, hostJson, &etcdv2.SetOptions{
+		TTL: HEARTBEAT_DURATION * time.Second,
+	})
 	if err != nil {
 		return errgo.Notef(err, "Unable to register host")
 	}

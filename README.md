@@ -18,10 +18,11 @@ Registering a service consists of providing a public hostname or/and a private h
 
 ```go
 /*
- * First argument is the name of the service
- * Then a struct containing the service informations
- * The registeration will stop when the context will be canceled.
- * It will return the service uuid and a channel which will send back any modifications made to the service by the other host of the same service. This is usefull for credential synchronisation.
+ * First argument is the name of the service.
+ * Then a struct containing the service information.
+ * The registration will stop when the context will be canceled.
+ * It will return the service uuid and a channel which will send back any modifications made to the
+   service by the other host of the same service. This is useful for credential synchronization.
  */
 ctx, cancel := context.WithCancel(context.Background())
 registration := service.Register(
@@ -34,11 +35,12 @@ registration := service.Register(
       "https": "443",
     },
     Critical:       true,
+    Shard:          "shard-0",
     User:           gopassword.Generate(32),
     Password:       gopassword.Generate(32),
     Public: true,
     PrivateHostname: "node-1.internal.dev",
-    PrivatePorts: service.ports{
+    PrivatePorts: service.Ports{
       "http":  "8080",
       "https": "80443",
     },
@@ -63,7 +65,8 @@ This will create two different etcd keys:
       "http": "8080",
       "https": "80443"
    },
-   "critcal": true,
+   "critical": true,
+   "shard": "shard-0",
    "uuid": "your-service-uuid-node-1.internal.dev",
    "ports":{
       "http":"80",
@@ -72,7 +75,7 @@ This will create two different etcd keys:
 }
 ```
 
-* `/service_infos/name_of_service` containing:
+* `/services_infos/name_of_service` containing:
 
 ```json
 {
@@ -87,6 +90,38 @@ This will create two different etcd keys:
    },
    "public": true
 }
+```
+
+Shard information is stored per host under `/services/<name>/<uuid>`. It is intentionally not stored in
+`/services_infos/<name>`, because different instances of the same service may register on different shards.
+
+### Query a Service
+
+Use `Get` to query all hosts for a service:
+
+```go
+hosts, err := service.Get("my-service").All()
+url, err := service.Get("my-service").URL("http", "/health")
+```
+
+Use `GetForShard` to restrict host lookups to a specific shard:
+
+```go
+hosts, err := service.GetForShard("my-service", "shard-0").All()
+url, err := service.GetForShard("my-service", "shard-0").URL("http", "/health")
+```
+
+`Service.All`, `Service.First`, `Service.One`, and `Service.URL` now take a `service.QueryOptions`
+argument. Pass `service.QueryOptions{}` when no filtering is needed.
+
+```go
+s, err := service.Get("my-service").Service()
+if err != nil {
+  return err
+}
+
+host, err := s.First(service.QueryOptions{Shard: "shard-0"})
+url, err := s.URL("http", "/health", service.QueryOptions{})
 ```
 
 ### Subscribe to New Service

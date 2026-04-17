@@ -26,7 +26,8 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, err)
 
 			h := &Host{}
-			json.Unmarshal([]byte(res.Node.Value), &h)
+			err = json.Unmarshal([]byte(res.Node.Value), h)
+			require.NoError(t, err)
 
 			assert.Equal(t, uuid, path.Base(res.Node.Key))
 			host.UUID = h.UUID
@@ -47,7 +48,7 @@ func TestRegister(t *testing.T) {
 			assert.LessOrEqual(t, duration, HEARTBEAT_DURATION*time.Second)
 		})
 
-		t.Run("And the serivce infos must be set", func(t *testing.T) {
+		t.Run("And the service infos must be set", func(t *testing.T) {
 			infos := &Service{
 				Name:     "test3_register",
 				Hostname: "public.dev",
@@ -65,8 +66,56 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, err)
 
 			service := &Service{}
-			json.Unmarshal([]byte(res.Node.Value), &service)
+			err = json.Unmarshal([]byte(res.Node.Value), service)
+			require.NoError(t, err)
 			assert.Equal(t, infos, service)
+		})
+
+		t.Run("And the shard must stay on the host when provided", func(t *testing.T) {
+			hostWithShard := genHost("test-shard")
+			hostWithShard.Shard = "shard-0"
+
+			w := Register(t.Context(), "test5_register", hostWithShard)
+			w.WaitRegistration()
+
+			res, err := KAPI().Get(t.Context(), "/services_infos/test5_register", &etcdv2.GetOptions{})
+			require.NoError(t, err)
+			assert.NotContains(t, res.Node.Value, `"shard"`)
+
+			service := &Service{}
+			err = json.Unmarshal([]byte(res.Node.Value), service)
+			require.NoError(t, err)
+			assert.Equal(t, "test5_register", service.Name)
+
+			host, err := Get("test5_register").First().Host()
+			require.NoError(t, err)
+			assert.Equal(t, "shard-0", host.Shard)
+		})
+
+		t.Run("And the shard must be empty when not provided", func(t *testing.T) {
+			hostWithoutShard := genHost("test-no-shard")
+			hostWithoutShard.Shard = ""
+
+			w := Register(t.Context(), "test6_register", hostWithoutShard)
+			w.WaitRegistration()
+
+			resService, err := KAPI().Get(t.Context(), "/services_infos/test6_register", &etcdv2.GetOptions{})
+			require.NoError(t, err)
+			assert.NotContains(t, resService.Node.Value, `"shard"`)
+
+			service := &Service{}
+			err = json.Unmarshal([]byte(resService.Node.Value), service)
+			require.NoError(t, err)
+			assert.Equal(t, "test6_register", service.Name)
+
+			resHost, err := KAPI().Get(t.Context(), "/services/test6_register/"+w.UUID(), &etcdv2.GetOptions{})
+			require.NoError(t, err)
+			assert.NotContains(t, resHost.Node.Value, `"shard"`)
+
+			storedHost := &Host{}
+			err = json.Unmarshal([]byte(resHost.Node.Value), storedHost)
+			require.NoError(t, err)
+			assert.Empty(t, storedHost.Shard)
 		})
 
 		t.Run("After cancelling context, the service should disappear", func(t *testing.T) {
@@ -74,16 +123,15 @@ func TestRegister(t *testing.T) {
 			host := genHost("test-disappear")
 			w := Register(ctx, "test4_register", host)
 			w.WaitRegistration()
+			hostKey := "/services/test4_register/" + w.UUID()
 			cancel()
 			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(t.Context(),
-				"/services/test4_register/"+host.Name, &etcdv2.GetOptions{},
-			)
+			_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
 			require.Error(t, err)
 			assert.True(t, etcdv2.IsKeyNotFound(err))
 		})
 
-		t.Run("When the privatehostname is not set, it must take the node hostname", func(t *testing.T) {
+		t.Run("When the private_hostname is not set, it must take the node hostname", func(t *testing.T) {
 			host := genHost("HelloWorld")
 			host.PrivateHostname = ""
 			w := Register(t.Context(), "hello_world", host)
@@ -144,7 +192,8 @@ func TestWatcher(t *testing.T) {
 				require.NoError(t, err)
 
 				h := &Host{}
-				json.Unmarshal([]byte(res.Node.Value), &h)
+				err = json.Unmarshal([]byte(res.Node.Value), h)
+				require.NoError(t, err)
 				assert.Equal(t, "host2", h.User)
 				assert.Equal(t, "password2", h.Password)
 			}
