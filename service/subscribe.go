@@ -10,12 +10,12 @@ import (
 
 var subscribeWatcher = Subscribe
 
-// Subscribe to every event that happen to a service
+// Subscribe to every event that happen to a service.
 func Subscribe(service string) etcdv2.Watcher {
 	return KAPI().Watcher("/services/"+service, &etcdv2.WatcherOptions{Recursive: true})
 }
 
-// SubscribeDown return a channel that will notice you everytime a host loose his etcd registration.
+// SubscribeDown returns a channel that will notice you every time a host loses his etcd registration.
 // The subscription lifetime is tied to ctx so callers can stop the blocking etcd watch cleanly.
 func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *etcdv2.Error) {
 	expirations := make(chan string)
@@ -51,7 +51,7 @@ func SubscribeDown(ctx context.Context, service string) (<-chan string, <-chan *
 	return expirations, errs
 }
 
-// SubscribeNew return a channel that will notice you everytime a new host is registered.
+// SubscribeNew returns a channel that will notice you every time a new host is registered.
 // The subscription lifetime is tied to ctx so callers can stop the blocking etcd watch cleanly.
 func SubscribeNew(ctx context.Context, service string) (<-chan *Host, <-chan *etcdv2.Error) {
 	hosts := make(chan *Host)

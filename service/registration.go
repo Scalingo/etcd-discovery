@@ -6,12 +6,12 @@ import (
 	"sync"
 )
 
-// RegistrationWrapper wreap the uuid and the credential channel to provide a more user friendly API for the Register Method
+// RegistrationWrapper wraps the uuid and the credential channel to provide a more user-friendly API for the Register Method
 type RegistrationWrapper interface {
-	Ready() bool                                // Ready return strue if the service registred yet? This method should no be blocking
-	WaitRegistration(ctx context.Context) error // WaitRegistration wait for the first registration
-	Credentials() (Credentials, error)          // Credentials return the current credentials or an error if the service is not registred yet
-	UUID() string                               // UUID return the host UUID
+	Ready() bool                                // Ready returns true if the service is registered. This method should not be blocking.
+	WaitRegistration(ctx context.Context) error // WaitRegistration waits for the first registration
+	Credentials() (Credentials, error)          // Credentials returns the current credentials or an error if the service is not registered yet
+	UUID() string                               // UUID returns the host UUID
 }
 
 // Registration is the RegistrationWrapper implementation used by the Register method
@@ -62,7 +62,7 @@ func (w *Registration) WaitRegistration(ctx context.Context) error {
 	}
 }
 
-// Ready is a non blocking method that return true if the service is registred to the etcd service false otherwise
+// Ready is a non blocking method that return true if the service is registered to the etcd service false otherwise
 func (w *Registration) Ready() bool {
 	w.mutex.Lock()
 	ready := w.ready
@@ -75,7 +75,7 @@ func (w *Registration) UUID() string {
 	return w.uuid
 }
 
-// Credentials return the service credentials or an error if the service is not registred yet
+// Credentials return the service credentials or an error if the service is not registered yet
 func (w *Registration) Credentials() (Credentials, error) {
 	w.mutex.Lock()
 	cred := w.curCredentials
