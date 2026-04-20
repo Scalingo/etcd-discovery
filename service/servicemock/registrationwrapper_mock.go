@@ -5,6 +5,7 @@
 package servicemock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	service "github.com/Scalingo/etcd-discovery/v7/service"
@@ -79,13 +80,15 @@ func (mr *MockRegistrationWrapperMockRecorder) UUID() *gomock.Call {
 }
 
 // WaitRegistration mocks base method.
-func (m *MockRegistrationWrapper) WaitRegistration() {
+func (m *MockRegistrationWrapper) WaitRegistration(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "WaitRegistration")
+	ret := m.ctrl.Call(m, "WaitRegistration", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // WaitRegistration indicates an expected call of WaitRegistration.
-func (mr *MockRegistrationWrapperMockRecorder) WaitRegistration() *gomock.Call {
+func (mr *MockRegistrationWrapperMockRecorder) WaitRegistration(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitRegistration", reflect.TypeOf((*MockRegistrationWrapper)(nil).WaitRegistration))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitRegistration", reflect.TypeOf((*MockRegistrationWrapper)(nil).WaitRegistration), ctx)
 }

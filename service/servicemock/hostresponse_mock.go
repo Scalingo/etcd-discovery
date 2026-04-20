@@ -5,6 +5,7 @@
 package servicemock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	service "github.com/Scalingo/etcd-discovery/v7/service"
@@ -50,46 +51,46 @@ func (mr *MockHostResponseMockRecorder) Err() *gomock.Call {
 }
 
 // Host mocks base method.
-func (m *MockHostResponse) Host() (*service.Host, error) {
+func (m *MockHostResponse) Host(ctx context.Context) (*service.Host, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Host")
+	ret := m.ctrl.Call(m, "Host", ctx)
 	ret0, _ := ret[0].(*service.Host)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Host indicates an expected call of Host.
-func (mr *MockHostResponseMockRecorder) Host() *gomock.Call {
+func (mr *MockHostResponseMockRecorder) Host(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Host", reflect.TypeOf((*MockHostResponse)(nil).Host))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Host", reflect.TypeOf((*MockHostResponse)(nil).Host), ctx)
 }
 
 // PrivateURL mocks base method.
-func (m *MockHostResponse) PrivateURL(scheme, path string) (string, error) {
+func (m *MockHostResponse) PrivateURL(ctx context.Context, scheme, path string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PrivateURL", scheme, path)
+	ret := m.ctrl.Call(m, "PrivateURL", ctx, scheme, path)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PrivateURL indicates an expected call of PrivateURL.
-func (mr *MockHostResponseMockRecorder) PrivateURL(scheme, path any) *gomock.Call {
+func (mr *MockHostResponseMockRecorder) PrivateURL(ctx, scheme, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrivateURL", reflect.TypeOf((*MockHostResponse)(nil).PrivateURL), scheme, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrivateURL", reflect.TypeOf((*MockHostResponse)(nil).PrivateURL), ctx, scheme, path)
 }
 
 // URL mocks base method.
-func (m *MockHostResponse) URL(scheme, path string) (string, error) {
+func (m *MockHostResponse) URL(ctx context.Context, scheme, path string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "URL", scheme, path)
+	ret := m.ctrl.Call(m, "URL", ctx, scheme, path)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // URL indicates an expected call of URL.
-func (mr *MockHostResponseMockRecorder) URL(scheme, path any) *gomock.Call {
+func (mr *MockHostResponseMockRecorder) URL(ctx, scheme, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockHostResponse)(nil).URL), scheme, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockHostResponse)(nil).URL), ctx, scheme, path)
 }
