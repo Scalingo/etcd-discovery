@@ -100,28 +100,35 @@ Shard information is stored per host under `/services/<name>/<uuid>`. It is inte
 Use `Get` to query all hosts for a service:
 
 ```go
-hosts, err := service.Get("my-service").All()
-url, err := service.Get("my-service").URL("http", "/health")
+ctx := context.Background()
+
+hosts, err := service.Get(ctx, "my-service").All(ctx)
+url, err := service.Get(ctx, "my-service").URL(ctx, "http", "/health")
 ```
 
 Use `GetForShard` to restrict host lookups to a specific shard:
 
 ```go
-hosts, err := service.GetForShard("my-service", "shard-0").All()
-url, err := service.GetForShard("my-service", "shard-0").URL("http", "/health")
+ctx := context.Background()
+
+hosts, err := service.GetForShard(ctx, "my-service", "shard-0").All(ctx)
+url, err := service.GetForShard(ctx, "my-service", "shard-0").URL(ctx, "http", "/health")
 ```
 
-`Service.All`, `Service.First`, `Service.One`, and `Service.URL` now take a `service.QueryOptions`
-argument. Pass `service.QueryOptions{}` when no filtering is needed.
+`service.Get`, `service.GetForShard`, `Service.All`, `Service.First`, `Service.One`, and `Service.URL`
+now take a `context.Context`. `Service.All`, `Service.First`, `Service.One`, and `Service.URL` also take a
+`service.QueryOptions` argument. Pass `service.QueryOptions{}` when no filtering is needed.
 
 ```go
-s, err := service.Get("my-service").Service()
+ctx := context.Background()
+
+s, err := service.Get(ctx, "my-service").Service(ctx)
 if err != nil {
   return err
 }
 
-host, err := s.First(service.QueryOptions{Shard: "shard-0"})
-url, err := s.URL("http", "/health", service.QueryOptions{})
+host, err := s.First(ctx, service.QueryOptions{Shard: "shard-0"})
+url, err := s.URL(ctx, "http", "/health", service.QueryOptions{})
 ```
 
 ### Subscribe to New Service
