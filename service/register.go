@@ -77,6 +77,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 			if ctx.Err() != nil {
 				return
 			}
+
 			id, err = serviceRegistration(ctx, serviceKey, serviceValue)
 		}
 
@@ -179,6 +180,7 @@ func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 	return nil
 }
 
+// ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
 func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
 	err := hostRegistration(ctx, hostKey, hostJSON)
 	for err != nil {
@@ -189,7 +191,13 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 		if logFailures {
 			logger.Printf("Lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
 		}
-		time.Sleep(1 * time.Second)
+
+		// Wait for either context cancellation or the next retry attempt.
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(1 * time.Second):
+		}
 
 		err = hostRegistration(ctx, hostKey, hostJSON)
 		if err == nil && logFailures {
