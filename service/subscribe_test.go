@@ -15,6 +15,21 @@ type resAndErr struct {
 	error    error
 }
 
+type fakeWatcher struct {
+	results []resAndErr
+	index   int
+}
+
+func (w *fakeWatcher) Next(context.Context) (*etcdv2.Response, error) {
+	if w.index >= len(w.results) {
+		return nil, context.Canceled
+	}
+
+	result := w.results[w.index]
+	w.index++
+	return result.Response, result.error
+}
+
 func TestSubscribe(t *testing.T) {
 	t.Run("When we subscribe a service, we get all the notifications from it", func(t *testing.T) {
 		watcher := Subscribe("test_subs")
@@ -57,15 +72,45 @@ func TestSubscribe(t *testing.T) {
 	})
 }
 
+func TestSubscribeDownClosesDataChannelWhenErrUnread(t *testing.T) {
+	subscribeWatcher = func(string) etcdv2.Watcher {
+		return &fakeWatcher{
+			results: []resAndErr{
+				{error: &etcdv2.Error{Code: 500, Message: "boom"}},
+			},
+		}
+	}
+	t.Cleanup(func() {
+		subscribeWatcher = Subscribe
+	})
+
+	hosts, errs := SubscribeDown(t.Context(), "test_expiration")
+
+	select {
+	case host, ok := <-hosts:
+		assert.False(t, ok)
+		assert.Empty(t, host)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for hosts channel to close")
+	}
+
+	err, ok := <-errs
+	require.True(t, ok)
+	require.Equal(t, 500, err.Code)
+	require.Equal(t, "boom", err.Message)
+}
+
 func TestSubscribeDown(t *testing.T) {
-	ctx, cancel := context.WithCancel(t.Context())
+	registrationCtx, cancelRegistration := context.WithCancel(t.Context())
+	subscriptionCtx, cancelSubscription := context.WithCancel(t.Context())
+	defer cancelSubscription()
 
 	t.Run("When the service 'test' is watched and a host expired", func(t *testing.T) {
-		w := Register(ctx, "test_expiration", genHost("test-expiration"))
-		hosts, _ := SubscribeDown("test_expiration")
-		w.WaitRegistration()
+		w := Register(registrationCtx, "test_expiration", genHost("test-expiration"))
+		hosts, _ := SubscribeDown(subscriptionCtx, "test_expiration")
+		require.NoError(t, w.WaitRegistration(t.Context()))
 
-		cancel()
+		cancelRegistration()
 		t.Run("The name of the disappeared host should be returned", func(t *testing.T) {
 			select {
 			case host, ok := <-hosts:
@@ -76,12 +121,40 @@ func TestSubscribeDown(t *testing.T) {
 	})
 }
 
+func TestSubscribeNewClosesDataChannelWhenErrUnread(t *testing.T) {
+	subscribeWatcher = func(string) etcdv2.Watcher {
+		return &fakeWatcher{
+			results: []resAndErr{
+				{error: &etcdv2.Error{Code: 500, Message: "boom"}},
+			},
+		}
+	}
+	t.Cleanup(func() {
+		subscribeWatcher = Subscribe
+	})
+
+	hosts, errs := SubscribeNew(t.Context(), "test_new")
+
+	select {
+	case host, ok := <-hosts:
+		assert.False(t, ok)
+		assert.Nil(t, host)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for hosts channel to close")
+	}
+
+	err, ok := <-errs
+	require.True(t, ok)
+	require.Equal(t, 500, err.Code)
+	require.Equal(t, "boom", err.Message)
+}
+
 func TestSubscribeNew(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	t.Run("When the service 'test' is watched and a host registered", func(t *testing.T) {
-		hosts, _ := SubscribeNew("test_new")
+		hosts, _ := SubscribeNew(t.Context(), "test_new")
 		time.Sleep(200 * time.Millisecond)
 		newHost := genHost("test-new")
 		Register(ctx, "test_new", newHost)

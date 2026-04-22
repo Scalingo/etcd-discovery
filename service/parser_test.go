@@ -47,7 +47,7 @@ var (
 
 func TestBuildHostsFromNodes(t *testing.T) {
 	t.Run("Given a sample response with 2 nodes, we got 2 hosts", func(t *testing.T) {
-		hosts, err := buildHostsFromNodes(sampleNodes)
+		hosts, err := buildHostsFromNodes(t.Context(), sampleNodes)
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)
 		assert.Equal(t, sampleResult, *hosts[0])
@@ -57,7 +57,7 @@ func TestBuildHostsFromNodes(t *testing.T) {
 
 func TestBuildHostFromNode(t *testing.T) {
 	t.Run("Given a sample response, we got a filled Host", func(t *testing.T) {
-		host, err := buildHostFromNode(sampleNode)
+		host, err := buildHostFromNode(t.Context(), sampleNode)
 		require.NoError(t, err)
 		assert.Equal(t, sampleResult, *host)
 	})
@@ -65,7 +65,7 @@ func TestBuildHostFromNode(t *testing.T) {
 
 func TestBuildServiceFromNode(t *testing.T) {
 	t.Run("Given a sample response, we got a filled Infos", func(t *testing.T) {
-		infos, err := buildServiceFromNode(sampleInfoNode)
+		infos, err := buildServiceFromNode(t.Context(), sampleInfoNode)
 		require.NoError(t, err)
 		assert.True(t, infos.Critical)
 	})

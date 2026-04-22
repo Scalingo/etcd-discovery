@@ -5,6 +5,7 @@
 package servicemock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	service "github.com/Scalingo/etcd-discovery/v7/service"
@@ -36,18 +37,18 @@ func (m *MockServiceResponse) EXPECT() *MockServiceResponseMockRecorder {
 }
 
 // All mocks base method.
-func (m *MockServiceResponse) All() (service.Hosts, error) {
+func (m *MockServiceResponse) All(ctx context.Context) (service.Hosts, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "All")
+	ret := m.ctrl.Call(m, "All", ctx)
 	ret0, _ := ret[0].(service.Hosts)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // All indicates an expected call of All.
-func (mr *MockServiceResponseMockRecorder) All() *gomock.Call {
+func (mr *MockServiceResponseMockRecorder) All(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "All", reflect.TypeOf((*MockServiceResponse)(nil).All))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "All", reflect.TypeOf((*MockServiceResponse)(nil).All), ctx)
 }
 
 // Err mocks base method.
@@ -65,59 +66,59 @@ func (mr *MockServiceResponseMockRecorder) Err() *gomock.Call {
 }
 
 // First mocks base method.
-func (m *MockServiceResponse) First() service.HostResponse {
+func (m *MockServiceResponse) First(ctx context.Context) service.HostResponse {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "First")
+	ret := m.ctrl.Call(m, "First", ctx)
 	ret0, _ := ret[0].(service.HostResponse)
 	return ret0
 }
 
 // First indicates an expected call of First.
-func (mr *MockServiceResponseMockRecorder) First() *gomock.Call {
+func (mr *MockServiceResponseMockRecorder) First(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "First", reflect.TypeOf((*MockServiceResponse)(nil).First))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "First", reflect.TypeOf((*MockServiceResponse)(nil).First), ctx)
 }
 
 // One mocks base method.
-func (m *MockServiceResponse) One() service.HostResponse {
+func (m *MockServiceResponse) One(ctx context.Context) service.HostResponse {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "One")
+	ret := m.ctrl.Call(m, "One", ctx)
 	ret0, _ := ret[0].(service.HostResponse)
 	return ret0
 }
 
 // One indicates an expected call of One.
-func (mr *MockServiceResponseMockRecorder) One() *gomock.Call {
+func (mr *MockServiceResponseMockRecorder) One(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "One", reflect.TypeOf((*MockServiceResponse)(nil).One))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "One", reflect.TypeOf((*MockServiceResponse)(nil).One), ctx)
 }
 
 // Service mocks base method.
-func (m *MockServiceResponse) Service() (*service.Service, error) {
+func (m *MockServiceResponse) Service(ctx context.Context) (*service.Service, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Service")
+	ret := m.ctrl.Call(m, "Service", ctx)
 	ret0, _ := ret[0].(*service.Service)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Service indicates an expected call of Service.
-func (mr *MockServiceResponseMockRecorder) Service() *gomock.Call {
+func (mr *MockServiceResponseMockRecorder) Service(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Service", reflect.TypeOf((*MockServiceResponse)(nil).Service))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Service", reflect.TypeOf((*MockServiceResponse)(nil).Service), ctx)
 }
 
 // URL mocks base method.
-func (m *MockServiceResponse) URL(scheme, path string) (string, error) {
+func (m *MockServiceResponse) URL(ctx context.Context, scheme, path string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "URL", scheme, path)
+	ret := m.ctrl.Call(m, "URL", ctx, scheme, path)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // URL indicates an expected call of URL.
-func (mr *MockServiceResponseMockRecorder) URL(scheme, path any) *gomock.Call {
+func (mr *MockServiceResponseMockRecorder) URL(ctx, scheme, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockServiceResponse)(nil).URL), scheme, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockServiceResponse)(nil).URL), ctx, scheme, path)
 }

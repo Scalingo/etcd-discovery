@@ -9,8 +9,10 @@
 * feat(service): Add optional shard field when registering hosts
 * feat(service): Add `GetForShard` to query hosts for a specific shard
 * feat(service): Add `QueryOptions` to `Service.All/First/One/URL` for shard filtering
+* feat: Implement context everywhere where missing in the library
 
 Breaking Changes:
+* Public functions and methods that previously had no `context.Context` parameter now require one
 * `Service.All/First/One/URL` signatures now require `QueryOptions`
 * `Service.All/First/One/URL` now return an error and `nil` hosts when no host was found in etcd, instead of returning an empty host
 

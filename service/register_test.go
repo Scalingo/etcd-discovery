@@ -20,7 +20,7 @@ func TestRegister(t *testing.T) {
 		t.Run("It should be available with etcd", func(t *testing.T) {
 			host.Name = "test_register"
 			w := Register(t.Context(), "test_register", host)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
 			res, err := KAPI().Get(t.Context(), "/services/test_register/"+uuid, &etcdv2.GetOptions{})
 			require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestRegister(t *testing.T) {
 
 		t.Run(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
 			res, err := KAPI().Get(t.Context(),
 				"/services/test2_register/"+uuid, &etcdv2.GetOptions{},
@@ -61,7 +61,7 @@ func TestRegister(t *testing.T) {
 				Critical: true,
 			}
 			w := Register(t.Context(), "test3_register", host)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			res, err := KAPI().Get(t.Context(), "/services_infos/test3_register", &etcdv2.GetOptions{})
 			require.NoError(t, err)
 
@@ -76,7 +76,7 @@ func TestRegister(t *testing.T) {
 			hostWithShard.Shard = "shard-0"
 
 			w := Register(t.Context(), "test5_register", hostWithShard)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 
 			res, err := KAPI().Get(t.Context(), "/services_infos/test5_register", &etcdv2.GetOptions{})
 			require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestRegister(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, "test5_register", service.Name)
 
-			host, err := Get("test5_register").First().Host()
+			host, err := Get(t.Context(), "test5_register").First(t.Context()).Host(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, "shard-0", host.Shard)
 		})
@@ -97,7 +97,7 @@ func TestRegister(t *testing.T) {
 			hostWithoutShard.Shard = ""
 
 			w := Register(t.Context(), "test6_register", hostWithoutShard)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 
 			resService, err := KAPI().Get(t.Context(), "/services_infos/test6_register", &etcdv2.GetOptions{})
 			require.NoError(t, err)
@@ -122,13 +122,13 @@ func TestRegister(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
 			host := genHost("test-disappear")
 			w := Register(ctx, "test4_register", host)
-			w.WaitRegistration()
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			hostKey := "/services/test4_register/" + w.UUID()
 			cancel()
-			time.Sleep(100 * time.Millisecond)
-			_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
-			require.Error(t, err)
-			assert.True(t, etcdv2.IsKeyNotFound(err))
+			assert.Eventually(t, func() bool {
+				_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
+				return etcdv2.IsKeyNotFound(err)
+			}, (HEARTBEAT_DURATION+2)*time.Second, 100*time.Millisecond)
 		})
 
 		t.Run("When the private_hostname is not set, it must take the node hostname", func(t *testing.T) {
@@ -142,8 +142,8 @@ func TestRegister(t *testing.T) {
 			host.Public = false
 			host.PrivatePorts = Ports{}
 			w := Register(t.Context(), "hello_world2", host)
-			w.WaitRegistration()
-			h, err := Get("hello_world2").First().Host()
+			require.NoError(t, w.WaitRegistration(t.Context()))
+			h, err := Get(t.Context(), "hello_world2").First(t.Context()).Host(t.Context())
 			require.NoError(t, err)
 
 			assert.Len(t, h.PrivatePorts, 1)
@@ -163,7 +163,7 @@ func TestWatcher(t *testing.T) {
 		host2.Password = "password2"
 
 		w1 := Register(t.Context(), "test-watcher", host1)
-		w1.WaitRegistration()
+		require.NoError(t, w1.WaitRegistration(t.Context()))
 
 		cred1, err := w1.Credentials()
 		require.NoError(t, err)
@@ -171,7 +171,7 @@ func TestWatcher(t *testing.T) {
 		assert.Equal(t, "password1", cred1.Password)
 
 		w2 := Register(t.Context(), "test-watcher", host2)
-		w2.WaitRegistration()
+		require.NoError(t, w2.WaitRegistration(t.Context()))
 
 		t.Run("it should send the new passwords", func(t *testing.T) {
 			cred2, err := w2.Credentials()
