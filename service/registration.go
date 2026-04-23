@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"sync"
 )
 
@@ -81,7 +81,7 @@ func (w *Registration) Credentials() (Credentials, error) {
 	cred := w.curCredentials
 	w.mutex.Unlock()
 	if cred == nil {
-		return Credentials{}, errors.New("Not ready")
+		return Credentials{}, stderrors.New("Not ready")
 	}
 	return *cred, nil
 }

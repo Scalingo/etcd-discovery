@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"path"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
@@ -96,17 +96,17 @@ func SubscribeNew(ctx context.Context, service string) (<-chan *Host, <-chan *et
 // the errs channel, and supports wrapped errors without panicking on unrelated
 // error types.
 func subscriptionError(err error) *etcdv2.Error {
-	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	if err == nil || stderrors.Is(err, context.Canceled) || stderrors.Is(err, context.DeadlineExceeded) {
 		return nil
 	}
 
 	var etcdErr *etcdv2.Error
-	if errors.As(err, &etcdErr) {
+	if stderrors.As(err, &etcdErr) {
 		return etcdErr
 	}
 
 	var etcdErrValue etcdv2.Error
-	if errors.As(err, &etcdErrValue) {
+	if stderrors.As(err, &etcdErrValue) {
 		// Some call paths return etcd.Error by value; copy it to preserve the
 		// Subscribe* channel type without requiring callers to special-case it.
 		return &etcdErrValue

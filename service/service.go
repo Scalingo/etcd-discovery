@@ -2,19 +2,20 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"math/rand"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
-	"gopkg.in/errgo.v1"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var (
-	ErrNoServiceFound     = errors.New("service not found")
-	ErrNoHostFound        = errors.New("no host found for this service")
-	ErrNoHostFoundOnShard = errors.New("no host found for this service on this shard")
-	ErrUnknownScheme      = errors.New("unknown scheme")
+	ErrNoServiceFound     = stderrors.New("service not found")
+	ErrNoHostFound        = stderrors.New("no host found for this service")
+	ErrNoHostFoundOnShard = stderrors.New("no host found for this service on this shard")
+	ErrUnknownScheme      = stderrors.New("unknown scheme")
 )
 
 // Service stores all the information about a service.
@@ -50,12 +51,12 @@ func (s *Service) All(ctx context.Context, queryOpts QueryOptions) (Hosts, error
 		if etcdv2.IsKeyNotFound(err) {
 			return nil, ErrNoServiceFound
 		}
-		return nil, errgo.Notef(err, "Unable to fetch services")
+		return nil, errors.Wrap(ctx, err, "fetch services")
 	}
 
 	hosts, err := buildHostsFromNodes(ctx, res.Node.Nodes)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(ctx, err, "build hosts from nodes")
 	}
 
 	if len(hosts) == 0 {
@@ -86,7 +87,7 @@ func (s *Service) All(ctx context.Context, queryOpts QueryOptions) (Hosts, error
 func (s *Service) First(ctx context.Context, queryOpts QueryOptions) (*Host, error) {
 	hosts, err := s.All(ctx, queryOpts)
 	if err != nil {
-		return nil, errgo.Notef(err, "fetch hosts")
+		return nil, errors.Wrap(ctx, err, "fetch all hosts")
 	}
 
 	return hosts[0], nil
@@ -96,7 +97,7 @@ func (s *Service) First(ctx context.Context, queryOpts QueryOptions) (*Host, err
 func (s *Service) One(ctx context.Context, queryOpts QueryOptions) (*Host, error) {
 	hosts, err := s.All(ctx, queryOpts)
 	if err != nil {
-		return nil, errgo.Mask(err)
+		return nil, errors.Wrap(ctx, err, "fetch all hosts")
 	}
 
 	return hosts[rand.Int()%len(hosts)], nil
@@ -114,12 +115,12 @@ func (s *Service) URL(ctx context.Context, scheme, path string, queryOpts QueryO
 	if !s.Public || queryOpts.Shard != "" {
 		host, err := s.One(ctx, queryOpts)
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(ctx, err, "fetch one host")
 		}
 
 		url, err := host.URL(ctx, scheme, path)
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(ctx, err, "fetch one host url")
 		}
 		return url, nil
 	}

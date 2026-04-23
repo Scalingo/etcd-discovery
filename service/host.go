@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"strings"
 
-	"gopkg.in/errgo.v1"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 // Ports is a representation of the ports exposed by a host or a service.
@@ -76,12 +76,12 @@ func (h *Host) URL(ctx context.Context, scheme, path string) (string, error) {
 
 	if scheme != "" {
 		if port, ok = h.Ports[scheme]; !ok {
-			return "", errors.New("unknown scheme")
+			return "", ErrUnknownScheme
 		}
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.Ports)
 		if err != nil {
-			return "", errgo.Notef(err, "find scheme and port")
+			return "", errors.Wrap(ctx, err, "find scheme and port")
 		}
 	}
 
@@ -99,7 +99,7 @@ func (h *Host) PrivateURL(ctx context.Context, scheme, path string) (string, err
 	if h.PrivateHostname == "" {
 		url, err := h.URL(ctx, scheme, path)
 		if err != nil {
-			return "", errgo.Mask(err)
+			return "", errors.Wrap(ctx, err, "get public url")
 		}
 		return url, nil
 	}
@@ -113,12 +113,12 @@ func (h *Host) PrivateURL(ctx context.Context, scheme, path string) (string, err
 
 	if scheme != "" {
 		if port, ok = h.PrivatePorts[scheme]; !ok {
-			return "", errors.New("unknown scheme")
+			return "", ErrUnknownScheme
 		}
 	} else {
 		scheme, port, err = h.findSchemeAndPort(h.PrivatePorts)
 		if err != nil {
-			return "", errgo.Notef(err, "find scheme and port")
+			return "", errors.Wrap(ctx, err, "find scheme and port")
 		}
 	}
 
@@ -127,6 +127,7 @@ func (h *Host) PrivateURL(ctx context.Context, scheme, path string) (string, err
 	} else {
 		url = fmt.Sprintf("%s://%s:%s%s", scheme, h.PrivateHostname, port, path)
 	}
+
 	return url, nil
 }
 
@@ -137,7 +138,7 @@ func (h *Host) findSchemeAndPort(ports Ports) (string, string, error) {
 			return scheme, port, nil
 		}
 	}
-	return "", "", errors.New("scheme not found")
+	return "", "", stderrors.New("scheme not found")
 }
 
 // HostResponse is the interface used to provide a single host response.
@@ -168,7 +169,7 @@ func (q *GetHostResponse) Err() error {
 }
 
 // Host will return the host represented by this error.
-func (q *GetHostResponse) Host(ctx context.Context) (*Host, error) {
+func (q *GetHostResponse) Host(_ context.Context) (*Host, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
@@ -181,9 +182,10 @@ func (q *GetHostResponse) URL(ctx context.Context, scheme, path string) (string,
 	if q.err != nil {
 		return "", q.err
 	}
+
 	url, err := q.host.URL(ctx, scheme, path)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(ctx, err, "get host public url")
 	}
 	return url, nil
 }
@@ -193,9 +195,10 @@ func (q *GetHostResponse) PrivateURL(ctx context.Context, scheme, path string) (
 	if q.err != nil {
 		return "", q.err
 	}
+
 	url, err := q.host.PrivateURL(ctx, scheme, path)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(ctx, err, "get host private url")
 	}
 	return url, nil
 }

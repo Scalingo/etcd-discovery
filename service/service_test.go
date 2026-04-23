@@ -82,7 +82,7 @@ func TestServiceFirst(t *testing.T) {
 		require.NoError(t, err)
 
 		host, err := s.First(t.Context(), QueryOptions{})
-		require.EqualError(t, err, "fetch hosts: "+ErrNoServiceFound.Error())
+		require.ErrorContains(t, err, ErrNoServiceFound.Error())
 		assert.Nil(t, host)
 	})
 
@@ -131,7 +131,7 @@ func TestServiceFirst(t *testing.T) {
 		require.NoError(t, err)
 
 		host, err := s.First(t.Context(), QueryOptions{Shard: testShard2ID})
-		require.EqualError(t, err, "fetch hosts: "+ErrNoHostFoundOnShard.Error())
+		require.ErrorContains(t, err, ErrNoHostFoundOnShard.Error())
 		assert.Nil(t, host)
 	})
 }
@@ -142,7 +142,7 @@ func TestServiceOne(t *testing.T) {
 		require.NoError(t, err)
 
 		host, err := s.One(t.Context(), QueryOptions{})
-		require.EqualError(t, err, ErrNoServiceFound.Error())
+		require.ErrorContains(t, err, ErrNoServiceFound.Error())
 		assert.Nil(t, host)
 	})
 
@@ -189,7 +189,7 @@ func TestServiceOne(t *testing.T) {
 		require.NoError(t, err)
 
 		host, err := s.One(t.Context(), QueryOptions{Shard: testShard2ID})
-		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		require.ErrorContains(t, err, ErrNoHostFoundOnShard.Error())
 		assert.Nil(t, host)
 	})
 }
@@ -233,7 +233,7 @@ func TestServiceURL(t *testing.T) {
 			require.NoError(t, err)
 
 			url, err := s.URL(t.Context(), "htjp", "/path", QueryOptions{})
-			require.EqualError(t, err, "unknown scheme")
+			require.ErrorIs(t, err, ErrUnknownScheme)
 			assert.Empty(t, url)
 		})
 
@@ -269,7 +269,7 @@ func TestServiceURL(t *testing.T) {
 			require.NoError(t, err)
 
 			url, err := s.URL(t.Context(), "http", "/path", QueryOptions{Shard: testShard2ID})
-			require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+			require.ErrorContains(t, err, ErrNoHostFoundOnShard.Error())
 			assert.Empty(t, url)
 		})
 	})
