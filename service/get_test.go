@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ func TestGetNoHost(t *testing.T) {
 
 	t.Run("Without any service, Get().One().Host() should return ErrNoServiceFound", func(t *testing.T) {
 		host, err := Get(t.Context(), "test_no_service").One(t.Context()).Host(t.Context())
-		require.EqualError(t, err, ErrNoServiceFound.Error())
+		require.ErrorIs(t, err, ErrNoServiceFound)
 		assert.Nil(t, host)
 	})
 }
@@ -61,7 +61,7 @@ func TestGetServiceResponse(t *testing.T) {
 	t.Run("With an errored Response", func(t *testing.T) {
 		testErrorMsg := "my test error"
 		response := &GetServiceResponse{
-			err:     errors.New(testErrorMsg),
+			err:     stderrors.New(testErrorMsg),
 			service: nil,
 		}
 
@@ -132,12 +132,12 @@ func TestGetServiceResponse(t *testing.T) {
 
 		t.Run("One should pass the One error", func(t *testing.T) {
 			r := response.One(t.Context())
-			require.EqualError(t, r.Err(), ErrNoServiceFound.Error())
+			require.ErrorIs(t, r.Err(), ErrNoServiceFound)
 		})
 
 		t.Run("First should pass the First error", func(t *testing.T) {
 			r := response.First(t.Context())
-			require.EqualError(t, r.Err(), "fetch hosts: "+ErrNoServiceFound.Error())
+			require.ErrorIs(t, r.Err(), ErrNoServiceFound)
 		})
 	})
 }
@@ -190,15 +190,15 @@ func TestGetForShard(t *testing.T) {
 		assert.Nil(t, hosts)
 
 		emptyHost, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).First(t.Context()).Host(t.Context())
-		require.EqualError(t, err, "fetch hosts: "+ErrNoHostFoundOnShard.Error())
+		require.ErrorIs(t, err, ErrNoHostFoundOnShard)
 		assert.Nil(t, emptyHost)
 
 		oneHost, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).One(t.Context()).Host(t.Context())
-		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		require.ErrorIs(t, err, ErrNoHostFoundOnShard)
 		assert.Nil(t, oneHost)
 
 		url, err := GetForShard(t.Context(), "test_service_get_for_shard_no_match", testShard1ID).URL(t.Context(), "http", "/path")
-		require.EqualError(t, err, ErrNoHostFoundOnShard.Error())
+		require.ErrorIs(t, err, ErrNoHostFoundOnShard)
 		assert.Empty(t, url)
 	})
 }

@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"net"
@@ -145,7 +145,7 @@ func tlsconfigFromMemory(certb64, keyb64, cab64 string) (*tls.Config, error) {
 
 	ca, _ := pem.Decode(capem)
 	if ca == nil {
-		return nil, errors.New("ca: invalid PEM")
+		return nil, stderrors.New("ca: invalid PEM")
 	}
 
 	certPool := x509.NewCertPool()

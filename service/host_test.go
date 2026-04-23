@@ -1,7 +1,7 @@
 package service
 
 import (
-	"errors"
+	stderrors "errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestHostUrl(t *testing.T) {
 		host := genHost("test")
 		url, err := host.URL(t.Context(), "htjp", "/path")
 		require.Error(t, err)
-		assert.Equal(t, "unknown scheme", err.Error())
+		require.ErrorIs(t, err, ErrUnknownScheme)
 		assert.Equal(t, 0, len(url))
 	})
 
@@ -64,7 +64,7 @@ func TestHostPrivateUrl(t *testing.T) {
 		host := genHost("test")
 		url, err := host.PrivateURL(t.Context(), "htjp", "/path")
 		require.Error(t, err)
-		assert.Equal(t, "unknown scheme", err.Error())
+		require.ErrorIs(t, err, ErrUnknownScheme)
 		assert.Equal(t, 0, len(url))
 	})
 
@@ -102,7 +102,7 @@ func TestHostsString(t *testing.T) {
 func TestGetHostResponse(t *testing.T) {
 	t.Run("With an errored response", func(t *testing.T) {
 		response := &GetHostResponse{
-			err:  errors.New("TestError"),
+			err:  stderrors.New("TestError"),
 			host: nil,
 		}
 
