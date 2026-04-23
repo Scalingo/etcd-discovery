@@ -8,7 +8,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
-	"log"
 	"math/big"
 	"testing"
 	"time"
@@ -24,11 +23,6 @@ func TestInit(t *testing.T) {
 
 	t.Run("hostname should be set", func(t *testing.T) {
 		require.NotNil(t, hostname)
-	})
-
-	t.Run("hostname should be set", func(t *testing.T) {
-		assert.Equal(t, "[etcd-discovery] ", logger.Prefix())
-		assert.Equal(t, log.LstdFlags, logger.Flags())
 	})
 }
 

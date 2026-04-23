@@ -10,7 +10,8 @@
 * feat(service): Add `GetForShard` to query hosts for a specific shard
 * feat(service): Add `QueryOptions` to `Service.All/First/One/URL` for shard filtering
 * feat: Implement context everywhere where missing in the library
-* refactor: Migrate package from `errgo` to `Scalingo/go-utils/errors/v3`
+* refactor: Replace `errgo` by `github.com/Scalingo/go-utils/errors/v3`
+* refactor: Replace std logger by `github.com/Scalingo/go-utils/logger`
 
 Breaking Changes:
 * Public functions and methods that previously had no `context.Context` parameter now require one

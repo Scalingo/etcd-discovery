@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	stderrors "errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -20,7 +19,6 @@ import (
 )
 
 var (
-	logger           *log.Logger
 	clientSingleton  etcdv2.Client
 	clientSingletonO = &sync.Once{}
 	hostname         string
@@ -75,7 +73,7 @@ func Client() etcdv2.Client {
 				panic(err)
 			}
 
-			transport := &http.Transport{
+			httpTransport := &http.Transport{
 				Proxy: http.ProxyFromEnvironment,
 				Dial: (&net.Dialer{
 					Timeout:   30 * time.Second,
@@ -86,7 +84,7 @@ func Client() etcdv2.Client {
 			}
 			c, err := etcdv2.New(etcdv2.Config{
 				Endpoints: hosts,
-				Transport: transport,
+				Transport: httpTransport,
 			})
 			if err != nil {
 				panic(err)
@@ -117,8 +115,6 @@ func init() {
 		}
 		hostname = h
 	}
-
-	logger = log.New(os.Stderr, "[etcd-discovery] ", log.LstdFlags)
 }
 
 func tlsconfigFromFiles(cert, key, ca string) (*tls.Config, error) {

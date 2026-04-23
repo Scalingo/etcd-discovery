@@ -10,6 +10,7 @@ import (
 	etcdv2 "go.etcd.io/etcd/client/v2"
 
 	"github.com/Scalingo/go-utils/errors/v3"
+	"github.com/Scalingo/go-utils/logger"
 )
 
 const (
@@ -26,6 +27,8 @@ const (
 // registration every 5 seconds, and the second one will check if the service
 // credentials don't change and notify otherwise.
 func Register(ctx context.Context, service string, host Host) *Registration {
+	log := logger.Get(ctx)
+
 	if !host.Public && len(host.PrivateHostname) == 0 {
 		host.PrivateHostname = host.Hostname
 	}
@@ -101,7 +104,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 			case <-ctx.Done():
 				_, err := KAPI().Delete(ctx, hostKey, &etcdv2.DeleteOptions{Recursive: false})
 				if err != nil {
-					logger.Println("remove host key", hostKey)
+					log.WithError(err).Errorf("remove host key %s", hostKey)
 				}
 				return
 			case credentials := <-privateCredentialsChan: // If the credentials have been changed,
@@ -135,22 +138,23 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 }
 
 func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan chan Credentials) {
+	log := logger.Get(ctx)
+
 	// id is the index of the last modification made to the key. The watcher will
 	// start watching for modifications done after this index. This will prevent
 	// packet or modification lost.
-
 	for {
 		watcher := KAPI().Watcher(serviceKey, &etcdv2.WatcherOptions{
 			AfterIndex: id,
 		})
 		resp, err := watcher.Next(ctx)
-		if err == context.Canceled {
+		if errors.Is(err, context.Canceled) {
 			return
 		}
 
 		if err != nil {
 			// We've lost the connexion to etcd. Sleep 1s and retry
-			logger.Printf("Lost watcher of '%v': '%v' (%v)", serviceKey, err, Client().Endpoints())
+			log.WithError(err).Errorf("Lost watcher of '%s' (%v)", serviceKey, Client().Endpoints())
 			id = 0
 			time.Sleep(1 * time.Second)
 			continue
@@ -158,9 +162,9 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 		var serviceInfos Service
 		err = json.Unmarshal([]byte(resp.Node.Value), &serviceInfos)
 		if err != nil {
-			logger.Printf(
-				"Error while getting service key '%v': '%v' (%v)",
-				serviceKey, err, Client().Endpoints(),
+			log.WithError(err).Errorf(
+				"Error while getting service key '%s' (%v)",
+				serviceKey, Client().Endpoints(),
 			)
 			time.Sleep(1 * time.Second)
 		}
@@ -183,6 +187,8 @@ func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 
 // ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
 func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
+	log := logger.Get(ctx)
+
 	err := hostRegistration(ctx, hostKey, hostJSON)
 	for err != nil {
 		if ctx.Err() != nil {
@@ -190,7 +196,7 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 		}
 
 		if logFailures {
-			logger.Printf("Lost registration of '%v': %v (%v)", service, err, Client().Endpoints())
+			log.WithError(err).Errorf("Lost registration of '%s' (%v)", service, Client().Endpoints())
 		}
 
 		// Wait for either context cancellation or the next retry attempt.
@@ -202,7 +208,7 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 
 		err = hostRegistration(ctx, hostKey, hostJSON)
 		if err == nil && logFailures {
-			logger.Printf("Recover registration of '%v'", service)
+			log.WithError(err).Errorf("Recover registration of '%s'", service)
 		}
 	}
 
