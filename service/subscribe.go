@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
 	"path"
 
 	etcdv2 "go.etcd.io/etcd/client/v2"
+
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 var subscribeWatcher = Subscribe
