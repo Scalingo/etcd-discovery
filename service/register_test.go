@@ -200,3 +200,28 @@ func TestWatcher(t *testing.T) {
 		})
 	})
 }
+
+func TestWithDefaultRegistrationTimeout(t *testing.T) {
+	t.Run("It adds a default deadline when the parent context has none", func(t *testing.T) {
+		ctx, cancel := withDefaultRegistrationTimeout(t.Context())
+		t.Cleanup(cancel)
+
+		deadline, ok := ctx.Deadline()
+		require.True(t, ok)
+		assert.WithinDuration(t, time.Now().Add(defaultRegistrationTimeout), deadline, 2*time.Second)
+	})
+
+	t.Run("It keeps the parent deadline when one already exists", func(t *testing.T) {
+		parent, parentCancel := context.WithTimeout(t.Context(), 30*time.Second)
+		t.Cleanup(parentCancel)
+
+		ctx, cancel := withDefaultRegistrationTimeout(parent)
+		t.Cleanup(cancel)
+
+		parentDeadline, ok := parent.Deadline()
+		require.True(t, ok)
+		deadline, ok := ctx.Deadline()
+		require.True(t, ok)
+		assert.Equal(t, parentDeadline, deadline)
+	})
+}

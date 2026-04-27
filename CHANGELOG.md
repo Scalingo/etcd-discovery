@@ -12,6 +12,7 @@
 * feat: Implement context everywhere where missing in the library
 * refactor: Replace `errgo` by `github.com/Scalingo/go-utils/errors/v3`
 * refactor: Replace std logger by `github.com/Scalingo/go-utils/logger`
+* fix(service): Avoid an infinite wait on registrations by timing out after 5 minutes
 
 Breaking Changes:
 * Public functions and methods that previously had no `context.Context` parameter now require one

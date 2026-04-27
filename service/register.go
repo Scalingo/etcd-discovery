@@ -17,6 +17,8 @@ const (
 	// HEARTBEAT_DURATION time in second between two registrations. The host will
 	// be deleted if etcd didn't receive any new registration in those 5 seconds.
 	HEARTBEAT_DURATION = 5
+	// defaultRegistrationTimeout is used when the caller does not provide a deadline on context.
+	defaultRegistrationTimeout = 5 * time.Minute
 )
 
 // Register a host with a service name and a host description. The last chan is
@@ -70,23 +72,23 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	serviceJSON, _ := json.Marshal(serviceInfos)
 	serviceValue := string(serviceJSON)
 
+	registration := NewRegistration(ctx, hostUUID, publicCredentialsChan)
+
 	go func() {
 		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
 		defer ticker.Stop()
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
-		id, err := serviceRegistration(ctx, serviceKey, serviceValue)
-		for err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-
-			id, err = serviceRegistration(ctx, serviceKey, serviceValue)
+		id, err := ensureServiceRegistration(ctx, serviceKey, serviceValue)
+		if err != nil {
+			registration.signalFailure(err)
+			return
 		}
 
 		err = ensureHostRegistration(ctx, service, hostKey, hostValue, false)
 		if err != nil {
+			registration.signalFailure(err)
 			return
 		}
 
@@ -134,7 +136,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 	}()
 
-	return NewRegistration(ctx, hostUUID, publicCredentialsChan)
+	return registration
 }
 
 func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan chan Credentials) {
@@ -177,6 +179,28 @@ func watch(ctx context.Context, serviceKey string, id uint64, credentialsChan ch
 	}
 }
 
+func ensureServiceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, error) {
+	ctx, cancel := withDefaultRegistrationTimeout(ctx)
+	defer cancel()
+
+	id, err := serviceRegistration(ctx, serviceKey, serviceJSON)
+	for err != nil {
+		if ctx.Err() != nil {
+			return 0, ctx.Err()
+		}
+
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case <-time.After(1 * time.Second):
+		}
+
+		id, err = serviceRegistration(ctx, serviceKey, serviceJSON)
+	}
+
+	return id, nil
+}
+
 func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 	_, err := KAPI().Set(ctx, hostKey, hostJSON, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
 	if err != nil {
@@ -187,6 +211,9 @@ func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 
 // ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
 func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
+	ctx, cancel := withDefaultRegistrationTimeout(ctx)
+	defer cancel()
+
 	log := logger.Get(ctx)
 
 	err := hostRegistration(ctx, hostKey, hostJSON)
@@ -206,13 +233,22 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 		case <-time.After(1 * time.Second):
 		}
 
-		err = hostRegistration(ctx, hostKey, hostJSON)
-		if err == nil && logFailures {
-			log.WithError(err).Errorf("Recover registration of '%s'", service)
+		registrationErr := hostRegistration(ctx, hostKey, hostJSON)
+		if registrationErr == nil {
+			log.Infof("Recover registration of '%s'", service)
 		}
 	}
 
 	return nil
+}
+
+func withDefaultRegistrationTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	_, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		return ctx, func() {}
+	}
+
+	return context.WithTimeout(ctx, defaultRegistrationTimeout)
 }
 
 func serviceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, error) {
