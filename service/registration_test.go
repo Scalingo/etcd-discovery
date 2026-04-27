@@ -64,7 +64,7 @@ func TestWaitRegistration(t *testing.T) {
 		assert.False(t, order[1])
 	})
 
-	t.Run("It must return an error when the context deadline exceeded", func(t *testing.T) {
+	t.Run("It must return an error when the context deadline is exceeded", func(t *testing.T) {
 		r := NewRegistration(t.Context(), "1234", make(chan Credentials))
 		r.signalFailure(context.DeadlineExceeded)
 
