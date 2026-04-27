@@ -34,7 +34,7 @@ func TestRegister(t *testing.T) {
 			assert.Equal(t, host, *h)
 		})
 
-		t.Run(fmt.Sprintf("And the ttl must be < %s", heartbeatTTL), func(t *testing.T) {
+		t.Run(fmt.Sprintf("And the ttl must be <= %s", heartbeatTTL), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
 			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
