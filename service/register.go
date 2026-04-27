@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	// HEARTBEAT_DURATION time in second between two registrations. The host will
-	// be deleted if etcd didn't receive any new registration in those 5 seconds.
-	HEARTBEAT_DURATION = 5
+	// heartbeatTTL is the etcd TTL for a host registration. The registration is
+	// refreshed before this expires, so the host stays available while healthy.
+	heartbeatTTL = 5 * time.Second
+
 	// defaultRegistrationTimeout is used when the caller does not provide a deadline on context.
 	defaultRegistrationTimeout = 5 * time.Minute
 )
@@ -75,7 +76,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	registration := NewRegistration(ctx, hostUUID, publicCredentialsChan)
 
 	go func() {
-		ticker := time.NewTicker((HEARTBEAT_DURATION - 1) * time.Second)
+		ticker := time.NewTicker(heartbeatTTL - time.Second)
 		defer ticker.Stop()
 
 		// id is the current modification index of the service key.
@@ -202,7 +203,7 @@ func ensureServiceRegistration(ctx context.Context, serviceKey, serviceJSON stri
 }
 
 func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
-	_, err := KAPI().Set(ctx, hostKey, hostJSON, &etcdv2.SetOptions{TTL: HEARTBEAT_DURATION * time.Second})
+	_, err := KAPI().Set(ctx, hostKey, hostJSON, &etcdv2.SetOptions{TTL: heartbeatTTL})
 	if err != nil {
 		return errors.Wrap(ctx, err, "register host")
 	}

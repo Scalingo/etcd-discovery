@@ -34,7 +34,7 @@ func TestRegister(t *testing.T) {
 			assert.Equal(t, host, *h)
 		})
 
-		t.Run(fmt.Sprintf("And the ttl must be < %d", HEARTBEAT_DURATION), func(t *testing.T) {
+		t.Run(fmt.Sprintf("And the ttl must be < %s", heartbeatTTL), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
 			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
@@ -45,7 +45,7 @@ func TestRegister(t *testing.T) {
 
 			now := time.Now()
 			duration := res.Node.Expiration.Sub(now)
-			assert.LessOrEqual(t, duration, HEARTBEAT_DURATION*time.Second)
+			assert.LessOrEqual(t, duration, heartbeatTTL)
 		})
 
 		t.Run("And the service infos must be set", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestRegister(t *testing.T) {
 			assert.Eventually(t, func() bool {
 				_, err := KAPI().Get(t.Context(), hostKey, &etcdv2.GetOptions{})
 				return etcdv2.IsKeyNotFound(err)
-			}, (HEARTBEAT_DURATION+2)*time.Second, 100*time.Millisecond)
+			}, heartbeatTTL+2*time.Second, 100*time.Millisecond)
 		})
 
 		t.Run("When the private_hostname is not set, it must take the node hostname", func(t *testing.T) {
