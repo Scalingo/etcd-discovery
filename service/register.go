@@ -234,8 +234,9 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 		case <-time.After(1 * time.Second):
 		}
 
-		registrationErr := hostRegistration(ctx, hostKey, hostJSON)
-		if registrationErr == nil {
+		previousErr := err
+		err = hostRegistration(ctx, hostKey, hostJSON)
+		if previousErr != nil && err == nil {
 			log.Infof("Recover registration of '%s'", service)
 		}
 	}
