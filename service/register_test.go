@@ -237,13 +237,13 @@ func TestEnsureInitialHostRegistration(t *testing.T) {
 
 			assert.Equal(t, http.MethodPut, r.Method)
 			assert.Equal(t, "/v2/keys/services/test-initial/host-1", r.URL.Path)
-			require.NoError(t, r.ParseForm())
+			assert.NoError(t, r.ParseForm())
 			assert.Equal(t, "{}", r.Form.Get("value"))
 			assert.Equal(t, "5", r.Form.Get("ttl"))
 
 			w.Header().Set("Content-Type", "application/json")
 			_, err := w.Write([]byte(`{"action":"set","node":{"key":"/services/test-initial/host-1","value":"{}","createdIndex":1,"modifiedIndex":1}}`))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		})
 
 		err := ensureInitialHostRegistration(
