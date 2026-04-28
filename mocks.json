@@ -1,5 +1,5 @@
 {
-  "base_package": "github.com/Scalingo/etcd-discovery/v7",
+  "base_package": "github.com/Scalingo/etcd-discovery/v9",
   "mocks": [
     {
       "interface": "HostResponse",
