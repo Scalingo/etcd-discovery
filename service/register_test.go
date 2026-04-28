@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -224,4 +227,125 @@ func TestWithDefaultRegistrationTimeout(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, parentDeadline, deadline)
 	})
+}
+
+func TestEnsureInitialHostRegistration(t *testing.T) {
+	t.Run("It registers the host with the heartbeat TTL", func(t *testing.T) {
+		called := false
+		useFakeEtcdServer(t, func(w http.ResponseWriter, r *http.Request) {
+			called = true
+
+			assert.Equal(t, http.MethodPut, r.Method)
+			assert.Equal(t, "/v2/keys/services/test-initial/host-1", r.URL.Path)
+			require.NoError(t, r.ParseForm())
+			assert.Equal(t, "{}", r.Form.Get("value"))
+			assert.Equal(t, "5", r.Form.Get("ttl"))
+
+			w.Header().Set("Content-Type", "application/json")
+			_, err := w.Write([]byte(`{"action":"set","node":{"key":"/services/test-initial/host-1","value":"{}","createdIndex":1,"modifiedIndex":1}}`))
+			require.NoError(t, err)
+		})
+
+		err := ensureInitialHostRegistration(
+			t.Context(),
+			"test-initial",
+			"/services/test-initial/host-1",
+			"{}",
+			false,
+		)
+
+		require.NoError(t, err)
+		assert.True(t, called)
+	})
+
+	t.Run("It honors the parent context deadline", func(t *testing.T) {
+		useFakeEtcdServer(t, func(w http.ResponseWriter, _ *http.Request) {
+			writeEtcdError(t, w)
+		})
+
+		ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
+		defer cancel()
+
+		err := ensureInitialHostRegistration(
+			ctx,
+			"test-initial-timeout",
+			"/services/test-initial-timeout/host-1",
+			"{}",
+			false,
+		)
+
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
+}
+
+func TestEnsureHostRegistrationWaitsForCallerContext(t *testing.T) {
+	firstRequest := make(chan struct{})
+	useFakeEtcdServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		select {
+		case firstRequest <- struct{}{}:
+		default:
+		}
+		writeEtcdError(t, w)
+	})
+
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+
+	go func() {
+		done <- ensureHostRegistration(
+			ctx,
+			"test-heartbeat",
+			"/services/test-heartbeat/host-1",
+			"{}",
+			false,
+		)
+	}()
+
+	select {
+	case <-firstRequest:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for the first host registration attempt")
+	}
+
+	select {
+	case err := <-done:
+		t.Fatalf("ensureHostRegistration returned before caller context was canceled: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	cancel()
+
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for ensureHostRegistration to stop after context cancellation")
+	}
+}
+
+func useFakeEtcdServer(t *testing.T, handler http.HandlerFunc) {
+	t.Helper()
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	t.Setenv("ETCD_HOSTS", server.URL)
+
+	previousClient := clientSingleton
+	previousOnce := clientSingletonO
+	clientSingleton = nil
+	clientSingletonO = &sync.Once{}
+
+	t.Cleanup(func() {
+		clientSingleton = previousClient
+		clientSingletonO = previousOnce
+	})
+}
+
+func writeEtcdError(t *testing.T, w http.ResponseWriter) {
+	t.Helper()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, err := w.Write([]byte(`{"errorCode":300,"message":"boom","cause":"test","index":1}`))
+	require.NoError(t, err)
 }

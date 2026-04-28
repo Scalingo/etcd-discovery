@@ -87,7 +87,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 			return
 		}
 
-		err = ensureHostRegistration(ctx, service, hostKey, hostValue, false)
+		err = ensureInitialHostRegistration(ctx, service, hostKey, hostValue, false)
 		if err != nil {
 			registration.signalFailure(err)
 			return
@@ -210,11 +210,15 @@ func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 	return nil
 }
 
-// ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
-func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
-	ctx, cancel := withDefaultRegistrationTimeout(ctx)
+func ensureInitialHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
+	registrationCtx, cancel := withDefaultRegistrationTimeout(ctx)
 	defer cancel()
 
+	return ensureHostRegistration(registrationCtx, service, hostKey, hostJSON, logFailures)
+}
+
+// ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
+func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
 	log := logger.Get(ctx)
 
 	err := hostRegistration(ctx, hostKey, hostJSON)
