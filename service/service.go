@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	etcdv2 "go.etcd.io/etcd/client/v2"
+	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 )
@@ -43,18 +43,12 @@ type QueryOptions struct {
 
 // All returns all hosts associated with a service
 func (s *Service) All(ctx context.Context, queryOpts QueryOptions) (Hosts, error) {
-	res, err := KAPI().Get(ctx, "/services/"+s.Name, &etcdv2.GetOptions{
-		Recursive: true,
-	})
-
+	res, err := etcdwrapper.ListValuesForService(ctx, s.Name)
 	if err != nil {
-		if etcdv2.IsKeyNotFound(err) {
-			return nil, ErrNoServiceFound
-		}
 		return nil, errors.Wrap(ctx, err, "fetch services")
 	}
 
-	hosts, err := buildHostsFromNodes(ctx, res.Node.Nodes)
+	hosts, err := buildHostsFromNodes(ctx, res)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "build hosts from nodes")
 	}
@@ -63,14 +57,25 @@ func (s *Service) All(ctx context.Context, queryOpts QueryOptions) (Hosts, error
 		return nil, ErrNoHostFound
 	}
 
+	finalHosts := Hosts{}
+	hostsMap := make(map[string]struct{})
+
+	for _, host := range hosts {
+		_, ok := hostsMap[host.UUID]
+		if !ok {
+			hostsMap[host.UUID] = struct{}{}
+			finalHosts = append(finalHosts, host)
+		}
+	}
+
 	// If no shard is specified, return all hosts
 	if queryOpts.Shard == "" {
-		return hosts, nil
+		return finalHosts, nil
 	}
 
 	// If shard is specified, filter hosts by shard
-	filteredHosts := make(Hosts, 0, len(hosts))
-	for _, host := range hosts {
+	filteredHosts := make(Hosts, 0, len(finalHosts))
+	for _, host := range finalHosts {
 		if host.Shard == queryOpts.Shard {
 			filteredHosts = append(filteredHosts, host)
 		}

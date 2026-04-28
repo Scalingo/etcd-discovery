@@ -5,7 +5,7 @@ This is a Go package for managing services over the decentralized key-value stor
 To install it:
 
 ```sh
-go get github.com/Scalingo/etcd-discovery/v7/service
+go get github.com/Scalingo/etcd-discovery/v9/service
 ```
 
 Registering a service consists of providing a public hostname or/and a private hostname:
@@ -129,42 +129,6 @@ if err != nil {
 
 host, err := s.First(ctx, service.QueryOptions{Shard: "shard-0"})
 url, err := s.URL(ctx, "http", "/health", service.QueryOptions{})
-```
-
-### Subscribe to New Service
-
-When a service is added from another host, if you want your application to
-notice it and communicating with it, it is necessary to watch these
-notifications.
-
-```go
-ctx, cancel := context.WithCancel(context.Background())
-defer cancel()
-
-newHosts, errs := service.SubscribeNew(ctx, "name_of_service")
-for host := range newHosts {
-  fmt.Println(host.Name, "has registered")
-}
-
-if err := <-errs; err != nil {
-  fmt.Println("watch failed:", err)
-}
-```
-
-### Watch Down Services
-
-```go
-ctx, cancel := context.WithCancel(context.Background())
-defer cancel()
-
-deadHosts, errs := service.SubscribeDown(ctx, "name_of_service")
-for hostname := range deadHosts {
-  fmt.Println(hostname, "is dead, RIP")
-}
-
-if err := <-errs; err != nil {
-  fmt.Println("watch failed:", err)
-}
 ```
 
 # Generate the Mocks

@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
+
 	etcdv2 "go.etcd.io/etcd/client/v2"
 )
 
@@ -45,10 +47,22 @@ type ServiceResponse interface {
 // information. This is done to provide maximal backward compatibility since older versions do
 // not register themselves to the "/services_infos" directory.
 func Get(ctx context.Context, service string) ServiceResponse {
-	res, err := KAPI().Get(ctx, "/services_infos/"+service, nil)
+	res, err := etcdwrapper.KAPI().Get(ctx, "/services_infos/"+service, nil)
+	if err != nil && !etcdv2.IsKeyNotFound(err) {
+		return &GetServiceResponse{
+			err:     err,
+			service: nil,
+		}
+	} else if etcdv2.IsKeyNotFound(err) {
+		res, err := etcdwrapper.KAPIV3().Get(ctx, "/services_infos/"+service)
+		if err != nil {
+			return &GetServiceResponse{
+				err:     err,
+				service: nil,
+			}
+		}
 
-	if err != nil {
-		if etcdv2.IsKeyNotFound(err) {
+		if len(res.Kvs) == 0 {
 			return &GetServiceResponse{
 				err: nil,
 				service: &Service{
@@ -56,13 +70,21 @@ func Get(ctx context.Context, service string) ServiceResponse {
 				},
 			}
 		}
+
+		s, err := buildServiceFromNode(ctx, res.Kvs[0].Value)
+		if err != nil {
+			return &GetServiceResponse{
+				err:     err,
+				service: nil,
+			}
+		}
 		return &GetServiceResponse{
-			err:     err,
-			service: nil,
+			err:     nil,
+			service: s,
 		}
 	}
 
-	s, err := buildServiceFromNode(ctx, res.Node)
+	s, err := buildServiceFromNode(ctx, []byte(res.Node.Value))
 	if err != nil {
 		return &GetServiceResponse{
 			err:     err,
@@ -72,7 +94,6 @@ func Get(ctx context.Context, service string) ServiceResponse {
 	return &GetServiceResponse{
 		err:     nil,
 		service: s,
-		shard:   "",
 	}
 }
 
