@@ -7,11 +7,15 @@ import (
 	"time"
 
 	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
+	"github.com/gofrs/uuid/v5"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
+)
 
-	"github.com/gofrs/uuid/v5"
+const (
+	// defaultRegistrationTimeout is used when the caller does not provide a deadline on context.
+	defaultRegistrationTimeout = 5 * time.Minute
 )
 
 // Register a host with a service name and a host description. The last chan is
@@ -56,31 +60,31 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	publicCredentialsChan := make(chan Credentials, 1)  // Communication between register and the client
 	privateCredentialsChan := make(chan Credentials, 1) // Communication between watcher and register
 
-	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUUID) //nolint: perfsprint
+	hostKey := fmt.Sprintf("/services/%s/%s", service, hostUUID)
 	hostJSON, _ := json.Marshal(&host)
 	hostValue := string(hostJSON)
 
-	serviceKey := fmt.Sprintf("/services_infos/%s", service) //nolint: perfsprint
+	serviceKey := fmt.Sprintf("/services_infos/%s", service)
 	serviceJSON, _ := json.Marshal(serviceInfos)
 	serviceValue := string(serviceJSON)
 
+	registration := NewRegistration(ctx, hostUUID, publicCredentialsChan)
+
 	go func() {
-		ticker := time.NewTicker((etcdwrapper.HeartbeatDuration - 1) * time.Second)
+		ticker := time.NewTicker(etcdwrapper.HeartbeatDuration - time.Second)
 		defer ticker.Stop()
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
-		idV2, idV3, err := serviceRegistration(ctx, serviceKey, serviceValue)
-		for err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-
-			idV2, idV3, err = serviceRegistration(ctx, serviceKey, serviceValue)
+		idv2, idv3, err := ensureServiceRegistration(ctx, serviceKey, serviceValue)
+		if err != nil {
+			registration.signalFailure(err)
+			return
 		}
 
-		err = ensureHostRegistration(ctx, service, hostKey, hostValue, false)
+		err = ensureInitialHostRegistration(ctx, service, hostKey, hostValue, false)
 		if err != nil {
+			registration.signalFailure(err)
 			return
 		}
 
@@ -90,7 +94,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 
 		if host.Public {
-			go watch(ctx, serviceKey, idV2, idV3, privateCredentialsChan)
+			go watch(ctx, serviceKey, idv2, idv3, privateCredentialsChan)
 		}
 
 		for {
@@ -100,9 +104,8 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				if err != nil {
 					log.WithError(err).Errorf("remove host key %s", hostKey)
 				}
-				ticker.Stop()
 				return
-			case credentials := <-privateCredentialsChan: // If the credentials have been changed
+			case credentials := <-privateCredentialsChan: // If the credentials have been changed,
 				// We update our cache
 				host.User = credentials.User
 				host.Password = credentials.Password
@@ -113,14 +116,13 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 				hostJSON, _ = json.Marshal(&host)
 				hostValue = string(hostJSON)
 
-				// synchro the host information
+				// Sync the host information
 				err := ensureHostRegistration(ctx, service, hostKey, hostValue, true)
 				if err != nil {
 					return
 				}
 				// and transmit them to the client
 				publicCredentialsChan <- credentials
-			case <-ticker.C:
 			case <-ticker.C:
 				err := ensureHostRegistration(ctx, service, hostKey, hostValue, true)
 				if err != nil {
@@ -130,7 +132,7 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 		}
 	}()
 
-	return NewRegistration(ctx, hostUUID, publicCredentialsChan)
+	return registration
 }
 
 func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, credentialsChan chan Credentials) {
@@ -144,12 +146,41 @@ func watch(ctx context.Context, serviceKey string, idV2 uint64, idV3 int64, cred
 	}
 }
 
+func ensureServiceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, int64, error) {
+	ctx, cancel := withDefaultRegistrationTimeout(ctx)
+	defer cancel()
+
+	idxV2, idxV3, err := serviceRegistration(ctx, serviceKey, serviceJSON)
+	for err != nil {
+		if ctx.Err() != nil {
+			return 0, 0, ctx.Err()
+		}
+
+		select {
+		case <-ctx.Done():
+			return 0, 0, ctx.Err()
+		case <-time.After(1 * time.Second):
+		}
+
+		idxV2, idxV3, err = serviceRegistration(ctx, serviceKey, serviceJSON)
+	}
+
+	return idxV2, idxV3, nil
+}
+
 func hostRegistration(ctx context.Context, hostKey, hostJSON string) error {
 	_, _, err := etcdwrapper.Set(ctx, hostKey, hostJSON, true)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "unable to register host")
+		return errors.Wrap(ctx, err, "register host")
 	}
 	return nil
+}
+
+func ensureInitialHostRegistration(ctx context.Context, service, hostKey, hostJSON string, logFailures bool) error {
+	registrationCtx, cancel := withDefaultRegistrationTimeout(ctx)
+	defer cancel()
+
+	return ensureHostRegistration(registrationCtx, service, hostKey, hostJSON, logFailures)
 }
 
 // ensureHostRegistration keeps retrying the host registration until it succeeds or the context is canceled.
@@ -176,11 +207,20 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 
 		err = hostRegistration(ctx, hostKey, hostJSON)
 		if err == nil && logFailures {
-			log.Errorf("Recover registration of '%s'", service)
+			log.Infof("Recover registration of '%s'", service)
 		}
 	}
 
 	return nil
+}
+
+func withDefaultRegistrationTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	_, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		return ctx, func() {}
+	}
+
+	return context.WithTimeout(ctx, defaultRegistrationTimeout)
 }
 
 func serviceRegistration(ctx context.Context, serviceKey, serviceJSON string) (uint64, int64, error) {

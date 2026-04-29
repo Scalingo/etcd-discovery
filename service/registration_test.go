@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -61,6 +62,15 @@ func TestWaitRegistration(t *testing.T) {
 
 		assert.True(t, order[0])
 		assert.False(t, order[1])
+	})
+
+	t.Run("It must return an error when the context deadline is exceeded", func(t *testing.T) {
+		r := NewRegistration(t.Context(), "1234", make(chan Credentials))
+		r.signalFailure(context.DeadlineExceeded)
+
+		err := r.WaitRegistration(t.Context())
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.False(t, r.Ready())
 	})
 }
 
