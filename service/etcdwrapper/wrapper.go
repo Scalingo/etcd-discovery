@@ -15,7 +15,7 @@ import (
 const (
 	// HeartbeatDuration time in second between two registration. The host will
 	// be deleted if etcd didn't receive any new registration in those 5 seconds
-	HeartbeatDuration = 5
+	HeartbeatDuration = 5 * time.Second
 )
 
 func Delete(ctx context.Context, hostKey string) error {
@@ -40,7 +40,7 @@ func Set(ctx context.Context, key, value string, withLease bool) (uint64, int64,
 	var opts *etcd.SetOptions
 	var opOptions []etcdv3.OpOption
 	if withLease {
-		opts = &etcd.SetOptions{TTL: HeartbeatDuration * time.Second}
+		opts = &etcd.SetOptions{TTL: HeartbeatDuration}
 
 		lease, err := leaseV3().Grant(ctx, int64(HeartbeatDuration))
 		if err != nil {

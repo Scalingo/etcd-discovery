@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
 )
