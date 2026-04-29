@@ -17,6 +17,7 @@ type RegistrationWrapper interface {
 // Registration is the RegistrationWrapper implementation used by the Register method
 type Registration struct {
 	credChan        chan Credentials
+	failureChan     chan error
 	readyChan       chan struct{}
 	ready           bool
 	waitErr         error
@@ -30,6 +31,7 @@ type Registration struct {
 func NewRegistration(ctx context.Context, uuid string, cred chan Credentials) *Registration {
 	r := &Registration{
 		credChan:        cred,
+		failureChan:     make(chan error, 1),
 		readyChan:       make(chan struct{}),
 		ready:           false,
 		waitErr:         nil,
@@ -93,6 +95,9 @@ func (w *Registration) worker(ctx context.Context) {
 			// Unblock WaitRegistration callers even if the registration never reached etcd.
 			w.signalReady(ctx.Err())
 			return
+		case err := <-w.failureChan:
+			w.signalReady(err)
+			return
 		case newCred := <-w.credChan:
 			w.mutex.Lock()
 			w.curCredentials = &newCred
@@ -116,4 +121,15 @@ func (w *Registration) signalReady(err error) {
 		w.mutex.Unlock()
 		close(w.readyChan)
 	})
+}
+
+func (w *Registration) signalFailure(err error) {
+	if err == nil {
+		return
+	}
+
+	select {
+	case w.failureChan <- err:
+	default:
+	}
 }
