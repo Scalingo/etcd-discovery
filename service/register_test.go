@@ -22,7 +22,7 @@ func TestRegister(t *testing.T) {
 		t.Run("It should be available with etcd", func(t *testing.T) {
 			host.Name = "test_register"
 			w := Register(t.Context(), "test_register", host)
-			w.WaitRegistration(t.Context())
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
 			res, err := etcdwrapper.KAPI().Get(t.Context(), "/services/test_register/"+uuid, &etcdv2.GetOptions{})
 			require.NoError(t, err)
@@ -37,7 +37,7 @@ func TestRegister(t *testing.T) {
 
 		t.Run(fmt.Sprintf("And the ttl must be < %d", etcdwrapper.HeartbeatDuration), func(t *testing.T) {
 			w := Register(t.Context(), "test2_register", host)
-			w.WaitRegistration(t.Context())
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			uuid := w.UUID()
 			res, err := etcdwrapper.KAPI().Get(t.Context(),
 				"/services/test2_register/"+uuid, &etcdv2.GetOptions{},
@@ -62,7 +62,7 @@ func TestRegister(t *testing.T) {
 				Critical: true,
 			}
 			w := Register(t.Context(), "test3_register", host)
-			w.WaitRegistration(t.Context())
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			res, err := etcdwrapper.KAPI().Get(t.Context(), "/services_infos/test3_register", &etcdv2.GetOptions{})
 			require.NoError(t, err)
 
@@ -75,7 +75,7 @@ func TestRegister(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
 			host := genHost("test-disappear")
 			w := Register(ctx, "test4_register", host)
-			w.WaitRegistration(t.Context())
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			cancel()
 
 			time.Sleep(100 * time.Millisecond)
@@ -98,7 +98,7 @@ func TestRegister(t *testing.T) {
 			host.Public = false
 			host.PrivatePorts = Ports{}
 			w := Register(t.Context(), "hello_world2", host)
-			w.WaitRegistration(t.Context())
+			require.NoError(t, w.WaitRegistration(t.Context()))
 			h, err := Get(t.Context(), "hello_world2").First(t.Context()).Host(t.Context())
 			require.NoError(t, err)
 
@@ -119,7 +119,7 @@ func TestWatcher(t *testing.T) {
 		host2.Password = "password2"
 
 		w1 := Register(t.Context(), "test-watcher", host1)
-		w1.WaitRegistration(t.Context())
+		require.NoError(t, w1.WaitRegistration(t.Context()))
 
 		cred1, err := w1.Credentials()
 		require.NoError(t, err)
@@ -127,7 +127,7 @@ func TestWatcher(t *testing.T) {
 		assert.Equal(t, "password1", cred1.Password)
 
 		w2 := Register(t.Context(), "test-watcher", host2)
-		w2.WaitRegistration(t.Context())
+		require.NoError(t, w2.WaitRegistration(t.Context()))
 
 		t.Run("it should send the new passwords", func(t *testing.T) {
 			cred2, err := w2.Credentials()

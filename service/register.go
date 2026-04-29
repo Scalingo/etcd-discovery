@@ -10,6 +10,7 @@ import (
 
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
+
 	"github.com/gofrs/uuid/v5"
 )
 

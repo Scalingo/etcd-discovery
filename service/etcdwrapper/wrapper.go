@@ -7,6 +7,7 @@ import (
 
 	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/go-utils/logger"
+
 	etcd "go.etcd.io/etcd/client/v2"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
