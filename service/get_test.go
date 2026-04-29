@@ -10,15 +10,15 @@ import (
 )
 
 func TestGetNoHost(t *testing.T) {
-	t.Run("Without any service, Get should return ErrNoServiceFound and a nil slice", func(t *testing.T) {
+	t.Run("Without any service, Get should return ErrNoHostFound and a nil slice", func(t *testing.T) {
 		hosts, err := Get(t.Context(), "test_no_service").All(t.Context())
-		require.EqualError(t, err, ErrNoServiceFound.Error())
+		require.EqualError(t, err, ErrNoHostFound.Error())
 		assert.Nil(t, hosts)
 	})
 
-	t.Run("Without any service, Get().One().Host() should return ErrNoServiceFound", func(t *testing.T) {
+	t.Run("Without any service, Get().One().Host() should return ErrNoHostFound", func(t *testing.T) {
 		host, err := Get(t.Context(), "test_no_service").One(t.Context()).Host(t.Context())
-		require.ErrorIs(t, err, ErrNoServiceFound)
+		require.ErrorIs(t, err, ErrNoHostFound)
 		assert.Nil(t, host)
 	})
 }
@@ -118,9 +118,9 @@ func TestGetServiceResponse(t *testing.T) {
 			assert.Equal(t, expectedService, service)
 		})
 
-		t.Run("All should return ErrNoServiceFound when the backing service has no hosts key", func(t *testing.T) {
+		t.Run("All should return ErrNoHostFound when the backing service has no hosts key", func(t *testing.T) {
 			hosts, err := response.All(t.Context())
-			require.EqualError(t, err, ErrNoServiceFound.Error())
+			require.EqualError(t, err, ErrNoHostFound.Error())
 			assert.Nil(t, hosts)
 		})
 
@@ -132,12 +132,12 @@ func TestGetServiceResponse(t *testing.T) {
 
 		t.Run("One should pass the One error", func(t *testing.T) {
 			r := response.One(t.Context())
-			require.ErrorIs(t, r.Err(), ErrNoServiceFound)
+			require.ErrorIs(t, r.Err(), ErrNoHostFound)
 		})
 
 		t.Run("First should pass the First error", func(t *testing.T) {
 			r := response.First(t.Context())
-			require.ErrorIs(t, r.Err(), ErrNoServiceFound)
+			require.ErrorIs(t, r.Err(), ErrNoHostFound)
 		})
 	})
 }
