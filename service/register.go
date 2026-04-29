@@ -66,11 +66,16 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 
 	go func() {
 		ticker := time.NewTicker((etcdwrapper.HeartbeatDuration - 1) * time.Second)
+		defer ticker.Stop()
 
 		// id is the current modification index of the service key.
 		// this is used for the watcher.
 		idV2, idV3, err := serviceRegistration(ctx, serviceKey, serviceValue)
 		for err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+
 			idV2, idV3, err = serviceRegistration(ctx, serviceKey, serviceValue)
 		}
 
