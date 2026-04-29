@@ -13,6 +13,8 @@
 * refactor: Replace `errgo` by `github.com/Scalingo/go-utils/errors/v3`
 * refactor: Replace std logger by `github.com/Scalingo/go-utils/logger`
 * fix(service): Avoid an infinite wait on registrations by timing out after 5 minutes
+* feat(register): Add logs when service and host is registered on etcd
+* feat(registration): Add a log when waiting for etcd registration
 
 Breaking Changes:
 * Public functions and methods that previously had no `context.Context` parameter now require one
