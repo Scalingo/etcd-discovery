@@ -1,11 +1,11 @@
-# Etcd Discovery v7.1.5
+# Etcd Discovery v8.0.0
 
 This is a Go package for managing services over the decentralized key-value store [etcd](https://github.com/etcd-io/etcd).
 
 To install it:
 
 ```sh
-go get github.com/Scalingo/etcd-discovery/v7/service
+go get github.com/Scalingo/etcd-discovery/v8
 ```
 
 Registering a service consists of providing a public hostname or/and a private hostname:
@@ -185,7 +185,7 @@ Bump new version number in `CHANGELOG.md` and `README.md`.
 Commit, tag and create a new release:
 
 ```sh
-version="7.1.5"
+version="8.0.0"
 
 git switch --create release/${version}
 git add CHANGELOG.md README.md

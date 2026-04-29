@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v8.0.0
+
 * build(deps): various updates
 * build(go): use go 1.25
 * fix: Add missing `mocks.json` file and regenerate mocks
