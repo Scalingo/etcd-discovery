@@ -239,7 +239,7 @@ func ensureHostRegistration(ctx context.Context, service, hostKey, hostJSON stri
 		}
 
 		err = hostRegistration(ctx, hostKey, hostJSON)
-		if err == nil {
+		if err == nil && logFailures {
 			log.Infof("Recover registration of '%s'", service)
 		}
 	}
