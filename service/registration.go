@@ -4,6 +4,8 @@ import (
 	"context"
 	stderrors "errors"
 	"sync"
+
+	"github.com/Scalingo/go-utils/logger"
 )
 
 // RegistrationWrapper wraps the uuid and the credential channel to provide a more user-friendly API for the Register Method
@@ -50,6 +52,9 @@ func (w *Registration) WaitRegistration(ctx context.Context) error {
 	if w.Ready() {
 		return nil
 	}
+
+	log := logger.Get(ctx)
+	log.Info("Waiting for etcd registration")
 
 	select {
 	case <-ctx.Done():

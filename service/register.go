@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Scalingo/etcd-discovery/v9/service/etcdwrapper"
 	"github.com/Scalingo/go-utils/errors/v3"
@@ -39,6 +40,11 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 	if host.PrivateHostname != "" && len(host.PrivatePorts) == 0 {
 		host.PrivatePorts = host.Ports
 	}
+
+	ctx, log = logger.WithFieldsToCtx(ctx, logrus.Fields{
+		"hostname":     host.Hostname,
+		"service_name": host.Name,
+	})
 
 	uuidV4, _ := uuid.NewV4()
 	hostUUID := fmt.Sprintf("%s-%s", uuidV4.String(), host.PrivateHostname)
@@ -81,12 +87,14 @@ func Register(ctx context.Context, service string, host Host) *Registration {
 			registration.signalFailure(err)
 			return
 		}
+		log.Info("Service registered in etcd")
 
 		err = ensureInitialHostRegistration(ctx, service, hostKey, hostValue, false)
 		if err != nil {
 			registration.signalFailure(err)
 			return
 		}
+		log.Info("Host registered in etcd")
 
 		publicCredentialsChan <- Credentials{
 			User:     serviceInfos.User,
