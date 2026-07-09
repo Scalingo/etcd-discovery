@@ -8,7 +8,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	go.etcd.io/etcd/client/pkg/v3 v3.6.11
+	go.etcd.io/etcd/client/pkg/v3 v3.6.12
 	// The latest versions of etcd have been migrated to go modules.
 	// Since this change the version of the etcd client we are currently
 	// using in this package has been named v2.
@@ -16,7 +16,7 @@ require (
 	//
 	// The package "go.etcd.io/etcd/client/v3" is a complete refactoring
 	// of the client and uses grpc instead of http, that we currently use.
-	go.etcd.io/etcd/client/v2 v2.305.30
+	go.etcd.io/etcd/client/v2 v2.305.31
 	go.etcd.io/etcd/client/v3 v3.6.10
 	go.uber.org/mock v0.6.0
 )
@@ -33,11 +33,11 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.6.11 // indirect
+	go.etcd.io/etcd/api/v3 v3.6.12 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
