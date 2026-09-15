@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	etcdv2 "go.etcd.io/etcd/client/v2"
-
 	"github.com/Scalingo/go-utils/errors/v3"
 )
 
-func buildHostsFromNodes(ctx context.Context, nodes etcdv2.Nodes) (Hosts, error) {
-	hosts := make(Hosts, len(nodes))
-	for i, node := range nodes {
+func buildHostsFromNodes(ctx context.Context, nodeValues [][]byte) (Hosts, error) {
+	hosts := make(Hosts, len(nodeValues))
+	for i, node := range nodeValues {
 		host, err := buildHostFromNode(ctx, node)
 		if err != nil {
 			return nil, errors.Wrap(ctx, err, "build host from node")
@@ -21,18 +19,18 @@ func buildHostsFromNodes(ctx context.Context, nodes etcdv2.Nodes) (Hosts, error)
 	return hosts, nil
 }
 
-func buildHostFromNode(ctx context.Context, node *etcdv2.Node) (*Host, error) {
+func buildHostFromNode(ctx context.Context, nodeValue []byte) (*Host, error) {
 	host := &Host{}
-	err := json.Unmarshal([]byte(node.Value), host)
+	err := json.Unmarshal(nodeValue, host)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "unmarshal host")
 	}
 	return host, nil
 }
 
-func buildServiceFromNode(ctx context.Context, node *etcdv2.Node) (*Service, error) {
+func buildServiceFromNode(ctx context.Context, val []byte) (*Service, error) {
 	service := &Service{}
-	err := json.Unmarshal([]byte(node.Value), service)
+	err := json.Unmarshal(val, service)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "unmarshal service")
 	}

@@ -40,7 +40,7 @@ func TestWaitRegistration(t *testing.T) {
 		registrationChan := make(chan bool)
 		go func() {
 			for {
-				_ = r.WaitRegistration(t.Context())
+				assert.NoError(t, r.WaitRegistration(t.Context()))
 				registrationChan <- true
 			}
 		}()

@@ -13,7 +13,7 @@ func TestServiceAll(t *testing.T) {
 		require.NoError(t, err)
 
 		hosts, err := s.All(t.Context(), QueryOptions{})
-		require.EqualError(t, err, ErrNoServiceFound.Error())
+		require.EqualError(t, err, ErrNoHostFound.Error())
 		assert.Nil(t, hosts)
 	})
 
@@ -77,12 +77,12 @@ func TestServiceAll(t *testing.T) {
 }
 
 func TestServiceFirst(t *testing.T) {
-	t.Run("Without a service host, it should return ErrNoServiceFound", func(t *testing.T) {
+	t.Run("Without a service host, it should return ErrNoHostFound", func(t *testing.T) {
 		s, err := Get(t.Context(), "test-service-first-empty").Service(t.Context())
 		require.NoError(t, err)
 
 		host, err := s.First(t.Context(), QueryOptions{})
-		require.ErrorIs(t, err, ErrNoServiceFound)
+		require.ErrorIs(t, err, ErrNoHostFound)
 		assert.Nil(t, host)
 	})
 
@@ -137,12 +137,12 @@ func TestServiceFirst(t *testing.T) {
 }
 
 func TestServiceOne(t *testing.T) {
-	t.Run("Without a service host, it should return ErrNoServiceFound", func(t *testing.T) {
+	t.Run("Without a service host, it should return ErrNoHostFound", func(t *testing.T) {
 		s, err := Get(t.Context(), "test-service-one-empty").Service(t.Context())
 		require.NoError(t, err)
 
 		host, err := s.One(t.Context(), QueryOptions{})
-		require.ErrorIs(t, err, ErrNoServiceFound)
+		require.ErrorIs(t, err, ErrNoHostFound)
 		assert.Nil(t, host)
 	})
 

@@ -38,7 +38,7 @@ var (
 		}
 		`,
 	}
-	sampleNodes = etcdv2.Nodes{sampleNode, sampleNode}
+	sampleNodes = [][]byte{[]byte(sampleNode.Value), []byte(sampleNode.Value)}
 )
 
 var (
@@ -57,7 +57,7 @@ func TestBuildHostsFromNodes(t *testing.T) {
 
 func TestBuildHostFromNode(t *testing.T) {
 	t.Run("Given a sample response, we got a filled Host", func(t *testing.T) {
-		host, err := buildHostFromNode(t.Context(), sampleNode)
+		host, err := buildHostFromNode(t.Context(), []byte(sampleNode.Value))
 		require.NoError(t, err)
 		assert.Equal(t, sampleResult, *host)
 	})
@@ -65,7 +65,7 @@ func TestBuildHostFromNode(t *testing.T) {
 
 func TestBuildServiceFromNode(t *testing.T) {
 	t.Run("Given a sample response, we got a filled Infos", func(t *testing.T) {
-		infos, err := buildServiceFromNode(t.Context(), sampleInfoNode)
+		infos, err := buildServiceFromNode(t.Context(), []byte(sampleInfoNode.Value))
 		require.NoError(t, err)
 		assert.True(t, infos.Critical)
 	})
